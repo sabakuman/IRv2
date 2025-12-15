@@ -19,7 +19,6 @@ export default function Wizard() {
   const [isFetchingAgreements, setIsFetchingAgreements] = useState(false);
   const [isFetchingEconomy, setIsFetchingEconomy] = useState(false);
   const [isFetchingNews, setIsFetchingNews] = useState(false);
-  const [enrichingDelegateId, setEnrichingDelegateId] = useState<string | null>(null);
   const [data, setData] = useState<ReportData>(EMPTY_REPORT_DATA);
   const [reportTitle, setReportTitle] = useState('');
 
@@ -46,6 +45,27 @@ export default function Wizard() {
     }
   }, [id]);
 
+  // Helper to safely extract and parse JSON from mixed content
+  const extractAndParseJSON = (text: string) => {
+    try {
+      // 1. Try direct parse
+      return JSON.parse(text);
+    } catch (e) {
+      // 2. Try extracting JSON block
+      const match = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+      if (match) {
+        try {
+          return JSON.parse(match[0]);
+        } catch (e2) {
+          console.error("Failed to parse extracted JSON block", e2);
+          throw e2;
+        }
+      }
+      console.error("No JSON found in response", text);
+      throw new Error("Invalid API response format");
+    }
+  };
+
   // Helper to construct AI instruction based on language
   const getLanguageInstruction = () => {
     return language === 'ar' 
@@ -65,7 +85,7 @@ export default function Wizard() {
         
         ${langInstr}
         
-        Return a strictly valid JSON object (no markdown, no code blocks) matching this structure exactly (keys must remain in English):
+        Return a strictly valid JSON object matching this structure exactly (keys must remain in English):
         {
           "capital": "string",
           "officialLanguage": "string",
@@ -92,11 +112,12 @@ export default function Wizard() {
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+          }
         });
 
-        const text = response.text;
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const aiData = JSON.parse(cleanJson);
+        const aiData = extractAndParseJSON(response.text);
 
         setData(prev => ({
           ...prev,
@@ -111,6 +132,8 @@ export default function Wizard() {
             availableSkills: aiData.availableSkills || []
           }
         }));
+      } else {
+        console.error("API Key missing");
       }
     } catch (error) {
       console.error("AI Fetch failed", error);
@@ -148,15 +171,14 @@ export default function Wizard() {
             contents: prompt,
             config: {
               tools: [{ googleSearch: {} }],
+              // Cannot use responseMimeType with tools
             },
          });
          
-         const text = response.text;
-         const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-         const newsItems = JSON.parse(cleanJson);
+         const newsItems = extractAndParseJSON(response.text);
          
          // Add IDs
-         const newsWithIds = newsItems.map((n: any) => ({ ...n, id: uuidv4() }));
+         const newsWithIds = Array.isArray(newsItems) ? newsItems.map((n: any) => ({ ...n, id: uuidv4() })) : [];
          
          setData(prev => ({
             ...prev,
@@ -182,7 +204,7 @@ export default function Wizard() {
         
         ${langInstr}
         
-        Return a strictly valid JSON object (no markdown) with this structure (keys must remain in English):
+        Return a strictly valid JSON object with this structure (keys must remain in English):
         {
           "economicStats": {
             "inflation": "string (e.g. 5.1% in 2024)",
@@ -205,11 +227,12 @@ export default function Wizard() {
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+          }
         });
 
-        const text = response.text;
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const aiData = JSON.parse(cleanJson);
+        const aiData = extractAndParseJSON(response.text);
 
         setData(prev => ({
           ...prev,
@@ -241,6 +264,7 @@ export default function Wizard() {
            
            let prompt = '';
            let tools = [];
+           let config: any = {};
 
            if (source === 'GENERAL') {
               // General Online Search using Google Search Tool
@@ -248,7 +272,7 @@ export default function Wizard() {
               
               ${langInstr}
               
-              Return a strictly valid JSON array of objects with this structure (no markdown) (keys must remain in English):
+              Return a strictly valid JSON array of objects with this structure (keys must remain in English):
               [
                 {
                    "title": "string (e.g. MoU on Manpower)",
@@ -257,7 +281,10 @@ export default function Wizard() {
                    "summary": "string (Key focus e.g. Domestic workers rights)"
                 }
               ]`;
-              tools = [{ googleSearch: {} }];
+              config = {
+                 tools: [{ googleSearch: {} }]
+                 // responseMimeType NOT ALLOWED with tools
+              };
            } else {
               // Simulate MOFA Database (Internal Knowledge)
               prompt = `Act as the official UAE Ministry of Foreign Affairs & International Cooperation (MOFAIC) database.
@@ -265,7 +292,7 @@ export default function Wizard() {
               
               ${langInstr}
               
-              Return a strictly valid JSON array of objects with this structure (no markdown) (keys must remain in English):
+              Return a strictly valid JSON array of objects with this structure (keys must remain in English):
               [
                 {
                    "title": "string (Official Agreement Name)",
@@ -274,21 +301,21 @@ export default function Wizard() {
                    "summary": "string (Official purpose)"
                 }
               ]`;
+              config = {
+                responseMimeType: 'application/json'
+              };
            }
 
            const response = await ai.models.generateContent({
               model: 'gemini-2.5-flash',
               contents: prompt,
-              config: {
-                 tools: tools.length > 0 ? tools : undefined,
-              }
+              config: config
            });
 
-           const text = response.text;
-           const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+           // Robust parsing
+           const fetchedAgreements = extractAndParseJSON(response.text);
            
-           try {
-              const fetchedAgreements = JSON.parse(cleanJson);
+           if (Array.isArray(fetchedAgreements)) {
               // Append unique agreements
               setData(prev => {
                 const existing = new Set(prev.bilateralAgreements.map(a => a.title));
@@ -298,8 +325,6 @@ export default function Wizard() {
                    bilateralAgreements: [...prev.bilateralAgreements, ...uniqueNew]
                 };
               });
-           } catch (e) {
-              console.error("Failed to parse agreements JSON", text);
            }
         }
       } catch (error) {
