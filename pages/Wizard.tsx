@@ -49,7 +49,7 @@ export default function Wizard() {
   // Helper to construct AI instruction based on language
   const getLanguageInstruction = () => {
     return language === 'ar' 
-      ? "IMPORTANT: All string values in the JSON response must be in Arabic (Modern Standard Arabic). Translate any English data to Arabic." 
+      ? "IMPORTANT: Provide the response in Arabic (Modern Standard Arabic). However, keep all JSON keys in English, and keep all numbers (dates, percentages, counts, currency amounts) in Western digits (0-9) format (e.g., 2024, 50%, 1.2M)." 
       : "All string values must be in English.";
   };
 
@@ -137,7 +137,7 @@ export default function Wizard() {
            {
              "title": "string (Headline)",
              "source": "string (News Source)",
-             "date": "string (Date string)",
+             "date": "string (Date string in western digits)",
              "summary": "string (1 sentence summary)",
              "url": "string (Link if available)"
            }
@@ -495,7 +495,7 @@ export default function Wizard() {
              </div>
 
              <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/20 dark:border-primary/30">
-                 <h4 className="font-bold text-primary-dark dark:text-primary-light mb-3 text-sm uppercase">Key Workforce Metrics</h4>
+                 <h4 className="font-bold text-primary-dark dark:text-primary-light mb-3 text-sm uppercase">{t('additionalIndicators')}</h4>
                  {data.uaeWorkforceStats.custom.map((item, i) => (
                     <div key={item.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                        <Input value={item.label} disabled={item.isTotal} onChange={(e) => { const newCustom = [...data.uaeWorkforceStats.custom]; newCustom[i].label = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: newCustom}}); }} placeholder="Title" />
@@ -560,7 +560,7 @@ export default function Wizard() {
                 <h4 className="font-serif font-bold text-xl text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">{t('icpData')}</h4>
                 
                 <div>
-                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">{t('workersByEmirate')}</h5>
+                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">{t('residentsByEmirate')}</h5>
                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {data.uaeWorkforceStats.icp.byEmirate.map((em, idx) => (
                          <div key={idx} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded p-3">
@@ -604,7 +604,7 @@ export default function Wizard() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold mb-4 text-gray-600 dark:text-gray-300 uppercase tracking-wider">Demographics</h3>
+              <h3 className="text-sm font-semibold mb-4 text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('workforceStats')}</h3>
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <Input label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} placeholder="e.g. 55 Million" />
                   <div className="relative">
@@ -710,7 +710,7 @@ export default function Wizard() {
                  <Input label={t('importsFromUae')} value={data.economicStats?.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} placeholder="e.g. 5.3 Billion USD" />
                  <Input label={t('remittances')} value={data.economicStats?.remittancesFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesFromUAE: e.target.value}})} placeholder="Manual Input required" />
                  <Input label={t('globalRemittances')} value={data.economicStats?.remittancesGlobal} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesGlobal: e.target.value}})} placeholder="e.g. 40 Billion USD" />
-                 <Input label={t('tipRank')} value={data.economicStats?.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} placeholder="e.g. Tier 2" />
+                 <Input label={t('tipRankLabel')} value={data.economicStats?.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} placeholder="e.g. Tier 2" />
                </div>
                
                <div className="space-y-4">
