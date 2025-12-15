@@ -4,8 +4,7 @@ import { MOCK_REPORTS, MOCK_AUDIT_LOGS } from '../constants';
 const STORAGE_KEYS = {
   REPORTS: 'uae_lmi_reports',
   LOGS: 'uae_lmi_logs',
-  USERS: 'uae_lmi_users',
-  INIT: 'uae_lmi_initialized_v5' // Bumped to v5 to FORCE RESET for Admin/Admin requirement
+  USERS: 'uae_lmi_users'
 };
 
 // --- Low Level Helpers ---
@@ -27,21 +26,13 @@ const setStorage = (key: string, value: any) => {
   }
 };
 
-// --- Initialization Logic ---
+// --- Initialization Logic (SAFE / LIVE BUILD MODE) ---
 const initializeStorage = () => {
-  // Check if this specific version has been initialized
-  const isInitialized = localStorage.getItem(STORAGE_KEYS.INIT);
-
-  if (!isInitialized) {
-    console.warn("System Reset: Initializing Default Data (Admin Reset)");
-
-    // 1. Reset Reports
-    setStorage(STORAGE_KEYS.REPORTS, MOCK_REPORTS);
-
-    // 2. Reset Logs
-    setStorage(STORAGE_KEYS.LOGS, MOCK_AUDIT_LOGS);
-
-    // 3. Reset Users - STRICT SINGLE ADMIN
+  // 1. Users - Check if users exist. If NOT, seed default admin. 
+  // This ensures we NEVER delete existing users on update.
+  const users = getStorage<UserProfile[]>(STORAGE_KEYS.USERS);
+  if (!users || (Array.isArray(users) && users.length === 0)) {
+    console.log("System Initialization: Seeding default admin (No existing users found).");
     const defaultAdmin: UserProfile = {
       id: 'u-admin',
       fullName: 'System Administrator',
@@ -51,15 +42,24 @@ const initializeStorage = () => {
       avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff'
     };
     setStorage(STORAGE_KEYS.USERS, [defaultAdmin]);
-
-    // Mark as initialized
-    localStorage.setItem(STORAGE_KEYS.INIT, 'true');
-    
-    // Clear previous version keys
-    localStorage.removeItem('uae_lmi_initialized_v4');
-    localStorage.removeItem('uae_lmi_initialized_v3');
-    localStorage.removeItem('uae_lmi_initialized_v2');
   }
+
+  // 2. Reports - Seed only if missing
+  const reports = getStorage<Report[]>(STORAGE_KEYS.REPORTS);
+  if (!reports) {
+    setStorage(STORAGE_KEYS.REPORTS, MOCK_REPORTS);
+  }
+
+  // 3. Logs - Seed only if missing
+  const logs = getStorage<AuditLog[]>(STORAGE_KEYS.LOGS);
+  if (!logs) {
+    setStorage(STORAGE_KEYS.LOGS, MOCK_AUDIT_LOGS);
+  }
+
+  // Clear legacy keys if they exist to keep storage clean, but do NOT use them for logic
+  localStorage.removeItem('uae_lmi_initialized_v5');
+  localStorage.removeItem('uae_lmi_initialized_v4');
+  localStorage.removeItem('uae_lmi_initialized_v3');
 };
 
 // Run immediately

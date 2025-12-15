@@ -47,7 +47,7 @@ export default function Wizard() {
     }
   }, [id]);
 
-  // Helper to get correct API key
+  // Helper to get correct API key (User preference overrides system default)
   const getApiKey = () => {
     return user?.apiKey || process.env.API_KEY;
   };
