@@ -398,137 +398,149 @@ export default function PrintView() {
         </div>
       </PageContainer>
 
-      {/* --- PAGE 4: RELATIONS (Combined) --- */}
+      {/* --- PAGE 4: RELATIONS (Standalone) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
         <HeaderBand country={data.country} reportId={report.id} />
 
         <SectionHeader
           icon={Handshake}
-          title={t('relationsDelegations')}
+          title={t('relationsDelegations')} // Reusing the key, but it's Relations & Engagement essentially
           subtitle={t('bilateralEngagement')}
         />
 
         {/* Agreements */}
         <div className="mb-6 avoid-break">
-           <h3 className="kpi-label mb-2 border-b border-gray-200 pb-1 flex items-center gap-2">
-              <FileText size={10} /> {t('keyAgreements')}
+           <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+              <FileText size={12} /> {t('keyAgreements')}
            </h3>
            
-           <div className="grid grid-cols-12 gap-2 text-[9px] font-bold text-gray-400 mb-1 px-2">
-             <div className="col-span-5">{t('titleProtocol')}</div>
-             <div className="col-span-5">{t('keyProvisions')}</div>
+           <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-gray-400 mb-2 px-2">
+             <div className="col-span-4">{t('titleProtocol')}</div>
+             <div className="col-span-6">{t('keyProvisions')}</div>
              <div className="col-span-2 text-end">{t('status')}</div>
            </div>
 
-           <div className="space-y-2">
+           <div className="space-y-3">
               {data.bilateralAgreements.map((agreement, idx) => (
-                 <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 grid grid-cols-12 gap-2 items-start">
-                    <div className="col-span-5">
-                       <p className="text-xs font-bold text-gray-900">{agreement.title}</p>
-                       <p className="text-[9px] font-mono text-gray-400 mt-0.5 font-sans" dir="ltr">{agreement.date}</p>
+                 <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-3 grid grid-cols-12 gap-4 items-start">
+                    <div className="col-span-4">
+                       <p className="text-sm font-bold text-gray-900">{agreement.title}</p>
+                       <p className="text-[10px] font-mono text-gray-400 mt-0.5 font-sans" dir="ltr">{agreement.date}</p>
                     </div>
-                    <div className="col-span-5">
-                       <p className="text-[9px] text-gray-600 leading-snug">{agreement.summary}</p>
+                    <div className="col-span-6">
+                       <p className="text-xs text-gray-600 leading-snug">{agreement.summary}</p>
                     </div>
                     <div className="col-span-2 text-end">
-                       <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                           {agreement.status === 'Active' ? t('active') : t('pending')}
                        </span>
                     </div>
                  </div>
               ))}
               {data.bilateralAgreements.length === 0 && (
-                 <p className="text-[9px] text-gray-400 italic text-center py-2">{t('noAgreements')}</p>
+                 <p className="text-sm text-gray-400 italic text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">{t('noAgreements')}</p>
               )}
            </div>
         </div>
 
         {/* Interactions */}
         <div className="mb-6 avoid-break">
-           <h3 className="kpi-label mb-2 border-b border-gray-200 pb-1 flex items-center gap-2">
-              <Calendar size={10} /> {t('recentHighLevelInteractions')}
+           <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+              <Calendar size={12} /> {t('recentHighLevelInteractions')}
            </h3>
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-2 gap-4">
               {data.recentInteractions.map((item, idx) => (
-                 <div key={idx} className="border border-gray-200 rounded-lg p-2.5 bg-white">
-                    <div className="flex justify-between items-start mb-1">
-                       <span className="text-[8px] font-bold uppercase tracking-wider text-primary bg-primary/5 px-1.5 py-0.5 rounded">{item.type}</span>
-                       <span className="text-[8px] font-mono text-gray-400 font-sans" dir="ltr">{item.date}</span>
+                 <div key={idx} className="border border-gray-200 rounded-lg p-3 bg-white hover:border-primary/20 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                       <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
+                       <span className="text-[10px] font-mono text-gray-500 font-sans" dir="ltr">{item.date}</span>
                     </div>
-                    <p className="text-[10px] font-bold text-gray-900 mb-0.5">{item.title}</p>
-                    <p className="text-[9px] text-gray-500 leading-snug line-clamp-3">{item.details}</p>
+                    <p className="text-sm font-bold text-gray-900 mb-1">{item.title}</p>
+                    <p className="text-xs text-gray-600 leading-snug">{item.details}</p>
                  </div>
               ))}
               {data.recentInteractions.length === 0 && (
-                 <div className="col-span-2 text-center py-2 text-[9px] text-gray-400 italic">{t('notAvailable')}</div>
+                 <div className="col-span-2 text-center py-4 text-sm text-gray-400 italic bg-gray-50 rounded-lg border border-dashed border-gray-200">{t('notAvailable')}</div>
               )}
            </div>
         </div>
 
         {/* Discussion Points */}
         <div className="avoid-break mb-6">
-           <h3 className="kpi-label mb-2 border-b border-gray-200 pb-1 flex items-center gap-2">
-              <MessageSquare size={10} /> {t('pointsDiscussion')}
+           <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+              <MessageSquare size={12} /> {t('pointsDiscussion')}
            </h3>
-           <ul className="space-y-1.5">
+           <ul className="space-y-3">
               {data.pointsOfDiscussion.map((point, idx) => (
-                 <li key={idx} className="flex gap-2 text-[9px] text-gray-700 items-start">
-                    <span className="text-accent font-bold mt-0.5">•</span>
+                 <li key={idx} className="flex gap-3 text-sm text-gray-700 items-start bg-gray-50/50 p-2 rounded-lg">
+                    <span className="text-accent font-bold mt-1">•</span>
                     <div>
-                       <strong className="block text-gray-900">{point.title}</strong>
-                       <span className="text-gray-600">{point.content}</span>
+                       <strong className="block text-gray-900 mb-0.5">{point.title}</strong>
+                       <span className="text-gray-600 text-xs">{point.content}</span>
                     </div>
                  </li>
               ))}
               {data.pointsOfDiscussion.length === 0 && (
-                 <li className="text-center py-2 text-[9px] text-gray-400 italic">{t('notAvailable')}</li>
+                 <li className="text-center py-4 text-sm text-gray-400 italic bg-gray-50 rounded-lg border border-dashed border-gray-200">{t('notAvailable')}</li>
               )}
            </ul>
         </div>
+      </PageContainer>
 
-        {/* Delegations (Compact) */}
-        <div className="grid grid-cols-2 gap-6 mt-4 pt-4 border-t-2 border-gray-100">
+      {/* --- PAGE 5: DELEGATIONS (Standalone) --- */}
+      <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+        <HeaderBand country={data.country} reportId={report.id} />
+
+        <SectionHeader
+          icon={Users}
+          title={t('sectionDelegation')}
+          subtitle=""
+        />
+
+        <div className="grid grid-cols-2 gap-8 mt-6">
+           {/* UAE Delegation */}
            <div className="avoid-break">
-              <div className="flex items-center gap-2 mb-3 border-b border-primary/20 pb-1.5">
-                 <img src="https://flagcdn.com/w40/ae.png" className="h-3 w-auto" alt="UAE" />
-                 <p className="text-[9px] font-bold uppercase text-primary tracking-widest">{t('uaeDelegation')}</p>
+              <div className="flex items-center gap-3 mb-6 border-b-2 border-primary pb-3">
+                 <img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto" alt="UAE" />
+                 <p className="text-xs font-extrabold uppercase text-primary tracking-widest">{t('uaeDelegation')}</p>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-6">
                  {data.delegations.uae.map((d) => (
-                    <div key={d.id} className="flex gap-3 items-start">
-                       <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-100 shadow-sm">
+                    <div key={d.id} className="flex gap-4 items-start p-4 bg-gray-50 rounded-xl border border-gray-100">
+                       <div className="w-14 h-14 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border-2 border-white shadow-md">
                           {d.imageUrl && <img src={d.imageUrl} className="w-full h-full object-cover" />}
                        </div>
                        <div>
-                          <p className="text-xs font-bold text-gray-900">{d.name}</p>
-                          <p className="text-[8px] font-bold text-gray-500 uppercase mb-0.5">{d.title}</p>
-                          <p className="text-[8px] text-gray-400 leading-tight line-clamp-2 italic">{d.bio}</p>
+                          <p className="text-sm font-serif font-bold text-gray-900">{d.name}</p>
+                          <p className="text-[9px] font-bold text-primary uppercase mb-1 tracking-wide">{d.title}</p>
+                          <p className="text-[10px] text-gray-500 leading-relaxed italic border-l-2 border-gray-200 pl-2">{d.bio}</p>
                        </div>
                     </div>
                  ))}
-                 {data.delegations.uae.length === 0 && <p className="text-[9px] text-gray-400 italic">{t('notAvailable')}</p>}
+                 {data.delegations.uae.length === 0 && <p className="text-sm text-gray-400 italic text-center py-4">{t('notAvailable')}</p>}
               </div>
            </div>
 
+           {/* Partner Delegation */}
            <div className="avoid-break">
-              <div className="flex items-center gap-2 mb-3 border-b border-accent/20 pb-1.5">
-                 <Globe size={12} className="text-accent" />
-                 <p className="text-[9px] font-bold uppercase text-accent tracking-widest">{t('partnerDelegation')}</p>
+              <div className="flex items-center gap-3 mb-6 border-b-2 border-accent pb-3">
+                 <Globe size={18} className="text-accent" />
+                 <p className="text-xs font-extrabold uppercase text-accent tracking-widest">{t('partnerDelegation')}</p>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-6">
                  {data.delegations.partner.map((d) => (
-                    <div key={d.id} className="flex gap-3 items-start">
-                       <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-100 shadow-sm">
+                    <div key={d.id} className="flex gap-4 items-start p-4 bg-gray-50 rounded-xl border border-gray-100">
+                       <div className="w-14 h-14 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border-2 border-white shadow-md">
                           {d.imageUrl && <img src={d.imageUrl} className="w-full h-full object-cover" />}
                        </div>
                        <div>
-                          <p className="text-xs font-bold text-gray-900">{d.name}</p>
-                          <p className="text-[8px] font-bold text-gray-500 uppercase mb-0.5">{d.title}</p>
-                          <p className="text-[8px] text-gray-400 leading-tight line-clamp-2 italic">{d.bio}</p>
+                          <p className="text-sm font-serif font-bold text-gray-900">{d.name}</p>
+                          <p className="text-[9px] font-bold text-accent uppercase mb-1 tracking-wide">{d.title}</p>
+                          <p className="text-[10px] text-gray-500 leading-relaxed italic border-l-2 border-gray-200 pl-2">{d.bio}</p>
                        </div>
                     </div>
                  ))}
-                 {data.delegations.partner.length === 0 && <p className="text-[9px] text-gray-400 italic">{t('notAvailable')}</p>}
+                 {data.delegations.partner.length === 0 && <p className="text-sm text-gray-400 italic text-center py-4">{t('notAvailable')}</p>}
               </div>
            </div>
         </div>
