@@ -46,23 +46,33 @@ export default function Wizard() {
   }, [id]);
 
   // Helper to safely extract and parse JSON from mixed content
-  const extractAndParseJSON = (text: string) => {
+  const extractAndParseJSON = (text: string | undefined) => {
+    if (!text) return null;
     try {
-      // 1. Try direct parse
-      return JSON.parse(text);
-    } catch (e) {
-      // 2. Try extracting JSON block
-      const match = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-      if (match) {
-        try {
-          return JSON.parse(match[0]);
-        } catch (e2) {
-          console.error("Failed to parse extracted JSON block", e2);
-          throw e2;
+      // 1. Clean markdown code blocks
+      let cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      // 2. Try direct parse
+      try {
+        return JSON.parse(cleanText);
+      } catch (e) {
+        // 3. Extract from first { or [ to last } or ]
+        const firstOpen = cleanText.search(/[{\[]/);
+        
+        // Manual substring finding for last closing brace to be safe
+        const lastCurly = cleanText.lastIndexOf('}');
+        const lastSquare = cleanText.lastIndexOf(']');
+        const end = Math.max(lastCurly, lastSquare);
+
+        if (firstOpen !== -1 && end !== -1 && end > firstOpen) {
+           const jsonStr = cleanText.substring(firstOpen, end + 1);
+           return JSON.parse(jsonStr);
         }
+        throw e;
       }
-      console.error("No JSON found in response", text);
-      throw new Error("Invalid API response format");
+    } catch (e) {
+      console.error("JSON Parse Error:", e, text);
+      throw new Error("Failed to parse API response.");
     }
   };
 
@@ -74,7 +84,10 @@ export default function Wizard() {
   };
 
   const handleFetchData = async () => {
-    if (!data.country) return;
+    if (!data.country) {
+      alert("Please enter a country name first.");
+      return;
+    }
     setIsFetchingAI(true);
     
     try {
@@ -111,7 +124,7 @@ export default function Wizard() {
 
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
-          contents: prompt,
+          contents: [{ parts: [{ text: prompt }] }],
           config: {
             responseMimeType: 'application/json',
           }
@@ -119,24 +132,40 @@ export default function Wizard() {
 
         const aiData = extractAndParseJSON(response.text);
 
-        setData(prev => ({
-          ...prev,
-          ...aiData,
-          workforceStats: {
-            ...prev.workforceStats,
-            totalWorkforce: aiData.totalWorkforce,
-            participationMale: aiData.participationMale,
-            participationFemale: aiData.participationFemale,
-            migrationDestinations: aiData.migrationDestinations || [],
-            topSectors: aiData.topSectors,
-            availableSkills: aiData.availableSkills || []
-          }
-        }));
+        if (aiData) {
+          setData(prev => ({
+            ...prev,
+            capital: aiData.capital || prev.capital,
+            officialLanguage: aiData.officialLanguage || prev.officialLanguage,
+            population: aiData.population || prev.population,
+            currency: aiData.currency || prev.currency,
+            gdp: aiData.gdp || prev.gdp,
+            hdi: aiData.hdi || prev.hdi,
+            directFlight: aiData.directFlight !== undefined ? aiData.directFlight : prev.directFlight,
+            uaeEmbassyLocation: aiData.uaeEmbassyLocation || prev.uaeEmbassyLocation,
+            foreignEmbassyLocation: aiData.foreignEmbassyLocation || prev.foreignEmbassyLocation,
+            averageWage: aiData.averageWage || prev.averageWage,
+            minimumWage: aiData.minimumWage || prev.minimumWage,
+            workforceStats: {
+              ...prev.workforceStats,
+              totalWorkforce: aiData.totalWorkforce || prev.workforceStats.totalWorkforce,
+              participationMale: aiData.participationMale || prev.workforceStats.participationMale,
+              participationFemale: aiData.participationFemale || prev.workforceStats.participationFemale,
+              migrationDestinations: aiData.migrationDestinations || prev.workforceStats.migrationDestinations,
+              topSectors: aiData.topSectors || prev.workforceStats.topSectors,
+              availableSkills: aiData.availableSkills || prev.workforceStats.availableSkills
+            }
+          }));
+        } else {
+          alert("Received empty response from AI.");
+        }
       } else {
+        alert("API Key is missing. Please check your configuration.");
         console.error("API Key missing");
       }
     } catch (error) {
       console.error("AI Fetch failed", error);
+      alert("Failed to fetch data. Please try again.");
     } finally {
       setIsFetchingAI(false);
     }
@@ -168,25 +197,29 @@ export default function Wizard() {
 
          const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: [{ parts: [{ text: prompt }] }],
             config: {
               tools: [{ googleSearch: {} }],
-              // Cannot use responseMimeType with tools
             },
          });
          
          const newsItems = extractAndParseJSON(response.text);
          
-         // Add IDs
-         const newsWithIds = Array.isArray(newsItems) ? newsItems.map((n: any) => ({ ...n, id: uuidv4() })) : [];
-         
-         setData(prev => ({
-            ...prev,
-            relatedNews: [...(prev.relatedNews || []), ...newsWithIds]
-         }));
+         if (Array.isArray(newsItems)) {
+            const newsWithIds = newsItems.map((n: any) => ({ ...n, id: uuidv4() }));
+            setData(prev => ({
+              ...prev,
+              relatedNews: [...(prev.relatedNews || []), ...newsWithIds]
+            }));
+         } else {
+            console.warn("News items not in array format", newsItems);
+         }
+       } else {
+         alert("API Key is missing.");
        }
      } catch (error) {
         console.error("News Fetch Failed", error);
+        alert("Failed to fetch news.");
      } finally {
         setIsFetchingNews(false);
      }
@@ -226,7 +259,7 @@ export default function Wizard() {
         
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
-          contents: prompt,
+          contents: [{ parts: [{ text: prompt }] }],
           config: {
             responseMimeType: 'application/json',
           }
@@ -234,20 +267,25 @@ export default function Wizard() {
 
         const aiData = extractAndParseJSON(response.text);
 
-        setData(prev => ({
-          ...prev,
-          economicStats: {
-            ...prev.economicStats,
-            ...aiData.economicStats
-          },
-          educationStats: {
-            ...prev.educationStats,
-            ...aiData.educationStats
-          }
-        }));
+        if (aiData) {
+          setData(prev => ({
+            ...prev,
+            economicStats: {
+              ...prev.economicStats,
+              ...aiData.economicStats
+            },
+            educationStats: {
+              ...prev.educationStats,
+              ...aiData.educationStats
+            }
+          }));
+        }
+      } else {
+        alert("API Key is missing.");
       }
     } catch (error) {
       console.error("Economy Fetch Failed", error);
+      alert("Failed to fetch economic data.");
     } finally {
       setIsFetchingEconomy(false);
     }
@@ -263,7 +301,6 @@ export default function Wizard() {
            const langInstr = getLanguageInstruction();
            
            let prompt = '';
-           let tools = [];
            let config: any = {};
 
            if (source === 'GENERAL') {
@@ -308,7 +345,7 @@ export default function Wizard() {
 
            const response = await ai.models.generateContent({
               model: 'gemini-2.5-flash',
-              contents: prompt,
+              contents: [{ parts: [{ text: prompt }] }],
               config: config
            });
 
@@ -325,10 +362,15 @@ export default function Wizard() {
                    bilateralAgreements: [...prev.bilateralAgreements, ...uniqueNew]
                 };
               });
+           } else {
+             console.warn("Agreements not in array format", fetchedAgreements);
            }
+        } else {
+          alert("API Key is missing.");
         }
       } catch (error) {
          console.error("Agreement Fetch Failed", error);
+         alert("Failed to fetch agreements.");
       } finally {
          setIsFetchingAgreements(false);
       }
@@ -476,7 +518,7 @@ export default function Wizard() {
                <div className="flex-1 w-full">
                  <Input label={t('country')} value={data.country} onChange={e => setData({...data, country: e.target.value})} placeholder="e.g. Vietnam" className="text-lg font-medium" />
                </div>
-               <Button onClick={handleFetchData} disabled={!data.country || isFetchingAI} className="w-full md:w-auto bg-accent hover:bg-accent-light text-white border-none shadow-lg">
+               <Button onClick={handleFetchData} disabled={isFetchingAI} className="w-full md:w-auto bg-accent hover:bg-accent-light text-white border-none shadow-lg">
                 {isFetchingAI ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />} {t('fetchData')}
               </Button>
             </div>
