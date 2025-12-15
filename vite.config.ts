@@ -8,11 +8,6 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     define: {
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
-      // Define a fallback for process.env to safely handle other accesses
-      'process.env': JSON.stringify({
-         NODE_ENV: mode,
-         API_KEY: env.API_KEY
-      })
     },
     build: {
       outDir: 'dist',
