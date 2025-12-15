@@ -10,12 +10,14 @@ import {
   FileText, Briefcase, GraduationCap
 } from 'lucide-react';
 import { PageContainer, HeaderBand, SectionHeader, KPI } from '../components/PrintUI';
+import { useLanguage } from '../context/LanguageContext';
 
 const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
 const COLORS = ['#1e3a8a', '#ca8a04', '#15803d', '#475569', '#ea580c', '#7c3aed'];
 
 export default function PrintView() {
   const { id } = useParams();
+  const { t, language, dir } = useLanguage();
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState(false);
 
@@ -56,17 +58,17 @@ export default function PrintView() {
   const DefaultFooter = () => (
     <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
       <p className="text-[9px] text-gray-400">
-        Generated on {new Date().toLocaleDateString("en-GB", { day: 'numeric', month: 'long', year: 'numeric' })}
+        {t('generatedOn')} {new Date().toLocaleDateString(language === 'ar' ? "ar-AE" : "en-GB", { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
       <p className="text-[9px] text-gray-400 uppercase tracking-widest">
-        Ministry of Human Resources & Emiratisation
+        {t('ministry')}
       </p>
     </div>
   );
 
   return (
-    <div className="bg-gray-100 min-h-screen pb-12">
-      <div className="fixed top-4 right-4 z-50 flex gap-2 no-print">
+    <div className="bg-gray-100 min-h-screen pb-12" dir={dir}>
+      <div className="fixed top-4 right-4 z-50 flex gap-2 no-print ltr">
          <button onClick={() => window.print()} className="bg-primary text-white px-4 py-2 rounded-lg shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold">
             <Printer size={18} /> Print
          </button>
@@ -78,19 +80,18 @@ export default function PrintView() {
       {/* --- PAGE 1: COVER --- */}
       <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
          {/* Background Elements */}
-         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
+         <div className={`absolute top-0 w-[600px] h-[600px] bg-primary/5 rounded-full -translate-y-1/2 ${language === 'ar' ? 'left-0 -translate-x-1/3' : 'right-0 translate-x-1/3'}`}></div>
          
          <div className="flex-1 flex flex-col justify-center px-16 relative z-10">
-            <div className="mb-12 border-l-[6px] border-accent pl-10 py-4">
+            <div className={`mb-12 border-accent py-4 ${language === 'ar' ? 'border-r-[6px] pr-10' : 'border-l-[6px] pl-10'}`}>
                <div className="flex items-center gap-3 mb-6 opacity-60">
                  <img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto" alt="UAE" />
                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">UAE • MOHRE</span>
                </div>
                <h1 className="text-6xl font-serif font-medium text-gray-900 leading-[1.1] mb-2">
-                  Labour Market<br/>
-                  <span className="text-primary font-bold">Intelligence</span>
+                  {t('loginTitle')}
                </h1>
-               <p className="text-xl text-gray-500 font-light mt-4">Bilateral Relations Briefing</p>
+               <p className="text-xl text-gray-500 font-light mt-4">{t('strategicOverview')}</p>
             </div>
 
             <div className="bg-gray-50 rounded-2xl p-10 border border-gray-100 max-w-lg">
@@ -103,24 +104,24 @@ export default function PrintView() {
                       />
                   </div>
                   <div>
-                     <p className="text-xs font-bold text-accent uppercase tracking-widest mb-1">Subject Market</p>
+                     <p className="text-xs font-bold text-accent uppercase tracking-widest mb-1">{t('subjectMarket')}</p>
                      <h2 className="text-4xl font-serif font-bold text-gray-900">{data.country}</h2>
                   </div>
                </div>
                
                <div className="grid grid-cols-2 gap-y-6 gap-x-4">
                   <div>
-                     <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Reference</p>
+                     <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('reference')}</p>
                      <p className="font-mono text-sm text-gray-800">{report.id}</p>
                   </div>
                   <div>
-                     <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Date</p>
+                     <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('date')}</p>
                      <p className="font-mono text-sm text-gray-800">{data.reportDate}</p>
                   </div>
                   <div className="col-span-2">
-                     <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Security Classification</p>
+                     <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('securityClass')}</p>
                      <span className="kpi-chip chip-restrict inline-flex items-center gap-1">
-                        <ShieldAlert size={10} /> Official / Restricted
+                        <ShieldAlert size={10} /> {t('officialRestricted')}
                      </span>
                   </div>
                </div>
@@ -135,48 +136,48 @@ export default function PrintView() {
 
         <SectionHeader
           icon={Globe}
-          title="Country Profile"
-          subtitle="Strategic Overview"
+          title={t('sectionProfile')}
+          subtitle={t('strategicOverview')}
         />
 
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <KPI icon={Landmark} label="Capital City" value={data.capital} />
-          <KPI icon={Users} label="Population" value={data.population} />
-          <KPI icon={Banknote} label="Currency" value={data.currency} />
+          <KPI icon={Landmark} label={t('capital')} value={data.capital} />
+          <KPI icon={Users} label={t('population')} value={data.population} />
+          <KPI icon={Banknote} label={t('currency')} value={data.currency} />
           <KPI
             icon={Plane}
-            label="Flight Connectivity"
-            value={data.directFlight ? "Direct Flights" : "Indirect Only"}
+            label={t('directFlight')}
+            value={data.directFlight ? t('yesDirect') : t('noDirect')}
             chip={data.directFlight ? "Connected" : "Limited"}
             tone={data.directFlight ? "ok" : "warn"}
             sub="To UAE Airports"
           />
-          <KPI icon={Building} label="UAE Embassy" value={data.uaeEmbassyLocation || "N/A"} />
-          <KPI icon={Globe} label="Official Language" value={data.officialLanguage} />
+          <KPI icon={Building} label={t('uaeEmbassy')} value={data.uaeEmbassyLocation || "N/A"} />
+          <KPI icon={Globe} label={t('officialLanguage')} value={data.officialLanguage} />
         </div>
 
         <SectionHeader
           icon={TrendingUp}
-          title="Economic Landscape"
+          title={t('economicLandscape')}
           subtitle="Trade & Education"
         />
 
         <div className="grid grid-cols-2 gap-4 mb-6">
-           <KPI icon={Banknote} label="GDP (Current US$)" value={data.gdp} />
-           <KPI icon={TrendingUp} label="Inflation Rate" value={data.economicStats.inflation} />
+           <KPI icon={Banknote} label={t('gdp')} value={data.gdp} />
+           <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats.inflation} />
         </div>
         
         <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 mb-6">
-           <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-200 pb-2">Bilateral Trade Volume</h4>
+           <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-200 pb-2">{t('bilateralTrade')}</h4>
            <div className="flex gap-8">
               <div className="flex-1">
-                 <p className="text-xs text-primary font-bold mb-1">Imports from UAE</p>
+                 <p className="text-xs text-primary font-bold mb-1">{t('importsFromUae')}</p>
                  <p className="text-xl font-serif font-bold text-gray-900">{data.economicStats.totalImportsFromUAE}</p>
                  <p className="text-[10px] text-gray-500 mt-1 truncate">{data.economicStats.topImportProducts.slice(0,3).join(', ')}</p>
               </div>
               <div className="w-px bg-gray-200"></div>
               <div className="flex-1">
-                 <p className="text-xs text-accent font-bold mb-1">Exports to UAE</p>
+                 <p className="text-xs text-accent font-bold mb-1">{t('exportsToUae')}</p>
                  <p className="text-xl font-serif font-bold text-gray-900">{data.economicStats.totalExportsToUAE}</p>
                  <p className="text-[10px] text-gray-500 mt-1 truncate">{data.economicStats.topExportProducts.slice(0,3).join(', ')}</p>
               </div>
@@ -184,8 +185,8 @@ export default function PrintView() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-           <KPI icon={GraduationCap} label="Higher Ed. Enrollment" value={data.educationStats.higherEducationEnrollment} />
-           <KPI icon={ShieldAlert} label="TIP Ranking" value={data.economicStats.tipRank} chip="Watch List" tone="warn" />
+           <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} />
+           <KPI icon={ShieldAlert} label={t('tipRank')} value={data.economicStats.tipRank} chip="Watch List" tone="warn" />
         </div>
       </PageContainer>
 
@@ -195,20 +196,20 @@ export default function PrintView() {
 
         <SectionHeader
           icon={Building}
-          title="Workforce in UAE"
+          title={t('sectionUaeWorkforce')}
           subtitle="MOHRE & ICP Data"
         />
 
         <div className="grid grid-cols-2 gap-4 mb-6">
            <KPI 
              icon={Briefcase} 
-             label="Private Sector (MOHRE)" 
+             label={t('totalPrivate')} 
              value={data.uaeWorkforceStats.mohre.totalPrivate.value} 
              sub={`As of ${data.uaeWorkforceStats.mohre.totalPrivate.date}`} 
            />
            <KPI 
              icon={Users} 
-             label="Domestic Workers (MOHRE)" 
+             label={t('totalDomestic')} 
              value={data.uaeWorkforceStats.mohre.totalDomestic.value} 
              sub={`As of ${data.uaeWorkforceStats.mohre.totalDomestic.date}`}
              tone="warn"
@@ -217,7 +218,7 @@ export default function PrintView() {
 
         <div className="grid grid-cols-3 gap-6 mb-8 h-48">
            <div className="col-span-2 border border-gray-200 rounded-xl p-4">
-              <p className="kpi-label mb-2">Distribution by Emirate</p>
+              <p className="kpi-label mb-2">{t('workersByEmirate')}</p>
               <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} margin={{top: 5, right: 5, bottom: 5, left: -20}}>
                      <XAxis dataKey="name" tick={{fontSize: 9}} interval={0} />
@@ -231,7 +232,7 @@ export default function PrintView() {
               </ResponsiveContainer>
            </div>
            <div className="border border-gray-200 rounded-xl p-4 flex flex-col justify-center">
-              <p className="kpi-label mb-2">Top Sectors</p>
+              <p className="kpi-label mb-2">{t('workersBySector')}</p>
               <div className="space-y-3">
                  {data.uaeWorkforceStats.mohre.bySector.slice(0,4).map((s, i) => (
                     <div key={i}>
@@ -250,30 +251,30 @@ export default function PrintView() {
 
         <SectionHeader
           icon={Users}
-          title="Partner Workforce"
+          title={t('sectionWorkforce')}
           subtitle="Source Market Analysis"
         />
 
         <div className="grid grid-cols-3 gap-4 mb-6">
            <div className="col-span-1">
-              <KPI icon={Users} label="Total Workforce" value={data.workforceStats.totalWorkforce} />
+              <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} />
            </div>
            <div className="col-span-2 kpi-card flex items-center justify-around">
               <div className="text-center">
-                 <p className="kpi-label mb-1">Male Participation</p>
+                 <p className="kpi-label mb-1">{t('maleParticipation')}</p>
                  <p className="text-xl font-bold text-blue-600">{data.workforceStats.participationMale}%</p>
               </div>
               <div className="h-8 w-px bg-gray-200"></div>
               <div className="text-center">
-                 <p className="kpi-label mb-1">Female Participation</p>
+                 <p className="kpi-label mb-1">{t('femaleParticipation')}</p>
                  <p className="text-xl font-bold text-pink-600">{data.workforceStats.participationFemale}%</p>
               </div>
            </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-           <KPI icon={Banknote} label="Average Monthly Wage" value={data.averageWage} tone="ok" />
-           <KPI icon={Banknote} label="Minimum Monthly Wage" value={data.minimumWage} />
+           <KPI icon={Banknote} label={t('avgWage')} value={data.averageWage} tone="ok" />
+           <KPI icon={Banknote} label={t('minWage')} value={data.minimumWage} />
         </div>
 
       </PageContainer>
@@ -284,12 +285,12 @@ export default function PrintView() {
 
         <SectionHeader
           icon={Handshake}
-          title="Relations & Agreements"
+          title={t('sectionAgreements')}
           subtitle="Bilateral Engagement"
         />
 
         <div className="mb-8">
-           <h3 className="kpi-label mb-4 border-b border-gray-200 pb-2">Key Bilateral Agreements</h3>
+           <h3 className="kpi-label mb-4 border-b border-gray-200 pb-2">{t('agreements')}</h3>
            <div className="space-y-3">
               {data.bilateralAgreements.map((agreement, idx) => (
                  <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex justify-between items-start avoid-break">
@@ -313,7 +314,7 @@ export default function PrintView() {
 
         <SectionHeader
           icon={Users}
-          title="Delegations"
+          title={t('sectionDelegation')}
           subtitle="Key Officials"
         />
 
@@ -321,7 +322,7 @@ export default function PrintView() {
            <div className="avoid-break">
               <div className="flex items-center gap-2 mb-4">
                  <img src="https://flagcdn.com/w40/ae.png" className="h-3 w-auto" alt="UAE" />
-                 <p className="text-xs font-bold uppercase text-primary">UAE Delegation</p>
+                 <p className="text-xs font-bold uppercase text-primary">{t('uaeDelegation')}</p>
               </div>
               <div className="space-y-4">
                  {data.delegations.uae.map((d) => (
@@ -341,7 +342,7 @@ export default function PrintView() {
            <div className="avoid-break">
               <div className="flex items-center gap-2 mb-4">
                  <Globe size={12} className="text-accent" />
-                 <p className="text-xs font-bold uppercase text-accent">Partner Delegation</p>
+                 <p className="text-xs font-bold uppercase text-accent">{t('partnerDelegation')}</p>
               </div>
               <div className="space-y-4">
                  {data.delegations.partner.map((d) => (

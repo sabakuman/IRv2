@@ -9,17 +9,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI } from "@google/genai";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const STEPS = [
-  { id: 'profile', icon: Globe, label: 'Country Profile' },
-  { id: 'uae-workforce', icon: BarChart2, label: 'Workforce in UAE' },
-  { id: 'workforce', icon: Users, label: 'Partner Workforce' },
-  { id: 'economy', icon: Briefcase, label: 'Economy & Education' },
-  { id: 'interactions', icon: MessageSquare, label: 'Interactions & News' },
-  { id: 'agreements', icon: FileText, label: 'Agreements' },
-  { id: 'delegation', icon: Users, label: 'Delegations' },
-  { id: 'preview', icon: CheckCircle, label: 'Preview' },
-];
-
 export default function Wizard() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,6 +23,17 @@ export default function Wizard() {
   const [data, setData] = useState<ReportData>(EMPTY_REPORT_DATA);
   const [reportTitle, setReportTitle] = useState('');
 
+  const STEPS = [
+    { id: 'profile', icon: Globe, label: t('sectionProfile') },
+    { id: 'uae-workforce', icon: BarChart2, label: t('sectionUaeWorkforce') },
+    { id: 'workforce', icon: Users, label: t('sectionWorkforce') },
+    { id: 'economy', icon: Briefcase, label: t('sectionEconomy') },
+    { id: 'interactions', icon: MessageSquare, label: t('sectionInteractions') },
+    { id: 'agreements', icon: FileText, label: t('sectionAgreements') },
+    { id: 'delegation', icon: Users, label: t('sectionDelegation') },
+    { id: 'preview', icon: CheckCircle, label: t('sectionPreview') },
+  ];
+
   useEffect(() => {
     if (id) {
       MockService.getReportById(id).then(r => {
@@ -46,6 +46,13 @@ export default function Wizard() {
     }
   }, [id]);
 
+  // Helper to construct AI instruction based on language
+  const getLanguageInstruction = () => {
+    return language === 'ar' 
+      ? "IMPORTANT: All string values in the JSON response must be in Arabic (Modern Standard Arabic). Translate any English data to Arabic." 
+      : "All string values must be in English.";
+  };
+
   const handleFetchData = async () => {
     if (!data.country) return;
     setIsFetchingAI(true);
@@ -53,9 +60,12 @@ export default function Wizard() {
     try {
       if (process.env.API_KEY) {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const langInstr = getLanguageInstruction();
         const prompt = `Act as a labour market intelligence expert. Fetch the latest available data from ILO (International Labour Organization), World Bank, and official government sources for ${data.country}.
         
-        Return a strictly valid JSON object (no markdown, no code blocks) matching this structure exactly:
+        ${langInstr}
+        
+        Return a strictly valid JSON object (no markdown, no code blocks) matching this structure exactly (keys must remain in English):
         {
           "capital": "string",
           "officialLanguage": "string",
@@ -101,36 +111,6 @@ export default function Wizard() {
             availableSkills: aiData.availableSkills || []
           }
         }));
-      } else {
-         // Fallback simulation
-         await new Promise(r => setTimeout(r, 2000));
-         setData(prev => ({
-           ...prev,
-           capital: 'Simulated Capital',
-           officialLanguage: 'Simulated Language',
-           population: '50M',
-           currency: 'Unit',
-           gdp: '500 Billion USD',
-           hdi: '0.750',
-           directFlight: true,
-           uaeEmbassyLocation: 'Capital City',
-           foreignEmbassyLocation: 'Abu Dhabi',
-           averageWage: '$450/month',
-           minimumWage: '$200/month',
-           workforceStats: {
-             ...prev.workforceStats,
-             totalWorkforce: '25 Million',
-             participationMale: 65,
-             participationFemale: 35,
-             migrationDestinations: [
-               { country: 'UAE', count: '500,000' },
-               { country: 'Saudi Arabia', count: '1.2 Million' },
-               { country: 'UK', count: '100,000' }
-             ],
-             topSectors: [{name: 'Services', value: 50}, {name: 'Agriculture', value: 30}, {name: 'Industry', value: 20}],
-             availableSkills: ['Construction', 'Hospitality', 'Nursing']
-           }
-         }));
       }
     } catch (error) {
       console.error("AI Fetch failed", error);
@@ -146,9 +126,13 @@ export default function Wizard() {
      try {
        if (process.env.API_KEY) {
          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-         const prompt = `Search for the top 3 most recent and relevant news articles regarding "Labour", "Workforce", "Migrant Workers", or "Economic Relations" between UAE and ${data.country}.
+         const langInstr = getLanguageInstruction();
+         const searchLang = language === 'ar' ? "Arabic" : "English";
+         const prompt = `Search for the top 3 most recent and relevant news articles in ${searchLang} regarding "Labour", "Workforce", "Migrant Workers", or "Economic Relations" between UAE and ${data.country}.
          
-         Return a strictly valid JSON array of objects with this structure:
+         ${langInstr}
+         
+         Return a strictly valid JSON array of objects with this structure (keys must remain in English):
          [
            {
              "title": "string (Headline)",
@@ -178,16 +162,6 @@ export default function Wizard() {
             ...prev,
             relatedNews: [...(prev.relatedNews || []), ...newsWithIds]
          }));
-       } else {
-         await new Promise(r => setTimeout(r, 1500));
-         setData(prev => ({
-            ...prev,
-            relatedNews: [
-               ...prev.relatedNews,
-               { id: uuidv4(), title: 'Bilateral Labour Agreement Renewed', source: 'Simulated News', date: '2023-11-01', summary: 'Both countries agreed to enhance worker protection.', url: '#' },
-               { id: uuidv4(), title: 'New Skill Verification Center Opened', source: 'Simulated News', date: '2023-10-15', summary: 'A center to test workers before migration.', url: '#' }
-            ]
-         }));
        }
      } catch (error) {
         console.error("News Fetch Failed", error);
@@ -203,9 +177,12 @@ export default function Wizard() {
     try {
       if (process.env.API_KEY) {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const langInstr = getLanguageInstruction();
         const prompt = `Act as an economic analyst. Fetch the latest official economic and education data for ${data.country}, focusing on its relationship with the UAE. 
         
-        Return a strictly valid JSON object (no markdown) with this structure:
+        ${langInstr}
+        
+        Return a strictly valid JSON object (no markdown) with this structure (keys must remain in English):
         {
           "economicStats": {
             "inflation": "string (e.g. 5.1% in 2024)",
@@ -245,17 +222,6 @@ export default function Wizard() {
             ...aiData.educationStats
           }
         }));
-      } else {
-        await new Promise(r => setTimeout(r, 1000));
-        setData(prev => ({
-          ...prev,
-          economicStats: {
-            ...prev.economicStats,
-            remittancesGlobal: '50B USD',
-            inflation: '4.2%',
-            gdp: '300 Billion USD',
-          }
-        }));
       }
     } catch (error) {
       console.error("Economy Fetch Failed", error);
@@ -271,6 +237,7 @@ export default function Wizard() {
       try {
         if (process.env.API_KEY) {
            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+           const langInstr = getLanguageInstruction();
            
            let prompt = '';
            let tools = [];
@@ -279,7 +246,9 @@ export default function Wizard() {
               // General Online Search using Google Search Tool
               prompt = `Search for all major Bilateral Labour Agreements, Memorandum of Understanding (MoU), and diplomatic protocols regarding workforce/manpower between the United Arab Emirates (UAE) and ${data.country}.
               
-              Return a strictly valid JSON array of objects with this structure (no markdown):
+              ${langInstr}
+              
+              Return a strictly valid JSON array of objects with this structure (no markdown) (keys must remain in English):
               [
                 {
                    "title": "string (e.g. MoU on Manpower)",
@@ -294,7 +263,9 @@ export default function Wizard() {
               prompt = `Act as the official UAE Ministry of Foreign Affairs & International Cooperation (MOFAIC) database.
               List the existing diplomatic treaties and agreements between UAE and ${data.country}, specifically focusing on Labour, Economy, and Trade.
               
-              Return a strictly valid JSON array of objects with this structure (no markdown):
+              ${langInstr}
+              
+              Return a strictly valid JSON array of objects with this structure (no markdown) (keys must remain in English):
               [
                 {
                    "title": "string (Official Agreement Name)",
@@ -330,17 +301,6 @@ export default function Wizard() {
            } catch (e) {
               console.error("Failed to parse agreements JSON", text);
            }
-        } else {
-           // Fallback Simulation
-           await new Promise(r => setTimeout(r, 1500));
-           const newAgreements: any[] = source === 'MOFA' 
-             ? [{ title: `Official UAE-${data.country} Protocol`, date: '2022', status: 'Active', summary: 'Official bilateral relations protocol from MOFA.' }]
-             : [{ title: `Draft Labour MoU`, date: '2023', status: 'Pending', summary: 'Found in recent news reports regarding domestic workers.' }];
-           
-           setData(prev => ({
-              ...prev,
-              bilateralAgreements: [...prev.bilateralAgreements, ...newAgreements]
-           }));
         }
       } catch (error) {
          console.error("Agreement Fetch Failed", error);
@@ -479,11 +439,11 @@ export default function Wizard() {
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
              <div className="border-b dark:border-gray-700 pb-4 mb-4">
                <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2 mb-2">
-                 <FileText size={20} /> Report Details
+                 <FileText size={20} /> {t('reportDetails')}
                </h3>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <Input label="Report Title" value={reportTitle} onChange={e => setReportTitle(e.target.value)} placeholder="e.g. Bilateral Meeting India" />
-                 <Input label="Report Date" type="date" value={data.reportDate} onChange={e => setData({...data, reportDate: e.target.value})} />
+                 <Input label={t('reportTitle')} value={reportTitle} onChange={e => setReportTitle(e.target.value)} placeholder="e.g. Bilateral Meeting India" />
+                 <Input label={t('reportDate')} type="date" value={data.reportDate} onChange={e => setData({...data, reportDate: e.target.value})} />
                </div>
              </div>
              
@@ -492,35 +452,35 @@ export default function Wizard() {
                  <Input label={t('country')} value={data.country} onChange={e => setData({...data, country: e.target.value})} placeholder="e.g. Vietnam" className="text-lg font-medium" />
                </div>
                <Button onClick={handleFetchData} disabled={!data.country || isFetchingAI} className="w-full md:w-auto bg-accent hover:bg-accent-light text-white border-none shadow-lg">
-                {isFetchingAI ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />} Fetch Data (ILO/WB)
+                {isFetchingAI ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />} {t('fetchData')}
               </Button>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
               <Input label={t('capital')} value={data.capital} onChange={e => setData({...data, capital: e.target.value})} />
-              <Input label="Official Language" value={data.officialLanguage} onChange={e => setData({...data, officialLanguage: e.target.value})} />
+              <Input label={t('officialLanguage')} value={data.officialLanguage} onChange={e => setData({...data, officialLanguage: e.target.value})} />
               
               <div className="flex flex-col gap-1.5 md:col-span-2">
                  <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 flex items-center gap-2">
-                   <Plane size={14} /> Direct Flight to UAE
+                   <Plane size={14} /> {t('directFlight')}
                  </label>
                  <div className="flex gap-4">
                     <button 
                       onClick={() => setData({...data, directFlight: true})}
                       className={`flex-1 py-3 rounded-lg border font-medium transition-all ${data.directFlight ? 'bg-primary text-white border-primary shadow-md' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600'}`}
-                    >Yes, Direct Flights Available</button>
+                    >{t('yesDirect')}</button>
                     <button 
                       onClick={() => setData({...data, directFlight: false})}
                       className={`flex-1 py-3 rounded-lg border font-medium transition-all ${!data.directFlight ? 'bg-primary text-white border-primary shadow-md' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600'}`}
-                    >No Direct Flights</button>
+                    >{t('noDirect')}</button>
                  </div>
               </div>
 
-              <Input label="UAE Embassy" value={data.uaeEmbassyLocation} onChange={e => setData({...data, uaeEmbassyLocation: e.target.value})} />
-              <Input label="Foreign Embassy" value={data.foreignEmbassyLocation} onChange={e => setData({...data, foreignEmbassyLocation: e.target.value})} />
-              <Input label="GDP" value={data.gdp} onChange={e => setData({...data, gdp: e.target.value})} />
-              <Input label="HDI" value={data.hdi} onChange={e => setData({...data, hdi: e.target.value})} />
-              <Input label="Population" value={data.population} onChange={e => setData({...data, population: e.target.value})} />
-              <Input label="Currency" value={data.currency} onChange={e => setData({...data, currency: e.target.value})} />
+              <Input label={t('uaeEmbassy')} value={data.uaeEmbassyLocation} onChange={e => setData({...data, uaeEmbassyLocation: e.target.value})} />
+              <Input label={t('foreignEmbassy')} value={data.foreignEmbassyLocation} onChange={e => setData({...data, foreignEmbassyLocation: e.target.value})} />
+              <Input label={t('gdp')} value={data.gdp} onChange={e => setData({...data, gdp: e.target.value})} />
+              <Input label={t('hdi')} value={data.hdi} onChange={e => setData({...data, hdi: e.target.value})} />
+              <Input label={t('population')} value={data.population} onChange={e => setData({...data, population: e.target.value})} />
+              <Input label={t('currency')} value={data.currency} onChange={e => setData({...data, currency: e.target.value})} />
             </div>
           </div>
         );
@@ -529,7 +489,7 @@ export default function Wizard() {
           <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
              <div className="border-b dark:border-gray-700 pb-4">
                <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2">
-                  <BarChart2 size={20} /> Workforce in UAE
+                  <BarChart2 size={20} /> {t('sectionUaeWorkforce')}
                </h3>
                <p className="text-sm text-gray-500 dark:text-gray-400">Breakdown of workers by MOHRE and ICP data sources.</p>
              </div>
@@ -551,18 +511,18 @@ export default function Wizard() {
 
              {/* MOHRE Data */}
              <div className="space-y-6">
-                <h4 className="font-serif font-bold text-xl text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">MOHRE Data</h4>
+                <h4 className="font-serif font-bold text-xl text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">{t('mohreData')}</h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <Card className="p-4 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700">
-                      <h5 className="font-bold text-sm mb-2 text-gray-600 dark:text-gray-300">Total Private Sector Workers</h5>
+                      <h5 className="font-bold text-sm mb-2 text-gray-600 dark:text-gray-300">{t('totalPrivate')}</h5>
                       <div className="flex gap-2">
                          <Input placeholder="Number" value={data.uaeWorkforceStats.mohre.totalPrivate.value} onChange={e => setData({ ...data, uaeWorkforceStats: { ...data.uaeWorkforceStats, mohre: { ...data.uaeWorkforceStats.mohre, totalPrivate: { ...data.uaeWorkforceStats.mohre.totalPrivate, value: e.target.value } } } })} />
                          <Input placeholder="As of (Date)" value={data.uaeWorkforceStats.mohre.totalPrivate.date} onChange={e => setData({ ...data, uaeWorkforceStats: { ...data.uaeWorkforceStats, mohre: { ...data.uaeWorkforceStats.mohre, totalPrivate: { ...data.uaeWorkforceStats.mohre.totalPrivate, date: e.target.value } } } })} />
                       </div>
                    </Card>
                    <Card className="p-4 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700">
-                      <h5 className="font-bold text-sm mb-2 text-gray-600 dark:text-gray-300">Total Domestic Workers</h5>
+                      <h5 className="font-bold text-sm mb-2 text-gray-600 dark:text-gray-300">{t('totalDomestic')}</h5>
                       <div className="flex gap-2">
                          <Input placeholder="Number" value={data.uaeWorkforceStats.mohre.totalDomestic.value} onChange={e => setData({ ...data, uaeWorkforceStats: { ...data.uaeWorkforceStats, mohre: { ...data.uaeWorkforceStats.mohre, totalDomestic: { ...data.uaeWorkforceStats.mohre.totalDomestic, value: e.target.value } } } })} />
                          <Input placeholder="As of (Date)" value={data.uaeWorkforceStats.mohre.totalDomestic.date} onChange={e => setData({ ...data, uaeWorkforceStats: { ...data.uaeWorkforceStats, mohre: { ...data.uaeWorkforceStats.mohre, totalDomestic: { ...data.uaeWorkforceStats.mohre.totalDomestic, date: e.target.value } } } })} />
@@ -571,7 +531,7 @@ export default function Wizard() {
                 </div>
 
                 <div>
-                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">Workers by Emirate</h5>
+                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">{t('workersByEmirate')}</h5>
                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {data.uaeWorkforceStats.mohre.byEmirate.map((em, idx) => (
                          <div key={idx} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded p-3">
@@ -583,7 +543,7 @@ export default function Wizard() {
                 </div>
 
                 <div>
-                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">Workers by Sector</h5>
+                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">{t('workersBySector')}</h5>
                    {data.uaeWorkforceStats.mohre.bySector.map((sec, idx) => (
                       <div key={idx} className="flex gap-4 mb-2 items-center">
                          <Input placeholder="Sector Name" className="flex-1" value={sec.name} onChange={e => updateUaeWorkforce('mohre', 'bySector', idx, 'name', e.target.value)} />
@@ -597,10 +557,10 @@ export default function Wizard() {
 
              {/* ICP Data */}
              <div className="space-y-6 pt-6 border-t dark:border-gray-700">
-                <h4 className="font-serif font-bold text-xl text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">ICP Data</h4>
+                <h4 className="font-serif font-bold text-xl text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">{t('icpData')}</h4>
                 
                 <div>
-                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">Distribution by Emirate</h5>
+                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">{t('workersByEmirate')}</h5>
                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {data.uaeWorkforceStats.icp.byEmirate.map((em, idx) => (
                          <div key={idx} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded p-3">
@@ -612,7 +572,7 @@ export default function Wizard() {
                 </div>
 
                 <div>
-                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">Distribution by Sector</h5>
+                   <h5 className="font-bold text-sm mb-3 text-gray-600 dark:text-gray-300">{t('workersBySector')}</h5>
                    {data.uaeWorkforceStats.icp.bySector.map((sec, idx) => (
                       <div key={idx} className="flex gap-4 mb-2 items-center">
                          <Input placeholder="Sector Name" className="flex-1" value={sec.name} onChange={e => updateUaeWorkforce('icp', 'bySector', idx, 'name', e.target.value)} />
@@ -630,31 +590,31 @@ export default function Wizard() {
           <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
                <div>
-                  <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2"><TrendingUp size={20} /> Partner Country Wages & Workforce</h3>
+                  <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2"><TrendingUp size={20} /> {t('sectionWorkforce')}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Economic indicators provided by ILO & World Bank data</p>
                </div>
                <Button onClick={handleFetchData} disabled={!data.country || isFetchingAI} className="bg-accent hover:bg-accent-light text-white text-sm">
-                {isFetchingAI ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />} Fetch Economic Data
+                {isFetchingAI ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />} {t('fetchData')}
               </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700">
-                 <Input label="Average Monthly Wage (USD)" value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. $350/month" />
-                 <Input label="Minimum Monthly Wage (USD)" value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. $180/month" />
+                 <Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. $350/month" />
+                 <Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. $180/month" />
             </div>
 
             <div>
               <h3 className="text-sm font-semibold mb-4 text-gray-600 dark:text-gray-300 uppercase tracking-wider">Demographics</h3>
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Input label="Total Workforce Size" value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} placeholder="e.g. 55 Million" />
+                  <Input label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} placeholder="e.g. 55 Million" />
                   <div className="relative">
-                     <Input type="number" label="Male Participation (%)" value={data.workforceStats.participationMale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationMale: Number(e.target.value)}})} />
+                     <Input type="number" label={t('maleParticipation')} value={data.workforceStats.participationMale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationMale: Number(e.target.value)}})} />
                       <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 mt-2 rounded-full overflow-hidden">
                         <div className="bg-blue-600 h-full" style={{ width: `${data.workforceStats.participationMale}%` }}></div>
                       </div>
                   </div>
                   <div className="relative">
-                    <Input type="number" label="Female Participation (%)" value={data.workforceStats.participationFemale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationFemale: Number(e.target.value)}})} />
+                    <Input type="number" label={t('femaleParticipation')} value={data.workforceStats.participationFemale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationFemale: Number(e.target.value)}})} />
                     <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 mt-2 rounded-full overflow-hidden">
                         <div className="bg-pink-500 h-full" style={{ width: `${data.workforceStats.participationFemale}%` }}></div>
                     </div>
@@ -663,7 +623,7 @@ export default function Wizard() {
             </div>
 
              <div>
-               <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">Top Migration Destinations</label>
+               <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('migrationDestinations')}</label>
                <div className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg overflow-hidden">
                  <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
@@ -710,7 +670,7 @@ export default function Wizard() {
 
             <div>
               <h3 className="text-sm font-semibold mb-3 text-gray-600 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
-                 <Hammer size={14} /> Available Skills for Migration
+                 <Hammer size={14} /> {t('availableSkills')}
               </h3>
               <div className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg p-4">
                  <div className="flex flex-wrap gap-2 mb-3">
@@ -733,29 +693,29 @@ export default function Wizard() {
           <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
                <div>
-                  <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2"><Briefcase size={20} /> Economy & Education</h3>
+                  <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2"><Briefcase size={20} /> {t('sectionEconomy')}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Official trade statistics, inflation, and educational insights</p>
                </div>
                <Button onClick={handleFetchEconomyEdu} disabled={!data.country || isFetchingEconomy} className="bg-accent hover:bg-accent-light text-white text-sm">
-                {isFetchingEconomy ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />} Fetch Economy & Education
+                {isFetchingEconomy ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />} {t('fetchEconomy')}
               </Button>
             </div>
 
             <Card className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                <h4 className="font-bold text-lg mb-4 text-primary-dark dark:text-primary-light">Economic Indicators</h4>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                 <Input label="Inflation Rate" value={data.economicStats?.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} placeholder="e.g. 4.5%" />
-                 <Input label="GDP (Current US$)" value={data.economicStats?.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} placeholder="e.g. 500 Billion USD" />
-                 <Input label="Total Exports to UAE" value={data.economicStats?.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} placeholder="e.g. 2.1 Billion USD" />
-                 <Input label="Total Imports from UAE" value={data.economicStats?.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} placeholder="e.g. 5.3 Billion USD" />
-                 <Input label="Remittances from UAE" value={data.economicStats?.remittancesFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesFromUAE: e.target.value}})} placeholder="Manual Input required" />
-                 <Input label="Global Remittances Received" value={data.economicStats?.remittancesGlobal} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesGlobal: e.target.value}})} placeholder="e.g. 40 Billion USD" />
-                 <Input label="TIP Rank" value={data.economicStats?.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} placeholder="e.g. Tier 2" />
+                 <Input label={t('inflation')} value={data.economicStats?.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} placeholder="e.g. 4.5%" />
+                 <Input label={t('gdp')} value={data.economicStats?.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} placeholder="e.g. 500 Billion USD" />
+                 <Input label={t('exportsToUae')} value={data.economicStats?.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} placeholder="e.g. 2.1 Billion USD" />
+                 <Input label={t('importsFromUae')} value={data.economicStats?.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} placeholder="e.g. 5.3 Billion USD" />
+                 <Input label={t('remittances')} value={data.economicStats?.remittancesFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesFromUAE: e.target.value}})} placeholder="Manual Input required" />
+                 <Input label={t('globalRemittances')} value={data.economicStats?.remittancesGlobal} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesGlobal: e.target.value}})} placeholder="e.g. 40 Billion USD" />
+                 <Input label={t('tipRank')} value={data.economicStats?.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} placeholder="e.g. Tier 2" />
                </div>
                
                <div className="space-y-4">
                  <div>
-                    <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">Top Exports to UAE</label>
+                    <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('topExports')}</label>
                     <div className="flex flex-wrap gap-2">
                       {(data.economicStats?.topExportProducts || []).map((prod, i) => (
                         <span key={i} className="bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-3 py-1 rounded-full text-sm flex items-center gap-2">
@@ -768,7 +728,7 @@ export default function Wizard() {
                  </div>
 
                  <div>
-                    <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">Top Imports from UAE</label>
+                    <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('topImports')}</label>
                     <div className="flex flex-wrap gap-2">
                       {(data.economicStats?.topImportProducts || []).map((prod, i) => (
                         <span key={i} className="bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 px-3 py-1 rounded-full text-sm flex items-center gap-2">
@@ -797,13 +757,13 @@ export default function Wizard() {
             </Card>
 
             <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-               <h4 className="font-bold text-lg mb-4 text-primary-dark dark:text-primary-light flex items-center gap-2"><GraduationCap size={20} /> Education Insights</h4>
+               <h4 className="font-bold text-lg mb-4 text-primary-dark dark:text-primary-light flex items-center gap-2"><GraduationCap size={20} /> {t('educationInsights')}</h4>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                 <Input label="Primary School Enrollment" value={data.educationStats?.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} placeholder="e.g. 96%" />
-                 <Input label="Higher Education Enrollment" value={data.educationStats?.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} placeholder="e.g. 35%" />
+                 <Input label={t('primaryEnrollment')} value={data.educationStats?.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} placeholder="e.g. 96%" />
+                 <Input label={t('higherEnrollment')} value={data.educationStats?.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} placeholder="e.g. 35%" />
                </div>
                <div>
-                  <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">Top 5 Universities</label>
+                  <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('topUniversities')}</label>
                   <div className="space-y-2">
                     {(data.educationStats?.topUniversities || []).map((uni, i) => (
                       <div key={i} className="flex gap-2">
@@ -843,14 +803,14 @@ export default function Wizard() {
           <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
              <div className="border-b dark:border-gray-700 pb-4 mb-6">
                 <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2">
-                   <MessageSquare size={20} /> Recent Interactions & News
+                   <MessageSquare size={20} /> {t('sectionInteractions')}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Record diplomatic visits, key discussion points, and relevant news.</p>
              </div>
 
              {/* Recent Interactions */}
              <div className="space-y-4">
-                <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><Calendar size={18} /> Recent Interactions</h4>
+                <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><Calendar size={18} /> {t('recentInteractions')}</h4>
                 {data.recentInteractions.map((item, idx) => (
                    <Card key={item.id} className="p-4 relative">
                       <button onClick={() => setData({...data, recentInteractions: data.recentInteractions.filter(i => i.id !== item.id)})} className="absolute top-4 right-4 text-gray-400 hover:text-red-500">X</button>
@@ -889,7 +849,7 @@ export default function Wizard() {
              
              {/* Points of Discussion */}
              <div className="space-y-4 pt-6 border-t dark:border-gray-700">
-                <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><MessageSquare size={18} /> Points of Discussion</h4>
+                <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><MessageSquare size={18} /> {t('pointsDiscussion')}</h4>
                 {data.pointsOfDiscussion.map((item, idx) => (
                    <Card key={item.id} className="p-4 relative">
                       <button onClick={() => setData({...data, pointsOfDiscussion: data.pointsOfDiscussion.filter(i => i.id !== item.id)})} className="absolute top-4 right-4 text-gray-400 hover:text-red-500">X</button>
@@ -911,9 +871,9 @@ export default function Wizard() {
              {/* News */}
              <div className="space-y-4 pt-6 border-t dark:border-gray-700">
                 <div className="flex justify-between items-center">
-                   <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><Newspaper size={18} /> Related News</h4>
+                   <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><Newspaper size={18} /> {t('relatedNews')}</h4>
                    <Button size="sm" onClick={handleFetchNews} disabled={!data.country || isFetchingNews} className="bg-accent text-white">
-                      {isFetchingNews ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />} Fetch News (AI)
+                      {isFetchingNews ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />} {t('fetchNews')}
                    </Button>
                 </div>
                 
@@ -950,10 +910,10 @@ export default function Wizard() {
                </div>
                <div className="flex gap-3 w-full md:w-auto">
                  <Button onClick={() => handleFetchAgreements('MOFA')} disabled={isFetchingAgreements || !data.country} variant="outline" className="flex-1 md:flex-none border-primary text-primary hover:bg-primary hover:text-white dark:border-primary-light dark:text-primary-light dark:hover:bg-primary-light dark:hover:text-black">
-                   {isFetchingAgreements ? <Loader2 className="animate-spin" size={16} /> : <LinkIcon size={16} />} Fetch from MOFA
+                   {isFetchingAgreements ? <Loader2 className="animate-spin" size={16} /> : <LinkIcon size={16} />} {t('fetchMofa')}
                  </Button>
                  <Button onClick={() => handleFetchAgreements('GENERAL')} disabled={isFetchingAgreements || !data.country} className="flex-1 md:flex-none bg-primary text-white">
-                   {isFetchingAgreements ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />} Search Online
+                   {isFetchingAgreements ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />} {t('searchOnline')}
                  </Button>
                </div>
             </div>
@@ -985,12 +945,12 @@ export default function Wizard() {
                     )}
                     <div>
                       <h3 className="font-serif font-bold text-2xl text-gray-900 dark:text-white leading-tight">
-                        {type === 'uae' ? 'UAE Delegation' : `${data.country || 'Partner'} Delegation`}
+                        {type === 'uae' ? t('uaeDelegation') : `${data.country || 'Partner'} Delegation`}
                       </h3>
                       <Input 
                          className="text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mt-1 border-transparent bg-transparent px-0 py-0 h-auto focus:ring-0 focus:border-b border-gray-300 w-64 dark:focus:border-gray-500"
-                         placeholder={type === 'uae' ? "Ministry Officials" : "Counterpart Officials"}
-                         defaultValue={type === 'uae' ? "Ministry Officials" : "Counterpart Officials"}
+                         placeholder={type === 'uae' ? t('ministryOfficials') : t('counterpartOfficials')}
+                         defaultValue={type === 'uae' ? t('ministryOfficials') : t('counterpartOfficials')}
                       />
                     </div>
                  </div>
@@ -1001,7 +961,7 @@ export default function Wizard() {
                     onClick={() => addDelegate(type)}
                     className="hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm bg-white dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 dark:border-gray-600"
                  >
-                    <UserPlus size={18} /> Add Member
+                    <UserPlus size={18} /> {t('addMember')}
                  </Button>
               </div>
 
@@ -1083,7 +1043,7 @@ export default function Wizard() {
                <p className="text-center text-gray-500 mb-8">{data.reportDate}</p>
                <div className="bg-white p-8 shadow-diplomatic max-w-2xl mx-auto space-y-6 text-black">
                   <div>
-                    <h3 className="font-serif text-lg text-primary mb-2 border-b-2 border-accent w-fit">Workforce in UAE</h3>
+                    <h3 className="font-serif text-lg text-primary mb-2 border-b-2 border-accent w-fit">{t('sectionUaeWorkforce')}</h3>
                     <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                        <div className="bg-gray-50 p-2 rounded">
                           <p className="text-xs text-gray-500">MOHRE: Total Private</p>
@@ -1095,9 +1055,9 @@ export default function Wizard() {
                        </div>
                     </div>
                   </div>
-                  <div><h3 className="font-serif text-lg text-primary mb-2 border-b-2 border-accent w-fit">Interactions & News</h3> <p className="text-sm">{data.recentInteractions.length} Interactions, {data.relatedNews.length} News items.</p></div>
+                  <div><h3 className="font-serif text-lg text-primary mb-2 border-b-2 border-accent w-fit">{t('sectionInteractions')}</h3> <p className="text-sm">{data.recentInteractions.length} Interactions, {data.relatedNews.length} News items.</p></div>
                   <div>
-                    <h3 className="font-serif text-lg text-primary mb-2 border-b-2 border-accent w-fit">Delegations</h3>
+                    <h3 className="font-serif text-lg text-primary mb-2 border-b-2 border-accent w-fit">{t('sectionDelegation')}</h3>
                     <div className="text-sm">
                       <p className="font-bold">UAE:</p> <ul className="list-disc ml-5 mb-2">{data.delegations.uae.map(d => <li key={d.id}>{d.name}</li>)}</ul>
                       <p className="font-bold">Partner:</p> <ul className="list-disc ml-5">{data.delegations.partner.map(d => <li key={d.id}>{d.name}</li>)}</ul>
@@ -1116,7 +1076,7 @@ export default function Wizard() {
       <div className="mb-8">
         {/* Title input moved inside Profile Step, keeping header minimal */}
         <h1 className="text-2xl font-serif font-bold text-gray-800 dark:text-white">
-           {currentStep === 0 ? "Create New Report" : (reportTitle || "Untitled Report")}
+           {currentStep === 0 ? t('createNew') : (reportTitle || "Untitled Report")}
         </h1>
       </div>
 
