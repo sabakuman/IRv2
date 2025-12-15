@@ -9,6 +9,7 @@ export interface UserProfile {
   role: UserRole;
   avatarUrl?: string;
   password?: string;
+  apiKey?: string; // Personal Gemini API Key
 }
 
 export interface Delegate {

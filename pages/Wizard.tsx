@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { ReportData, EMPTY_REPORT_DATA, Report, Delegate, LabelValue, NewsItem, RecentInteraction, PointOfDiscussion } from '../types';
 import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
@@ -13,6 +14,7 @@ export default function Wizard() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const { user } = useAuth(); // Access user to get API key
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(!!id);
   const [isFetchingAI, setIsFetchingAI] = useState(false);
@@ -44,6 +46,11 @@ export default function Wizard() {
       });
     }
   }, [id]);
+
+  // Helper to get correct API key
+  const getApiKey = () => {
+    return user?.apiKey || process.env.API_KEY;
+  };
 
   // Helper to safely extract and parse JSON from mixed content
   const extractAndParseJSON = (text: string | undefined) => {
@@ -88,84 +95,85 @@ export default function Wizard() {
       alert("Please enter a country name first.");
       return;
     }
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      alert("API Key missing. Please go to Settings and add your Gemini API Key.");
+      return;
+    }
+
     setIsFetchingAI(true);
     
     try {
-      if (process.env.API_KEY) {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const langInstr = getLanguageInstruction();
-        const prompt = `Act as a labour market intelligence expert. Fetch the latest available data from ILO (International Labour Organization), World Bank, and official government sources for ${data.country}.
-        
-        ${langInstr}
-        
-        Return a strictly valid JSON object matching this structure exactly (keys must remain in English):
-        {
-          "capital": "string",
-          "officialLanguage": "string",
-          "population": "string (e.g. 1.4B)",
-          "currency": "string",
-          "gdp": "string (e.g. 400 Billion USD)",
-          "hdi": "string (e.g. 0.750)",
-          "directFlight": boolean,
-          "uaeEmbassyLocation": "string (City in target country)",
-          "foreignEmbassyLocation": "string (City in UAE, usually Abu Dhabi or Dubai)",
-          "averageWage": "string (Monthly average in USD approx)",
-          "minimumWage": "string (Monthly minimum in USD approx)",
-          "totalWorkforce": "string (e.g. 50 Million)",
-          "participationMale": number (percentage 0-100),
-          "participationFemale": number (percentage 0-100),
-          "migrationDestinations": [{"country": "string", "count": "string (e.g. 2.5 Million)"}],
-          "topSectors": [{"name": "string", "value": number}, {"name": "string", "value": number}],
-          "availableSkills": ["string", "string", "string", "string"]
-        }
-        
-        For "migrationDestinations", provide the top 3-5 countries workers migrate to, and the estimated total number of workers in that country.
-        For "availableSkills", list the top 4-6 specific job skills or industries that are abundant and available for migration (e.g. "Construction", "Nursing", "IT", "Domestic Work").`;
+      const ai = new GoogleGenAI({ apiKey });
+      const langInstr = getLanguageInstruction();
+      const prompt = `Act as a labour market intelligence expert. Fetch the latest available data from ILO (International Labour Organization), World Bank, and official government sources for ${data.country}.
+      
+      ${langInstr}
+      
+      Return a strictly valid JSON object matching this structure exactly (keys must remain in English):
+      {
+        "capital": "string",
+        "officialLanguage": "string",
+        "population": "string (e.g. 1.4B)",
+        "currency": "string",
+        "gdp": "string (e.g. 400 Billion USD)",
+        "hdi": "string (e.g. 0.750)",
+        "directFlight": boolean,
+        "uaeEmbassyLocation": "string (City in target country)",
+        "foreignEmbassyLocation": "string (City in UAE, usually Abu Dhabi or Dubai)",
+        "averageWage": "string (Monthly average in USD approx)",
+        "minimumWage": "string (Monthly minimum in USD approx)",
+        "totalWorkforce": "string (e.g. 50 Million)",
+        "participationMale": number (percentage 0-100),
+        "participationFemale": number (percentage 0-100),
+        "migrationDestinations": [{"country": "string", "count": "string (e.g. 2.5 Million)"}],
+        "topSectors": [{"name": "string", "value": number}, {"name": "string", "value": number}],
+        "availableSkills": ["string", "string", "string", "string"]
+      }
+      
+      For "migrationDestinations", provide the top 3-5 countries workers migrate to, and the estimated total number of workers in that country.
+      For "availableSkills", list the top 4-6 specific job skills or industries that are abundant and available for migration (e.g. "Construction", "Nursing", "IT", "Domestic Work").`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ parts: [{ text: prompt }] }],
-          config: {
-            responseMimeType: 'application/json',
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          responseMimeType: 'application/json',
+        }
+      });
+
+      const aiData = extractAndParseJSON(response.text);
+
+      if (aiData) {
+        setData(prev => ({
+          ...prev,
+          capital: aiData.capital || prev.capital,
+          officialLanguage: aiData.officialLanguage || prev.officialLanguage,
+          population: aiData.population || prev.population,
+          currency: aiData.currency || prev.currency,
+          gdp: aiData.gdp || prev.gdp,
+          hdi: aiData.hdi || prev.hdi,
+          directFlight: aiData.directFlight !== undefined ? aiData.directFlight : prev.directFlight,
+          uaeEmbassyLocation: aiData.uaeEmbassyLocation || prev.uaeEmbassyLocation,
+          foreignEmbassyLocation: aiData.foreignEmbassyLocation || prev.foreignEmbassyLocation,
+          averageWage: aiData.averageWage || prev.averageWage,
+          minimumWage: aiData.minimumWage || prev.minimumWage,
+          workforceStats: {
+            ...prev.workforceStats,
+            totalWorkforce: aiData.totalWorkforce || prev.workforceStats.totalWorkforce,
+            participationMale: aiData.participationMale || prev.workforceStats.participationMale,
+            participationFemale: aiData.participationFemale || prev.workforceStats.participationFemale,
+            migrationDestinations: aiData.migrationDestinations || prev.workforceStats.migrationDestinations,
+            topSectors: aiData.topSectors || prev.workforceStats.topSectors,
+            availableSkills: aiData.availableSkills || prev.workforceStats.availableSkills
           }
-        });
-
-        const aiData = extractAndParseJSON(response.text);
-
-        if (aiData) {
-          setData(prev => ({
-            ...prev,
-            capital: aiData.capital || prev.capital,
-            officialLanguage: aiData.officialLanguage || prev.officialLanguage,
-            population: aiData.population || prev.population,
-            currency: aiData.currency || prev.currency,
-            gdp: aiData.gdp || prev.gdp,
-            hdi: aiData.hdi || prev.hdi,
-            directFlight: aiData.directFlight !== undefined ? aiData.directFlight : prev.directFlight,
-            uaeEmbassyLocation: aiData.uaeEmbassyLocation || prev.uaeEmbassyLocation,
-            foreignEmbassyLocation: aiData.foreignEmbassyLocation || prev.foreignEmbassyLocation,
-            averageWage: aiData.averageWage || prev.averageWage,
-            minimumWage: aiData.minimumWage || prev.minimumWage,
-            workforceStats: {
-              ...prev.workforceStats,
-              totalWorkforce: aiData.totalWorkforce || prev.workforceStats.totalWorkforce,
-              participationMale: aiData.participationMale || prev.workforceStats.participationMale,
-              participationFemale: aiData.participationFemale || prev.workforceStats.participationFemale,
-              migrationDestinations: aiData.migrationDestinations || prev.workforceStats.migrationDestinations,
-              topSectors: aiData.topSectors || prev.workforceStats.topSectors,
-              availableSkills: aiData.availableSkills || prev.workforceStats.availableSkills
-            }
-          }));
-        } else {
-          alert("Received empty response from AI.");
-        }
+        }));
       } else {
-        alert("API Key is missing. Please check your configuration.");
-        console.error("API Key missing");
+        alert("Received empty response from AI.");
       }
     } catch (error) {
       console.error("AI Fetch failed", error);
-      alert("Failed to fetch data. Please try again.");
+      alert("Failed to fetch data. Please check your API key or connection.");
     } finally {
       setIsFetchingAI(false);
     }
@@ -173,49 +181,51 @@ export default function Wizard() {
 
   const handleFetchNews = async () => {
      if (!data.country) return;
+     const apiKey = getApiKey();
+     if (!apiKey) {
+       alert("API Key missing. Please go to Settings and add your Gemini API Key.");
+       return;
+     }
+
      setIsFetchingNews(true);
 
      try {
-       if (process.env.API_KEY) {
-         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-         const langInstr = getLanguageInstruction();
-         const searchLang = language === 'ar' ? "Arabic" : "English";
-         const prompt = `Search for the top 3 most recent and relevant news articles in ${searchLang} regarding "Labour", "Workforce", "Migrant Workers", or "Economic Relations" between UAE and ${data.country}.
-         
-         ${langInstr}
-         
-         Return a strictly valid JSON array of objects with this structure (keys must remain in English):
-         [
-           {
-             "title": "string (Headline)",
-             "source": "string (News Source)",
-             "date": "string (Date string in western digits)",
-             "summary": "string (1 sentence summary)",
-             "url": "string (Link if available)"
-           }
-         ]`;
-
-         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [{ parts: [{ text: prompt }] }],
-            config: {
-              tools: [{ googleSearch: {} }],
-            },
-         });
-         
-         const newsItems = extractAndParseJSON(response.text);
-         
-         if (Array.isArray(newsItems)) {
-            const newsWithIds = newsItems.map((n: any) => ({ ...n, id: uuidv4() }));
-            setData(prev => ({
-              ...prev,
-              relatedNews: [...(prev.relatedNews || []), ...newsWithIds]
-            }));
-         } else {
-            console.warn("News items not in array format", newsItems);
+       const ai = new GoogleGenAI({ apiKey });
+       const langInstr = getLanguageInstruction();
+       const searchLang = language === 'ar' ? "Arabic" : "English";
+       const prompt = `Search for the top 3 most recent and relevant news articles in ${searchLang} regarding "Labour", "Workforce", "Migrant Workers", or "Economic Relations" between UAE and ${data.country}.
+       
+       ${langInstr}
+       
+       Return a strictly valid JSON array of objects with this structure (keys must remain in English):
+       [
+         {
+           "title": "string (Headline)",
+           "source": "string (News Source)",
+           "date": "string (Date string in western digits)",
+           "summary": "string (1 sentence summary)",
+           "url": "string (Link if available)"
          }
+       ]`;
+
+       const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [{ parts: [{ text: prompt }] }],
+          config: {
+            tools: [{ googleSearch: {} }],
+          },
+       });
+       
+       const newsItems = extractAndParseJSON(response.text);
+       
+       if (Array.isArray(newsItems)) {
+          const newsWithIds = newsItems.map((n: any) => ({ ...n, id: uuidv4() }));
+          setData(prev => ({
+            ...prev,
+            relatedNews: [...(prev.relatedNews || []), ...newsWithIds]
+          }));
        } else {
-         alert("API Key is missing.");
+          console.warn("News items not in array format", newsItems);
        }
      } catch (error) {
         console.error("News Fetch Failed", error);
@@ -227,61 +237,63 @@ export default function Wizard() {
 
   const handleFetchEconomyEdu = async () => {
     if (!data.country) return;
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      alert("API Key missing. Please go to Settings and add your Gemini API Key.");
+      return;
+    }
+
     setIsFetchingEconomy(true);
 
     try {
-      if (process.env.API_KEY) {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const langInstr = getLanguageInstruction();
-        const prompt = `Act as an economic analyst. Fetch the latest official economic and education data for ${data.country}, focusing on its relationship with the UAE. 
-        
-        ${langInstr}
-        
-        Return a strictly valid JSON object with this structure (keys must remain in English):
-        {
-          "economicStats": {
-            "inflation": "string (e.g. 5.1% in 2024)",
-            "gdp": "string (e.g. 450 Billion USD)",
-            "totalExportsToUAE": "string (e.g. 2 Billion USD)",
-            "totalImportsFromUAE": "string (e.g. 5 Billion USD)",
-            "topExportProducts": ["string", "string", "string"],
-            "topImportProducts": ["string", "string", "string"],
-            "mainEconomicPartners": ["string", "string", "string"],
-            "tipRank": "string (e.g. Tier 2 Watch List)",
-            "remittancesGlobal": "string (e.g. 40 Billion USD total global remittances received in 2023)"
-          },
-          "educationStats": {
-             "topUniversities": ["string", "string", "string", "string", "string"],
-             "primaryEnrollment": "string (e.g. 98%)",
-             "higherEducationEnrollment": "string (e.g. 35%)"
-          }
-        }`;
-        
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ parts: [{ text: prompt }] }],
-          config: {
-            responseMimeType: 'application/json',
-          }
-        });
-
-        const aiData = extractAndParseJSON(response.text);
-
-        if (aiData) {
-          setData(prev => ({
-            ...prev,
-            economicStats: {
-              ...prev.economicStats,
-              ...aiData.economicStats
-            },
-            educationStats: {
-              ...prev.educationStats,
-              ...aiData.educationStats
-            }
-          }));
+      const ai = new GoogleGenAI({ apiKey });
+      const langInstr = getLanguageInstruction();
+      const prompt = `Act as an economic analyst. Fetch the latest official economic and education data for ${data.country}, focusing on its relationship with the UAE. 
+      
+      ${langInstr}
+      
+      Return a strictly valid JSON object with this structure (keys must remain in English):
+      {
+        "economicStats": {
+          "inflation": "string (e.g. 5.1% in 2024)",
+          "gdp": "string (e.g. 450 Billion USD)",
+          "totalExportsToUAE": "string (e.g. 2 Billion USD)",
+          "totalImportsFromUAE": "string (e.g. 5 Billion USD)",
+          "topExportProducts": ["string", "string", "string"],
+          "topImportProducts": ["string", "string", "string"],
+          "mainEconomicPartners": ["string", "string", "string"],
+          "tipRank": "string (e.g. Tier 2 Watch List)",
+          "remittancesGlobal": "string (e.g. 40 Billion USD total global remittances received in 2023)"
+        },
+        "educationStats": {
+           "topUniversities": ["string", "string", "string", "string", "string"],
+           "primaryEnrollment": "string (e.g. 98%)",
+           "higherEducationEnrollment": "string (e.g. 35%)"
         }
-      } else {
-        alert("API Key is missing.");
+      }`;
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          responseMimeType: 'application/json',
+        }
+      });
+
+      const aiData = extractAndParseJSON(response.text);
+
+      if (aiData) {
+        setData(prev => ({
+          ...prev,
+          economicStats: {
+            ...prev.economicStats,
+            ...aiData.economicStats
+          },
+          educationStats: {
+            ...prev.educationStats,
+            ...aiData.educationStats
+          }
+        }));
       }
     } catch (error) {
       console.error("Economy Fetch Failed", error);
@@ -293,80 +305,82 @@ export default function Wizard() {
 
    const handleFetchAgreements = async (source: 'MOFA' | 'GENERAL') => {
       if (!data.country) return;
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        alert("API Key missing. Please go to Settings and add your Gemini API Key.");
+        return;
+      }
+
       setIsFetchingAgreements(true);
 
       try {
-        if (process.env.API_KEY) {
-           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-           const langInstr = getLanguageInstruction();
+        const ai = new GoogleGenAI({ apiKey });
+        const langInstr = getLanguageInstruction();
+        
+        let prompt = '';
+        let config: any = {};
+
+        if (source === 'GENERAL') {
+           // General Online Search using Google Search Tool
+           prompt = `Search for all major Bilateral Labour Agreements, Memorandum of Understanding (MoU), and diplomatic protocols regarding workforce/manpower between the United Arab Emirates (UAE) and ${data.country}.
            
-           let prompt = '';
-           let config: any = {};
-
-           if (source === 'GENERAL') {
-              // General Online Search using Google Search Tool
-              prompt = `Search for all major Bilateral Labour Agreements, Memorandum of Understanding (MoU), and diplomatic protocols regarding workforce/manpower between the United Arab Emirates (UAE) and ${data.country}.
-              
-              ${langInstr}
-              
-              Return a strictly valid JSON array of objects with this structure (keys must remain in English):
-              [
-                {
-                   "title": "string (e.g. MoU on Manpower)",
-                   "date": "string (e.g. 2022-05-12)",
-                   "status": "Active" | "Pending" | "Expired",
-                   "summary": "string (Key focus e.g. Domestic workers rights)"
-                }
-              ]`;
-              config = {
-                 tools: [{ googleSearch: {} }]
-                 // responseMimeType NOT ALLOWED with tools
-              };
-           } else {
-              // Simulate MOFA Database (Internal Knowledge)
-              prompt = `Act as the official UAE Ministry of Foreign Affairs & International Cooperation (MOFAIC) database.
-              List the existing diplomatic treaties and agreements between UAE and ${data.country}, specifically focusing on Labour, Economy, and Trade.
-              
-              ${langInstr}
-              
-              Return a strictly valid JSON array of objects with this structure (keys must remain in English):
-              [
-                {
-                   "title": "string (Official Agreement Name)",
-                   "date": "string (Year or Full Date)",
-                   "status": "Active" | "Pending" | "Expired",
-                   "summary": "string (Official purpose)"
-                }
-              ]`;
-              config = {
-                responseMimeType: 'application/json'
-              };
-           }
-
-           const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: [{ parts: [{ text: prompt }] }],
-              config: config
-           });
-
-           // Robust parsing
-           const fetchedAgreements = extractAndParseJSON(response.text);
+           ${langInstr}
            
-           if (Array.isArray(fetchedAgreements)) {
-              // Append unique agreements
-              setData(prev => {
-                const existing = new Set(prev.bilateralAgreements.map(a => a.title));
-                const uniqueNew = fetchedAgreements.filter((a: any) => !existing.has(a.title));
-                return {
-                   ...prev,
-                   bilateralAgreements: [...prev.bilateralAgreements, ...uniqueNew]
-                };
-              });
-           } else {
-             console.warn("Agreements not in array format", fetchedAgreements);
-           }
+           Return a strictly valid JSON array of objects with this structure (keys must remain in English):
+           [
+             {
+                "title": "string (e.g. MoU on Manpower)",
+                "date": "string (e.g. 2022-05-12)",
+                "status": "Active" | "Pending" | "Expired",
+                "summary": "string (Key focus e.g. Domestic workers rights)"
+             }
+           ]`;
+           config = {
+              tools: [{ googleSearch: {} }]
+              // responseMimeType NOT ALLOWED with tools
+           };
         } else {
-          alert("API Key is missing.");
+           // Simulate MOFA Database (Internal Knowledge)
+           prompt = `Act as the official UAE Ministry of Foreign Affairs & International Cooperation (MOFAIC) database.
+           List the existing diplomatic treaties and agreements between UAE and ${data.country}, specifically focusing on Labour, Economy, and Trade.
+           
+           ${langInstr}
+           
+           Return a strictly valid JSON array of objects with this structure (keys must remain in English):
+           [
+             {
+                "title": "string (Official Agreement Name)",
+                "date": "string (Year or Full Date)",
+                "status": "Active" | "Pending" | "Expired",
+                "summary": "string (Official purpose)"
+             }
+           ]`;
+           config = {
+             responseMimeType: 'application/json'
+           };
+        }
+
+        const response = await ai.models.generateContent({
+           model: 'gemini-2.5-flash',
+           contents: [{ parts: [{ text: prompt }] }],
+           config: config
+        });
+
+        // Robust parsing
+        const fetchedAgreements = extractAndParseJSON(response.text);
+        
+        if (Array.isArray(fetchedAgreements)) {
+           // Append unique agreements
+           setData(prev => {
+             const existing = new Set(prev.bilateralAgreements.map(a => a.title));
+             const uniqueNew = fetchedAgreements.filter((a: any) => !existing.has(a.title));
+             return {
+                ...prev,
+                bilateralAgreements: [...prev.bilateralAgreements, ...uniqueNew]
+             };
+           });
+        } else {
+          console.warn("Agreements not in array format", fetchedAgreements);
         }
       } catch (error) {
          console.error("Agreement Fetch Failed", error);

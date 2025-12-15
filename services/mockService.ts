@@ -146,5 +146,17 @@ export const MockService = {
       users[index].password = newPass;
       setStorage(STORAGE_KEYS.USERS, users);
     }
+  },
+
+  updateApiKey: async (userId: string, apiKey: string): Promise<UserProfile | null> => {
+    const users = getStorage<UserProfile[]>(STORAGE_KEYS.USERS) || [];
+    const index = users.findIndex(u => u.id === userId);
+    
+    if (index !== -1) {
+      users[index].apiKey = apiKey;
+      setStorage(STORAGE_KEYS.USERS, users);
+      return users[index];
+    }
+    return null;
   }
 };

@@ -1,12 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Card, Button } from '../components/ui/LayoutComponents';
-import { Moon, Sun, User, Bell, Lock } from 'lucide-react';
+import { MockService } from '../services/mockService';
+import { Card, Button, Input } from '../components/ui/LayoutComponents';
+import { Moon, Sun, User, Bell, Lock, Key, Check, AlertCircle } from 'lucide-react';
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  
+  const [apiKey, setApiKey] = useState(user?.apiKey || '');
+  const [isSavingKey, setIsSavingKey] = useState(false);
+  const [keyMessage, setKeyMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const handleSaveApiKey = async () => {
+    if (!user) return;
+    setIsSavingKey(true);
+    setKeyMessage(null);
+    
+    try {
+      const updatedUser = await MockService.updateApiKey(user.id, apiKey);
+      if (updatedUser) {
+        updateUser(updatedUser);
+        setKeyMessage({ type: 'success', text: 'API Key saved successfully.' });
+      } else {
+         setKeyMessage({ type: 'error', text: 'Failed to update user profile.' });
+      }
+    } catch (e) {
+      setKeyMessage({ type: 'error', text: 'An error occurred while saving.' });
+    } finally {
+      setIsSavingKey(false);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
@@ -36,6 +61,46 @@ export default function Settings() {
              <span className="inline-block mt-2 px-3 py-1 bg-primary/10 text-primary dark:text-accent rounded-full text-xs font-bold uppercase tracking-wide">
                {user?.role}
              </span>
+           </div>
+        </div>
+      </Card>
+
+      {/* API Key Section (NEW) */}
+      <Card className="dark:bg-secondary dark:border-gray-800">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-white">
+          <Key size={20} className="text-primary dark:text-accent" /> AI Configuration
+        </h2>
+        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl border border-gray-100 dark:border-gray-700">
+           <div className="mb-4">
+              <h3 className="font-medium text-gray-900 dark:text-white">Gemini API Key</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                 Enter your personal Google Gemini API key to enable AI features (Data Fetching, News, etc.). 
+                 This key is stored securely in your browser's local storage.
+              </p>
+           </div>
+           
+           <div className="flex flex-col gap-4">
+              <Input 
+                type="password" 
+                placeholder="AIzaSy..." 
+                value={apiKey} 
+                onChange={(e) => setApiKey(e.target.value)} 
+                className="font-mono text-sm"
+              />
+              
+              <div className="flex justify-between items-center">
+                 <div className="text-sm">
+                    {keyMessage && (
+                       <span className={`flex items-center gap-2 ${keyMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                          {keyMessage.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
+                          {keyMessage.text}
+                       </span>
+                    )}
+                 </div>
+                 <Button onClick={handleSaveApiKey} disabled={isSavingKey}>
+                    {isSavingKey ? 'Saving...' : 'Save Configuration'}
+                 </Button>
+              </div>
            </div>
         </div>
       </Card>
