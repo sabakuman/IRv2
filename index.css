@@ -1,3 +1,107 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===============================
+   PRINT CONFIGURATION
+================================ */
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    height: auto;
+    overflow: visible;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .page-break {
+    break-after: page;
+    page-break-after: always;
+    min-height: 297mm; /* Force full A4 height */
+    position: relative;
+  }
+
+  .avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+/* ===============================
+   KPI / INDICATOR SYSTEM
+================================ */
+@layer components {
+  .kpi-card {
+    @apply bg-white border border-gray-200 rounded-xl p-4 shadow-sm;
+  }
+
+  .kpi-row {
+    @apply flex items-start gap-3;
+  }
+
+  .kpi-icon {
+    @apply w-9 h-9 rounded-lg flex items-center justify-center
+           border border-gray-200 bg-gray-50;
+  }
+
+  .kpi-label {
+    @apply text-[10px] font-extrabold uppercase tracking-widest text-gray-500;
+  }
+
+  .kpi-value {
+    @apply text-2xl font-serif font-bold text-gray-900 leading-tight;
+  }
+
+  .kpi-sub {
+    @apply text-[10px] text-gray-500 italic;
+  }
+
+  .kpi-chip {
+    @apply text-[10px] font-bold uppercase tracking-wider
+           px-2 py-0.5 rounded-full border;
+  }
+
+  .chip-ok {
+    @apply bg-green-50 text-green-800 border-green-200;
+  }
+
+  .chip-warn {
+    @apply bg-amber-50 text-amber-800 border-amber-200;
+  }
+
+  .chip-info {
+    @apply bg-blue-50 text-blue-800 border-blue-200;
+  }
+
+  .chip-restrict {
+    @apply bg-red-50 text-red-800 border-red-200;
+  }
+
+  /* ===============================
+     SECTION RAIL
+  ================================ */
+  .section-rail {
+    @apply relative pl-5;
+  }
+
+  .section-rail:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 4px;
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    opacity: 0.18;
+  }
+}

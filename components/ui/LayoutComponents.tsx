@@ -1,14 +1,20 @@
 import React from 'react';
 
-export const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-card border border-secondary/50 dark:border-gray-700 p-6 transition-colors duration-200 ${className}`}>
+export const Card: React.FC<React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }> = ({ children, className = '', ...props }) => (
+  <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-card border border-secondary/50 dark:border-gray-700 p-6 transition-colors duration-200 ${className}`} {...props}>
     {children}
   </div>
 );
 
-export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'outline' | 'ghost' }> = 
-  ({ children, className = '', variant = 'primary', ...props }) => {
-    const base = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2";
+export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'outline' | 'ghost'; size?: 'sm' | 'default' | 'lg' }> = 
+  ({ children, className = '', variant = 'primary', size = 'default', ...props }) => {
+    const sizeClasses = {
+      sm: "px-3 py-1.5 text-sm",
+      default: "px-4 py-2",
+      lg: "px-6 py-3 text-lg"
+    };
+
+    const base = "rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2";
     const variants = {
       primary: "bg-primary text-white hover:bg-primary-light shadow-md hover:shadow-lg active:scale-95 dark:bg-primary dark:hover:bg-primary-light",
       outline: "border-2 border-primary text-primary hover:bg-primary/5 active:scale-95 dark:border-primary-light dark:text-primary-light dark:hover:bg-primary/20",
@@ -16,7 +22,7 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { 
     };
     
     return (
-      <button className={`${base} ${variants[variant]} ${className}`} {...props}>
+      <button className={`${base} ${sizeClasses[size || 'default']} ${variants[variant]} ${className}`} {...props}>
         {children}
       </button>
     );
