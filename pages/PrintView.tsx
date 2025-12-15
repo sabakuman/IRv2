@@ -7,7 +7,7 @@ import {
   Globe, Users, TrendingUp, Building, 
   Handshake, Landmark, Plane, Banknote, 
   Printer, X, AlertTriangle, ShieldAlert,
-  GraduationCap, Briefcase, MessageSquare, FileText, Calendar
+  GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity
 } from 'lucide-react';
 import { PageContainer, HeaderBand, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
@@ -211,6 +211,21 @@ export default function PrintView() {
                  <p className="text-[9px] text-gray-500 mt-1 truncate">{data.economicStats.topExportProducts.slice(0,3).join(', ')}</p>
               </div>
            </div>
+           
+           {/* Custom Economic Indicators */}
+           {data.economicStats.customStats && data.economicStats.customStats.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-gray-200">
+                 <p className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-2">{t('additionalIndicators')}</p>
+                 <div className="grid grid-cols-2 gap-3">
+                     {data.economicStats.customStats.map(stat => (
+                        <div key={stat.id}>
+                           <p className="text-[10px] text-gray-500 font-bold mb-0.5">{stat.label}</p>
+                           <p className="text-sm font-serif font-bold text-gray-900">{stat.value}</p>
+                        </div>
+                     ))}
+                 </div>
+              </div>
+           )}
         </div>
 
         {/* Section 3: Education */}
@@ -427,7 +442,7 @@ export default function PrintView() {
         </div>
 
         {/* Discussion Points */}
-        <div className="avoid-break">
+        <div className="avoid-break mb-8">
            <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
               <MessageSquare size={12} /> {t('pointsDiscussion')}
            </h3>
@@ -446,6 +461,23 @@ export default function PrintView() {
               )}
            </ul>
         </div>
+
+        {/* Custom Sections / Additional Info */}
+        {data.customSections && data.customSections.length > 0 && (
+           <div className="avoid-break mt-6 pt-6 border-t border-gray-200">
+               <h3 className="kpi-label mb-3 flex items-center gap-2">
+                  <FileText size={12} /> {language === 'ar' ? 'معلومات إضافية' : 'Additional Information'}
+               </h3>
+               <div className="space-y-4">
+                  {data.customSections.map((section) => (
+                     <div key={section.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <h4 className="text-sm font-bold text-gray-900 mb-2">{section.title}</h4>
+                        <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{section.content}</p>
+                     </div>
+                  ))}
+               </div>
+           </div>
+        )}
       </PageContainer>
 
       {/* --- PAGE 5: DELEGATIONS (Standalone) --- */}
