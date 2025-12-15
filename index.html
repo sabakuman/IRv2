@@ -88,6 +88,10 @@
       ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
       ::-webkit-scrollbar-thumb:hover { background: #555; }
     </style>
+    <!-- Polyfill for global process to prevent crashes in some libraries -->
+    <script>
+      window.process = window.process || { env: { NODE_ENV: 'production' } };
+    </script>
   <script type="importmap">
 {
   "imports": {
