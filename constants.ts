@@ -28,6 +28,10 @@ export const MOCK_REPORTS: Report[] = [
       directFlight: true,
       uaeEmbassyLocation: 'New Delhi',
       foreignEmbassyLocation: 'Abu Dhabi',
+      crimeRate: 'Low',
+      literacyRate: '77.7%',
+      governmentType: 'Federal Parliamentary Republic',
+      workforceMinistry: 'Ministry of Skill Development',
       uaeWorkforceStats: {
         mohre: {
           totalPrivate: { value: '3,200,000', date: 'Sept 2023' },
@@ -109,10 +113,15 @@ export const MOCK_REPORTS: Report[] = [
          { id: 'c-1', title: 'Strategic Partnership Context', content: 'India and UAE share a Comprehensive Economic Partnership Agreement (CEPA) which has significantly boosted non-oil trade.' }
       ],
       recentInteractions: [
-         { id: 'ri-1', title: 'Ministerial Visit to New Delhi', date: '2023-05-15', type: 'Visit', details: 'Discussed enhancing labor mobility pathways and skill harmonization standards between NSDC and UAE qualifications.' }
+         { id: 'ri-1', title: 'Ministerial Visit to New Delhi', date: '2023-05-15', type: 'Visit', details: 'Discussed enhancing labor mobility pathways and skill harmonization standards between NSDC and UAE qualifications.' },
+         { id: 'ri-2', title: 'Technical Joint Committee', date: '2023-08-10', type: 'Meeting', details: 'Reviewed implementation of the domestic worker MoU.' },
+         { id: 'ri-3', title: 'Phone Call: Ministers', date: '2023-09-01', type: 'Call', details: 'Coordination on upcoming Abu Dhabi Dialogue agenda.' },
+         { id: 'ri-4', title: 'Delegation to Abu Dhabi', date: '2023-10-05', type: 'Visit', details: 'High-level delegation visited Tadbeer centers to observe operational standards.' }
       ],
       pointsOfDiscussion: [
-         { id: 'pd-1', title: 'Skill Certification', content: 'Harmonization of skill standards between NSDC India and UAE authorities.' }
+         { id: 'pd-1', title: 'Skill Certification', content: 'Harmonization of skill standards between NSDC India and UAE authorities.' },
+         { id: 'pd-2', title: 'WPS Integration', content: 'Proposal to integrate Indian e-Migrate system with UAE WPS for better transparency.' },
+         { id: 'pd-3', title: 'Cost Reduction', content: 'Strategies to reduce recruitment costs for workers in the blue-collar sector.' }
       ],
       relatedNews: [],
       bilateralAgreements: [
@@ -128,74 +137,6 @@ export const MOCK_REPORTS: Report[] = [
         partner: [
            { id: 'd-ind-1', name: 'H.E. Dr. S. Jaishankar', title: 'Minister of External Affairs', imageUrl: 'https://picsum.photos/100/100?random=1', bio: 'Career diplomat and politician serving as the Minister of External Affairs of India.' }
         ]
-      }
-    }
-  },
-  {
-    id: 'r-102',
-    userId: 'u-1',
-    title: 'Labour Market Analysis: Philippines',
-    status: 'draft',
-    updatedAt: '2023-10-25T14:30:00Z',
-    data: {
-      ...EMPTY_REPORT_DATA,
-      reportDate: '2023-11-20',
-      country: 'Philippines',
-      capital: 'Manila',
-      officialLanguage: 'Filipino, English',
-      population: '115M',
-      currency: 'Philippine Peso (PHP)',
-      gdp: '404 Billion USD',
-      hdi: '0.699',
-      directFlight: true,
-      uaeEmbassyLocation: 'Manila',
-      foreignEmbassyLocation: 'Abu Dhabi',
-      averageWage: '$330/month',
-      minimumWage: '$180/month',
-      workforceStats: {
-        totalWorkforce: '48 Million',
-        participationMale: 73,
-        participationFemale: 51,
-        migrationDestinations: [
-          { country: 'USA', count: '4 Million' },
-          { country: 'Saudi Arabia', count: '1.8 Million' },
-          { country: 'UAE', count: '700,000' }
-        ],
-        topSectors: [
-          { name: 'Services', value: 60 },
-          { name: 'Agriculture', value: 23 },
-          { name: 'Industry', value: 17 }
-        ],
-        availableSkills: ['Nursing & Caregiving', 'Hospitality', 'Seafarers', 'Customer Service']
-      },
-      economicStats: {
-        inflation: '3.9%',
-        gdp: '404 Billion USD',
-        totalExportsToUAE: '500 Million USD',
-        totalImportsFromUAE: '1.2 Billion USD',
-        topExportProducts: ['Bananas', 'Pineapples', 'Electronics', 'Garments'],
-        topImportProducts: ['Oil', 'Petrochemicals', 'Aluminum'],
-        mainEconomicPartners: ['USA', 'China', 'Japan', 'Singapore'],
-        tipRank: 'Tier 1',
-        remittancesFromUAE: '1.2 Billion USD',
-        remittancesGlobal: '40 Billion USD',
-        customStats: []
-      },
-      educationStats: {
-        topUniversities: ['University of the Philippines', 'Ateneo de Manila University', 'De La Salle University'],
-        primaryEnrollment: '94%',
-        higherEducationEnrollment: '35%',
-      },
-      customSections: [],
-      recentInteractions: [],
-      pointsOfDiscussion: [],
-      relatedNews: [],
-      bilateralAgreements: [],
-      keyIssues: [],
-      recommendations: [],
-      delegations: {
-        uae: [],
-        partner: []
       }
     }
   }
@@ -298,7 +239,7 @@ export const TRANSLATIONS = {
     higherEnrollment: 'Higher Education Enrollment',
     topUniversities: 'Top 5 Universities',
     recentInteractions: 'Recent Interactions',
-    recentHighLevelInteractions: 'Recent High-Level Interactions',
+    recentHighLevelInteractions: 'Recent Interactions',
     pointsDiscussion: 'Points of Discussion',
     relatedNews: 'Related News',
     uaeDelegation: 'UAE Delegation',
@@ -343,7 +284,14 @@ export const TRANSLATIONS = {
     icpHeader: 'Federal Authority for Identity and Citizenship',
     icpSubheader: 'ICP DATA',
     workforceStats: 'Workforce Stats',
-    saveReport: 'Save Report'
+    saveReport: 'Save Report',
+    // New Fields
+    crimeRate: 'Crime Rate',
+    literacyRate: 'Literacy Rate',
+    governmentType: 'Government Type',
+    workforceMinistry: 'Ministry of Labour',
+    workforceOf: 'Workforce of',
+    relationshipSummary: 'Relationship Summary',
   },
   ar: {
     dashboard: 'لوحة التحكم',
@@ -409,7 +357,7 @@ export const TRANSLATIONS = {
     totalPrivate: 'إجمالي القطاع الخاص',
     totalDomestic: 'إجمالي العمالة المساعدة',
     dataAsOf: 'البيانات حتى',
-    workersByEmirate: 'توزيع العمال حسب الإمارة (MOHRE)',
+    workersByEmirate: 'توزيع العمال حسب الإمارة',
     residentsByEmirate: 'توزيع المقيمين حسب الإمارة (ICP)',
     workersBySector: 'توزيع العمال حسب القطاع',
     avgWage: 'متوسط الأجر الشهري',
@@ -435,8 +383,8 @@ export const TRANSLATIONS = {
     higherEnrollment: 'الالتحاق بالتعليم العالي',
     topUniversities: 'أفضل 5 جامعات',
     recentInteractions: 'التفاعلات الأخيرة',
-    recentHighLevelInteractions: 'أبرز التفاعلات رفيعة المستوى',
-    pointsDiscussion: 'نقاط النقاش',
+    recentHighLevelInteractions: 'التفاعلات الأخيرة',
+    pointsDiscussion: 'محاور النقاش',
     relatedNews: 'أخبار ذات صلة',
     uaeDelegation: 'وفد دولة الإمارات',
     partnerDelegation: 'وفد الدولة الشريكة',
@@ -480,6 +428,13 @@ export const TRANSLATIONS = {
     icpHeader: 'الهيئة الاتحادية للهوية والجنسية',
     icpSubheader: 'بيانات الهيئة الاتحادية للهوية والجنسية',
     workforceStats: 'إحصاءات القوى العاملة',
-    saveReport: 'حفظ التقرير'
+    saveReport: 'حفظ التقرير',
+    // New Fields
+    crimeRate: 'معدل الجريمة',
+    literacyRate: 'معدل الإلمام بالقراءة والكتابة',
+    governmentType: 'نظام الحكم',
+    workforceMinistry: 'الجهة المعنية بسوق العمل',
+    workforceOf: 'القوى العاملة لدى',
+    relationshipSummary: 'ملخص العلاقة',
   }
 };

@@ -88,6 +88,12 @@ export interface ReportData {
   uaeEmbassyLocation: string; // Location in that country
   foreignEmbassyLocation: string; // City in UAE
   
+  // New Demographics
+  crimeRate?: string;
+  literacyRate?: string;
+  governmentType?: string;
+  workforceMinistry?: string;
+
   // Section 2: Workforce in UAE (NEW)
   uaeWorkforceStats: UaeWorkforceData;
 
@@ -183,6 +189,10 @@ export const EMPTY_REPORT_DATA: ReportData = {
   directFlight: false,
   uaeEmbassyLocation: '',
   foreignEmbassyLocation: '',
+  crimeRate: '',
+  literacyRate: '',
+  governmentType: '',
+  workforceMinistry: '',
   averageWage: '',
   minimumWage: '',
   uaeWorkforceStats: {

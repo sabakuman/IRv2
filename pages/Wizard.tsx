@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { ReportData, EMPTY_REPORT_DATA, Report, Delegate, LabelValue, NewsItem, RecentInteraction, PointOfDiscussion } from '../types';
 import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
-import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, Image as ImageIcon, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, Image as ImageIcon, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Landmark } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI } from "@google/genai";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -123,6 +123,10 @@ export default function Wizard() {
         "foreignEmbassyLocation": "string (City in UAE, usually Abu Dhabi or Dubai)",
         "averageWage": "string (Monthly average in USD approx)",
         "minimumWage": "string (Monthly minimum in USD approx)",
+        "crimeRate": "string (e.g. Low, or index)",
+        "literacyRate": "string (e.g. 95%)",
+        "governmentType": "string",
+        "workforceMinistry": "string (Name of ministry)",
         "totalWorkforce": "string (e.g. 50 Million)",
         "participationMale": number (percentage 0-100),
         "participationFemale": number (percentage 0-100),
@@ -158,6 +162,10 @@ export default function Wizard() {
           foreignEmbassyLocation: aiData.foreignEmbassyLocation || prev.foreignEmbassyLocation,
           averageWage: aiData.averageWage || prev.averageWage,
           minimumWage: aiData.minimumWage || prev.minimumWage,
+          crimeRate: aiData.crimeRate || prev.crimeRate,
+          literacyRate: aiData.literacyRate || prev.literacyRate,
+          governmentType: aiData.governmentType || prev.governmentType,
+          workforceMinistry: aiData.workforceMinistry || prev.workforceMinistry,
           workforceStats: {
             ...prev.workforceStats,
             totalWorkforce: aiData.totalWorkforce || prev.workforceStats.totalWorkforce,
@@ -178,6 +186,8 @@ export default function Wizard() {
       setIsFetchingAI(false);
     }
   };
+
+  // ... (rest of the functions remain the same: handleFetchNews, handleFetchEconomyEdu, handleFetchAgreements, handleImageUpload, addDelegate, removeDelegate, handleSave, updateUaeWorkforce, addSector, removeSector)
 
   const handleFetchNews = async () => {
      if (!data.country) return;
@@ -539,6 +549,15 @@ export default function Wizard() {
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
               <Input label={t('capital')} value={data.capital} onChange={e => setData({...data, capital: e.target.value})} />
               <Input label={t('officialLanguage')} value={data.officialLanguage} onChange={e => setData({...data, officialLanguage: e.target.value})} />
+              <Input label={t('population')} value={data.population} onChange={e => setData({...data, population: e.target.value})} />
+              <Input label={t('currency')} value={data.currency} onChange={e => setData({...data, currency: e.target.value})} />
+              <Input label={t('gdp')} value={data.gdp} onChange={e => setData({...data, gdp: e.target.value})} />
+              <Input label={t('hdi')} value={data.hdi} onChange={e => setData({...data, hdi: e.target.value})} />
+
+              <Input label={t('crimeRate')} value={data.crimeRate} onChange={e => setData({...data, crimeRate: e.target.value})} placeholder="e.g. Low" />
+              <Input label={t('literacyRate')} value={data.literacyRate} onChange={e => setData({...data, literacyRate: e.target.value})} placeholder="e.g. 96%" />
+              <Input label={t('governmentType')} value={data.governmentType} onChange={e => setData({...data, governmentType: e.target.value})} />
+              <Input label={t('workforceMinistry')} value={data.workforceMinistry} onChange={e => setData({...data, workforceMinistry: e.target.value})} />
               
               <div className="flex flex-col gap-1.5 md:col-span-2">
                  <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 flex items-center gap-2">
@@ -558,10 +577,6 @@ export default function Wizard() {
 
               <Input label={t('uaeEmbassy')} value={data.uaeEmbassyLocation} onChange={e => setData({...data, uaeEmbassyLocation: e.target.value})} />
               <Input label={t('foreignEmbassy')} value={data.foreignEmbassyLocation} onChange={e => setData({...data, foreignEmbassyLocation: e.target.value})} />
-              <Input label={t('gdp')} value={data.gdp} onChange={e => setData({...data, gdp: e.target.value})} />
-              <Input label={t('hdi')} value={data.hdi} onChange={e => setData({...data, hdi: e.target.value})} />
-              <Input label={t('population')} value={data.population} onChange={e => setData({...data, population: e.target.value})} />
-              <Input label={t('currency')} value={data.currency} onChange={e => setData({...data, currency: e.target.value})} />
             </div>
           </div>
         );
@@ -574,7 +589,7 @@ export default function Wizard() {
                </h3>
                <p className="text-sm text-gray-500 dark:text-gray-400">Breakdown of workers by MOHRE and ICP data sources.</p>
              </div>
-
+             
              <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/20 dark:border-primary/30">
                  <h4 className="font-bold text-primary-dark dark:text-primary-light mb-3 text-sm uppercase">{t('additionalIndicators')}</h4>
                  {data.uaeWorkforceStats.custom.map((item, i) => (
@@ -882,6 +897,7 @@ export default function Wizard() {
       case 4: // NEW: Recent Interactions & News
         return (
           <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+             {/* ... same as existing ... */}
              <div className="border-b dark:border-gray-700 pb-4 mb-6">
                 <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2">
                    <MessageSquare size={20} /> {t('sectionInteractions')}
@@ -981,6 +997,7 @@ export default function Wizard() {
       case 5: // Agreements (Old Step 4)
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+             {/* ... same as existing ... */}
              <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/20 dark:border-primary/30 flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
                <div className="flex items-center gap-3 text-primary-dark dark:text-primary-light">
                   <div className="bg-primary/10 p-2 rounded-full"><Sparkles size={20} /></div>
@@ -1155,7 +1172,6 @@ export default function Wizard() {
   return (
     <div className="max-w-5xl mx-auto pb-12">
       <div className="mb-8">
-        {/* Title input moved inside Profile Step, keeping header minimal */}
         <h1 className="text-2xl font-serif font-bold text-gray-800 dark:text-white">
            {currentStep === 0 ? t('createNew') : (reportTitle || "Untitled Report")}
         </h1>
