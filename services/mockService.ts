@@ -5,7 +5,7 @@ const STORAGE_KEYS = {
   REPORTS: 'uae_lmi_reports',
   LOGS: 'uae_lmi_logs',
   USERS: 'uae_lmi_users',
-  INIT: 'uae_lmi_initialized_v4' // Bumped to v4 to FORCE RESET
+  INIT: 'uae_lmi_initialized_v5' // Bumped to v5 to FORCE RESET for Admin/Admin requirement
 };
 
 // --- Low Level Helpers ---
@@ -55,7 +55,8 @@ const initializeStorage = () => {
     // Mark as initialized
     localStorage.setItem(STORAGE_KEYS.INIT, 'true');
     
-    // Clear previous version keys if any to avoid confusion (optional cleanup)
+    // Clear previous version keys
+    localStorage.removeItem('uae_lmi_initialized_v4');
     localStorage.removeItem('uae_lmi_initialized_v3');
     localStorage.removeItem('uae_lmi_initialized_v2');
   }
@@ -65,6 +66,14 @@ const initializeStorage = () => {
 initializeStorage();
 
 export const MockService = {
+  // --- Auth ---
+  validateUser: async (emailOrId: string, password: string): Promise<UserProfile | null> => {
+    const users = getStorage<UserProfile[]>(STORAGE_KEYS.USERS) || [];
+    // Basic match: allow login by email OR the raw id 'admin'
+    const user = users.find(u => (u.email === emailOrId || u.email.split('@')[0] === emailOrId) && u.password === password);
+    return user || null;
+  },
+
   // --- Reports ---
   getReports: async (): Promise<Report[]> => {
     const reports = getStorage<Report[]>(STORAGE_KEYS.REPORTS) || [];

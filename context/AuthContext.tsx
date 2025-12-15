@@ -1,30 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, UserRole } from '../types';
+import { UserProfile } from '../types';
+import { MockService } from '../services/mockService';
 
 interface AuthContextType {
   user: UserProfile | null;
   isLoading: boolean;
-  signIn: (role: UserRole) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const ADMIN_USER: UserProfile = {
-  id: 'u-1',
-  email: 'official@mohre.gov.ae',
-  fullName: 'Ahmed Al-Mansouri',
-  role: 'admin',
-  avatarUrl: 'https://ui-avatars.com/api/?name=Ahmed+Al-Mansouri&background=0D8ABC&color=fff'
-};
-
-const STANDARD_USER: UserProfile = {
-  id: 'u-2',
-  email: 'sarah.k@mohre.gov.ae',
-  fullName: 'Sarah Khan',
-  role: 'user',
-  avatarUrl: 'https://ui-avatars.com/api/?name=Sarah+Khan&background=eb4034&color=fff'
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -34,21 +19,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check local storage for session
     const stored = localStorage.getItem('auth_session');
     if (stored) {
-      setUser(JSON.parse(stored));
+      try {
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+      } catch (e) {
+        localStorage.removeItem('auth_session');
+      }
     }
     setIsLoading(false);
   }, []);
 
-  const signIn = async (role: UserRole) => {
+  const signIn = async (email: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
     
-    const selectedUser = role === 'admin' ? ADMIN_USER : STANDARD_USER;
-    
-    setUser(selectedUser);
-    localStorage.setItem('auth_session', JSON.stringify(selectedUser));
-    setIsLoading(false);
+    try {
+      // Validate against the "Database"
+      const validUser = await MockService.validateUser(email, pass);
+      
+      if (validUser) {
+        setUser(validUser);
+        localStorage.setItem('auth_session', JSON.stringify(validUser));
+        
+        // Log the login action
+        await MockService.addAuditLog({
+          id: `log-${Date.now()}`,
+          action: 'LOGIN',
+          user: validUser.fullName,
+          timestamp: new Date().toISOString(),
+          details: 'Successful Login'
+        });
+        
+        setIsLoading(false);
+        return true;
+      } else {
+        setIsLoading(false);
+        return false;
+      }
+    } catch (e) {
+      console.error(e);
+      setIsLoading(false);
+      return false;
+    }
   };
 
   const signOut = () => {

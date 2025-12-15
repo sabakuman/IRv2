@@ -3,18 +3,30 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Button, Input, Card } from '../components/ui/LayoutComponents';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User } from 'lucide-react';
+import { LogIn, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const { signIn } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleLogin = async (role: 'admin' | 'user') => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
     setIsLoggingIn(true);
-    await signIn(role);
-    navigate('/dashboard');
+    
+    const success = await signIn(email, password);
+    
+    if (success) {
+      navigate('/dashboard');
+    } else {
+      setError('Invalid credentials. Please try again.');
+      setIsLoggingIn(false);
+    }
   };
 
   return (
@@ -33,43 +45,47 @@ export default function Login() {
         </div>
 
         <Card className="shadow-diplomatic">
-           <div className="space-y-6">
+           <form onSubmit={handleLogin} className="space-y-6">
              <div className="text-center pb-4 border-b border-gray-100">
                <h2 className="text-xl font-semibold text-foreground">{t('welcome')}</h2>
                <p className="text-sm text-gray-500">{t('loginSubtitle')}</p>
              </div>
              
+             {error && (
+               <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center gap-2">
+                 <AlertCircle size={16} /> {error}
+               </div>
+             )}
+             
              <div className="space-y-4">
                <Input 
-                 label="Official Email" 
-                 type="email" 
-                 placeholder="username@mohre.gov.ae" 
+                 label="Username or Email" 
+                 type="text" 
+                 placeholder="admin" 
+                 value={email}
+                 onChange={(e) => setEmail(e.target.value)}
+                 required
                />
                <Input 
                  label="Password" 
                  type="password" 
                  placeholder="••••••••" 
+                 value={password}
+                 onChange={(e) => setPassword(e.target.value)}
+                 required
                />
              </div>
 
-             <div className="pt-2 space-y-3">
+             <div className="pt-2">
                <Button 
+                  type="submit"
                   disabled={isLoggingIn}
-                  onClick={() => handleLogin('admin')} 
                   className="w-full py-3 text-lg bg-primary-dark hover:bg-primary"
                 >
-                 <Shield size={18} /> Login as Admin
-               </Button>
-               <Button 
-                  disabled={isLoggingIn}
-                  onClick={() => handleLogin('user')} 
-                  variant="outline" 
-                  className="w-full py-3 text-lg"
-                >
-                 <User size={18} /> Login as Standard User
+                 {isLoggingIn ? 'Authenticating...' : <><LogIn size={18} /> Login Securely</>}
                </Button>
              </div>
-           </div>
+           </form>
 
            <div className="mt-6 flex justify-center gap-4">
               <button 
