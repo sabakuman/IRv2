@@ -109,18 +109,18 @@ export const KPI = ({
   chip?: string;
   tone?: "ok" | "warn" | "info" | "restrict";
 }) => (
-  <div className="kpi-card avoid-break">
+  <div className="kpi-card avoid-break h-full flex flex-col justify-center">
     <div className="kpi-row">
-      <div className="kpi-icon">
+      <div className="kpi-icon shrink-0 mt-0.5">
         <Icon size={16} className="text-primary" />
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-center mb-0.5">
-          <p className="kpi-label truncate pr-2">{label}</p>
+        <div className="flex justify-between items-start mb-0.5">
+          <p className="kpi-label pr-1 leading-tight">{label}</p>
           {chip && (
             <span
-              className={`kpi-chip shrink-0 ${
+              className={`kpi-chip shrink-0 ml-1 ${
                 tone === "ok"
                   ? "chip-ok"
                   : tone === "warn"
@@ -135,8 +135,8 @@ export const KPI = ({
           )}
         </div>
 
-        <p className="kpi-value truncate" title={String(value)}>{value || 'N/A'}</p>
-        {sub && <p className="kpi-sub mt-0.5">{sub}</p>}
+        <p className="kpi-value break-words leading-tight text-base" title={String(value)}>{value || 'N/A'}</p>
+        {sub && <p className="kpi-sub mt-0.5 leading-tight">{sub}</p>}
       </div>
     </div>
   </div>
