@@ -9,70 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Naskh+Arabic:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     
-    <style>
-      :root {
-        --background: 0 0% 99%;
-        --foreground: 217 32% 17%;
-        
-        --primary: 217 91% 26%;
-        --primary-light: 217 91% 35%;
-        --primary-dark: 217 91% 18%;
-        --primary-foreground: 210 40% 98%;
-
-        --secondary: 217 19% 95%;
-        --secondary-foreground: 222 47% 11%;
-        
-        --accent: 37 92% 50%;
-        --accent-light: 37 92% 65%;
-        --accent-foreground: 210 40% 98%;
-
-        --muted: 217 19% 96%;
-        --muted-foreground: 215 16% 47%;
-        
-        --border: 214 32% 91%;
-        --input: 214 32% 91%;
-        --ring: 217 91% 26%;
-      }
-      
-      .dark {
-        --background: 222 47% 11%;
-        --foreground: 210 40% 98%;
-        
-        --primary: 217 91% 36%;
-        --primary-light: 217 91% 45%;
-        --primary-dark: 217 91% 26%;
-        --primary-foreground: 222 47% 11%;
-        
-        --secondary: 217 32% 17%;
-        --secondary-foreground: 210 40% 98%;
-        
-        --accent: 37 92% 50%;
-        --accent-light: 37 92% 60%;
-        --accent-foreground: 222 47% 11%;
-        
-        --muted: 217 32% 17%;
-        --muted-foreground: 215 20% 65%;
-        
-        --border: 217 32% 20%;
-        --input: 217 32% 20%;
-        --ring: 217 91% 36%;
-      }
-      
-      @layer base {
-        * {
-          @apply border-border;
-        }
-        body {
-          @apply bg-background text-foreground;
-        }
-      }
-
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #555; }
-    </style>
     <!-- Polyfill for global process to prevent crashes in some libraries -->
     <script>
       window.process = window.process || { env: { NODE_ENV: 'production' } };
@@ -80,16 +16,16 @@
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "vite": "https://esm.sh/vite@^7.3.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.10.1",
     "uuid": "https://esm.sh/uuid@^13.0.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
     "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
-    "recharts": "https://esm.sh/recharts@^3.5.1",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.10.1",
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
     "date-fns": "https://esm.sh/date-fns@^4.1.0",
-    "vite": "https://esm.sh/vite@^7.2.7",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
