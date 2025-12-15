@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { 
   Globe, Briefcase, Users, FileText, TrendingUp, Building, 
-  GraduationCap, MessageSquare, Handshake, MapPin, Calendar, 
-  ShieldAlert, Landmark, Plane, Banknote, BookOpen, Layers,
-  Printer, X, AlertTriangle
+  GraduationCap, Handshake, MapPin, 
+  ShieldAlert, Landmark, Plane, Banknote, 
+  Printer, X, AlertTriangle, CheckCircle2
 } from 'lucide-react';
 
-const COLORS = ['#1e40af', '#eab308', '#10b981', '#6b7280', '#f97316', '#8b5cf6'];
+const COLORS = ['#1e3a8a', '#ca8a04', '#15803d', '#475569', '#ea580c', '#7c3aed'];
 const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
 
 export default function PrintView() {
@@ -33,12 +33,10 @@ export default function PrintView() {
   useEffect(() => {
     // Wait for fonts and data to be fully ready before printing
     if (report) {
-      // Use document.fonts.ready to ensure web fonts (Inter/Serif) are loaded
-      // This prevents the PDF from having fallback fonts
       document.fonts.ready.then(() => {
         const timer = setTimeout(() => {
-           window.print();
-        }, 1000); // 1s buffer for charts to render animation-less
+           // window.print(); // Auto-print disabled for better UX, user can click button
+        }, 1500); 
         return () => clearTimeout(timer);
       });
     }
@@ -55,52 +53,66 @@ export default function PrintView() {
     );
   }
 
-  if (!report) return <div className="h-screen flex items-center justify-center text-primary font-serif animate-pulse">Generating Report Document...</div>;
+  if (!report) return <div className="h-screen flex items-center justify-center text-primary font-serif animate-pulse">Generating Ministerial Document...</div>;
 
   const { data } = report;
 
   // --- Layout Helper Components ---
 
   const PageContainer = ({ children, className = '' }: { children?: React.ReactNode, className?: string }) => (
-    <div className={`w-[210mm] min-h-[297mm] bg-white mx-auto relative print-safe-pad overflow-hidden ${className}`}>
-      {children}
+    <div className={`w-[210mm] min-h-[297mm] bg-white mx-auto relative print-safe-pad overflow-hidden flex flex-col ${className}`}>
+      {/* Running Header */}
+      <div className="absolute top-8 left-12 right-12 flex justify-between items-end border-b-2 border-primary/10 pb-2">
+        <div className="flex items-center gap-2 opacity-60">
+           <img src="https://flagcdn.com/w40/ae.png" className="h-3 w-auto" alt="UAE" />
+           <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Ministry of Human Resources & Emiratisation</span>
+        </div>
+        <div className="text-[9px] text-gray-400 font-mono">
+           REF: {report.id}
+        </div>
+      </div>
+
+      <div className="mt-16 flex-1">
+        {children}
+      </div>
+
       <Footer />
     </div>
   );
 
   const SectionHeader = ({ icon: Icon, title, subtitle }: { icon: any, title: string, subtitle?: string }) => (
-    <div className="flex items-center gap-4 border-b-2 border-primary pb-4 mb-8 mt-4">
-      <div className="bg-primary/5 p-3 rounded-full border border-primary/10 text-primary">
-        <Icon size={32} strokeWidth={1.5} />
+    <div className="flex items-end gap-4 border-b border-primary/20 pb-2 mb-8 mt-2">
+      <div className="text-primary-dark mb-1">
+        <Icon size={28} strokeWidth={1.5} />
       </div>
-      <div>
-        <h2 className="text-2xl font-serif font-bold text-primary-dark tracking-tight">{title}</h2>
-        {subtitle && <p className="text-sm text-gray-500 font-medium uppercase tracking-wider mt-1">{subtitle}</p>}
+      <div className="flex-1">
+        <h2 className="text-2xl font-serif font-bold text-primary-dark leading-none">{title}</h2>
+        {subtitle && <p className="text-xs text-accent font-bold uppercase tracking-widest mt-1">{subtitle}</p>}
       </div>
     </div>
   );
 
-  const StatBox = ({ label, value, sub, icon: Icon }: { label: string, value: string | number, sub?: string, icon?: any }) => (
-    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden group">
-      <div className="relative z-10">
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-2">
-          {Icon && <Icon size={12} />} {label}
-        </p>
-        <p className="text-xl font-bold text-primary-dark">{value}</p>
-        {sub && <p className="text-[10px] text-gray-400 mt-1">{sub}</p>}
-      </div>
-      <div className="absolute -bottom-4 -right-4 text-gray-50 opacity-10 rotate-12 group-hover:scale-110 transition-transform">
-        {Icon && <Icon size={64} />}
-      </div>
+  const StatItem = ({ label, value, sub }: { label: string, value: string | number, sub?: string }) => (
+    <div className="border-l-2 border-accent pl-4 py-1">
+       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">{label}</p>
+       <p className="text-lg font-bold text-gray-900 font-serif leading-tight">{value}</p>
+       {sub && <p className="text-[10px] text-gray-500 italic">{sub}</p>}
+    </div>
+  );
+
+  const DataCard = ({ title, children, className = '' }: { title?: string, children?: React.ReactNode, className?: string }) => (
+    <div className={`bg-gray-50/50 border border-gray-200 rounded-lg p-5 ${className}`}>
+      {title && <h3 className="font-bold text-primary-dark text-sm uppercase tracking-wide border-b border-gray-200 pb-2 mb-4">{title}</h3>}
+      {children}
     </div>
   );
 
   const Footer = () => (
-    <div className="absolute bottom-6 left-0 right-0 px-12 flex justify-between items-center text-[9px] text-gray-400 border-t border-gray-100 pt-4">
-      <p className="font-bold text-red-700 tracking-widest uppercase flex items-center gap-1">
-        <ShieldAlert size={10} /> Confidential / Internal Use Only
+    <div className="absolute bottom-8 left-12 right-12 flex justify-between items-center border-t border-gray-100 pt-3">
+      <p className="font-bold text-red-800 text-[9px] tracking-[0.2em] uppercase flex items-center gap-1.5 bg-red-50 px-2 py-1 rounded">
+        <ShieldAlert size={10} /> Confidential / Official Use Only
       </p>
-      <p>{report.id} • Generated on {new Date().toLocaleDateString()}</p>
+      <p className="text-[9px] text-gray-400 font-medium">Generated on {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
     </div>
   );
 
@@ -108,140 +120,181 @@ export default function PrintView() {
 
   // 1. Cover Page
   const CoverPage = () => (
-    <div className="w-[210mm] h-[297mm] bg-white mx-auto relative flex flex-col items-center justify-center overflow-hidden">
-       {/* Background Elements */}
-       <div className="absolute top-0 left-0 w-full h-32 bg-primary"></div>
-       <div className="absolute bottom-0 right-0 w-2/3 h-full bg-gray-50 -z-10 skew-x-12 translate-x-20"></div>
+    <div className="w-[210mm] h-[297mm] bg-white mx-auto relative flex flex-col overflow-hidden">
+       {/* Decorative Background */}
+       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-accent/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
        
-       <div className="text-center z-10 p-12 w-full">
-          <div className="mb-12">
-             <img src="https://flagcdn.com/w160/ae.png" alt="UAE" className="h-24 w-auto mx-auto drop-shadow-xl" />
-             <div className="mt-8">
-               <h1 className="text-lg font-serif font-medium text-gray-600 uppercase tracking-[0.2em] mb-2">Ministry of Human Resources & Emiratisation</h1>
-               <div className="h-1 w-24 bg-accent mx-auto"></div>
+       <div className="flex-1 flex flex-col justify-center px-16 relative z-10">
+          <div className="mb-16 border-l-4 border-accent pl-8 py-2">
+             <div className="flex items-center gap-3 mb-4">
+               <img src="https://flagcdn.com/w160/ae.png" alt="UAE" className="h-8 w-auto shadow-sm" />
+               <span className="h-8 w-px bg-gray-300"></span>
+               <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">United Arab Emirates<br/>Ministry of Human Resources & Emiratisation</p>
              </div>
+             <h1 className="text-4xl font-serif font-medium text-gray-900 leading-tight">
+                Labour Market<br/>Intelligence Report
+             </h1>
           </div>
 
-          <div className="mb-16">
-             <div className="inline-block border-2 border-primary/20 p-2 rounded-full mb-6 bg-white shadow-lg">
-                <img 
-                   src={`https://flagcdn.com/w160/${data.country === 'Philippines' ? 'ph' : data.country === 'India' ? 'in' : 'ae'}.png`} 
-                   className="w-24 h-24 rounded-full object-cover"
-                   onError={(e) => e.currentTarget.style.display = 'none'}
-                />
+          <div className="space-y-12">
+             <div className="flex items-center gap-8">
+                <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl overflow-hidden relative bg-gray-100">
+                    <img 
+                       src={`https://flagcdn.com/w320/${data.country === 'Philippines' ? 'ph' : data.country === 'India' ? 'in' : 'ae'}.png`} 
+                       className="w-full h-full object-cover"
+                       onError={(e) => e.currentTarget.style.display = 'none'}
+                    />
+                </div>
+                <div>
+                   <p className="text-sm font-bold text-accent uppercase tracking-widest mb-1">Subject Country</p>
+                   <h2 className="text-6xl font-serif font-bold text-primary-dark">{data.country}</h2>
+                </div>
              </div>
-             <h2 className="text-6xl font-serif font-bold text-primary-dark mb-4 leading-tight">{data.country}</h2>
-             <p className="text-2xl text-gray-500 font-light">Bilateral Labour Market Intelligence Report</p>
-          </div>
 
-          <div className="bg-white shadow-diplomatic px-8 py-4 rounded-xl inline-flex items-center gap-8 border border-gray-100">
-             <div className="text-left">
-                <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Report Date</p>
-                <p className="text-lg font-bold text-primary">{data.reportDate}</p>
-             </div>
-             <div className="h-8 w-px bg-gray-200"></div>
-             <div className="text-left">
-                <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Reference ID</p>
-                <p className="text-lg font-bold text-primary">{report.id}</p>
+             <div className="grid grid-cols-2 gap-8 border-t border-gray-100 pt-8">
+                <div>
+                   <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Report Date</p>
+                   <p className="text-lg font-medium text-gray-800">{data.reportDate}</p>
+                </div>
+                <div>
+                   <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Reference ID</p>
+                   <p className="text-lg font-mono text-gray-800">{report.id}</p>
+                </div>
+                <div>
+                   <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Classification</p>
+                   <p className="text-sm font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">Restricted</p>
+                </div>
+                <div>
+                   <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Prepared By</p>
+                   <p className="text-sm font-medium text-gray-800">International Relations Dept.</p>
+                </div>
              </div>
           </div>
        </div>
        
-       <div className="absolute bottom-12 text-center w-full">
-         <p className="text-xs font-bold text-red-600 tracking-[0.3em] uppercase">Confidential Document</p>
-       </div>
+       <div className="h-4 bg-primary w-full"></div>
     </div>
   );
 
-  // 2. Country Profile & Economy
+  // 2. Country Profile
   const ProfilePage = () => (
     <PageContainer className="page-break">
-       <SectionHeader icon={Globe} title="Country Profile" subtitle="Strategic Overview & Demographics" />
+       <SectionHeader icon={Globe} title="Country Profile" subtitle="Strategic Overview" />
        
-       {/* Top Cards */}
-       <div className="grid grid-cols-4 gap-4 mb-8">
-          <StatBox label="Capital" value={data.capital} icon={Landmark} />
-          <StatBox label="Population" value={data.population} icon={Users} />
-          <StatBox label="Currency" value={data.currency} icon={Banknote} />
-          <StatBox label="Flight Conn." value={data.directFlight ? "Direct" : "Indirect"} icon={Plane} />
+       <div className="grid grid-cols-3 gap-6 mb-8">
+          <DataCard className="col-span-2" title="Key Demographics">
+             <div className="grid grid-cols-2 gap-y-6 gap-x-8">
+               <StatItem label="Capital City" value={data.capital} />
+               <StatItem label="Total Population" value={data.population} />
+               <StatItem label="Currency" value={data.currency} />
+               <StatItem label="Flight Connectivity" value={data.directFlight ? "Direct Flights Available" : "Indirect Only"} sub="To UAE Airports" />
+               <StatItem label="Human Dev. Index (HDI)" value={data.hdi} />
+               <StatItem label="Official Language" value={data.officialLanguage} />
+             </div>
+          </DataCard>
+
+          <div className="space-y-6">
+             <DataCard title="Diplomatic Missions">
+               <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                      <span className="text-xs font-bold text-gray-500 uppercase">UAE Embassy</span>
+                    </div>
+                    <p className="font-serif text-lg text-primary-dark pl-4">{data.uaeEmbassyLocation || "N/A"}</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-2 h-2 rounded-full bg-accent"></div>
+                      <span className="text-xs font-bold text-gray-500 uppercase">Foreign Embassy</span>
+                    </div>
+                    <p className="font-serif text-lg text-gray-800 pl-4">{data.foreignEmbassyLocation || "N/A"}</p>
+                  </div>
+               </div>
+             </DataCard>
+
+             <div className="bg-primary text-white p-5 rounded-lg shadow-sm">
+                <p className="text-xs font-bold opacity-60 uppercase mb-2">Trafficking in Persons (TIP) Rank</p>
+                <div className="text-3xl font-serif font-bold">{data.economicStats.tipRank}</div>
+             </div>
+          </div>
        </div>
 
-       {/* Map / Key Info Split */}
-       <div className="flex gap-8 mb-8">
-          <div className="w-1/3 bg-primary/5 rounded-xl p-6 border border-primary/10">
-             <h3 className="font-serif font-bold text-primary mb-4 flex items-center gap-2"><MapPin size={18} /> Diplomatic Presence</h3>
+       <SectionHeader icon={TrendingUp} title="Economic Landscape" subtitle="Trade & Education" />
+
+       <div className="grid grid-cols-2 gap-6 mb-8">
+          <DataCard title="Trade Statistics">
              <div className="space-y-4">
-               <div>
-                  <p className="text-xs text-gray-500 uppercase">UAE Embassy</p>
-                  <p className="font-bold text-gray-800">{data.uaeEmbassyLocation || "N/A"}</p>
+               <div className="flex justify-between items-center border-b border-gray-200 border-dashed pb-2">
+                 <span className="text-sm text-gray-600">GDP (Current US$)</span>
+                 <span className="font-bold text-primary-dark">{data.gdp}</span>
                </div>
-               <div>
-                  <p className="text-xs text-gray-500 uppercase">Foreign Embassy</p>
-                  <p className="font-bold text-gray-800">{data.foreignEmbassyLocation || "N/A"}</p>
+               <div className="flex justify-between items-center border-b border-gray-200 border-dashed pb-2">
+                 <span className="text-sm text-gray-600">Inflation Rate</span>
+                 <span className="font-bold text-gray-800">{data.economicStats.inflation}</span>
                </div>
-               <div className="pt-4 border-t border-primary/10">
-                  <p className="text-xs text-gray-500 uppercase">Official Language</p>
-                  <p className="font-bold text-gray-800">{data.officialLanguage}</p>
+               <div className="flex justify-between items-center pt-2">
+                 <div className="text-center w-1/2 border-r border-gray-200">
+                    <p className="text-xs text-gray-400 uppercase font-bold">Imports from UAE</p>
+                    <p className="text-xl font-bold text-primary-dark mt-1">{data.economicStats.totalImportsFromUAE}</p>
+                 </div>
+                 <div className="text-center w-1/2">
+                    <p className="text-xs text-gray-400 uppercase font-bold">Exports to UAE</p>
+                    <p className="text-xl font-bold text-primary-dark mt-1">{data.economicStats.totalExportsToUAE}</p>
+                 </div>
                </div>
              </div>
-          </div>
+          </DataCard>
 
-          <div className="flex-1">
-             <div className="grid grid-cols-2 gap-4 h-full">
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                   <h4 className="font-bold text-gray-700 mb-2 flex items-center gap-2"><Briefcase size={16} /> Economic Indicators</h4>
-                   <ul className="space-y-3 text-sm">
-                      <li className="flex justify-between border-b border-gray-200 pb-1"><span>GDP</span> <span className="font-bold text-primary">{data.gdp}</span></li>
-                      <li className="flex justify-between border-b border-gray-200 pb-1"><span>HDI</span> <span className="font-bold">{data.hdi}</span></li>
-                      <li className="flex justify-between border-b border-gray-200 pb-1"><span>Inflation</span> <span className="font-bold">{data.economicStats.inflation}</span></li>
-                      <li className="flex justify-between"><span>TIP Rank</span> <span className="font-bold">{data.economicStats.tipRank}</span></li>
-                   </ul>
+          <DataCard title="Education & Skills">
+             <div className="mb-4">
+                <div className="flex justify-between text-xs font-bold text-gray-500 uppercase mb-1">
+                  <span>Primary Enrollment</span>
+                  <span>{data.educationStats.primaryEnrollment}</span>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                   <h4 className="font-bold text-gray-700 mb-2 flex items-center gap-2"><GraduationCap size={16} /> Education</h4>
-                   <ul className="space-y-3 text-sm">
-                      <li className="flex justify-between border-b border-gray-200 pb-1"><span>Primary Enrollment</span> <span className="font-bold">{data.educationStats.primaryEnrollment}</span></li>
-                      <li className="flex justify-between border-b border-gray-200 pb-1"><span>Higher Ed.</span> <span className="font-bold">{data.educationStats.higherEducationEnrollment}</span></li>
-                   </ul>
-                   <p className="text-xs text-gray-500 mt-2 font-bold uppercase">Top University</p>
-                   <p className="text-sm truncate">{data.educationStats.topUniversities[0]}</p>
+                <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                   <div className="h-full bg-primary" style={{ width: data.educationStats.primaryEnrollment.replace('%', '') + '%' }}></div>
                 </div>
              </div>
-          </div>
-       </div>
-
-       {/* Trade Stats */}
-       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mb-6">
-          <h3 className="font-serif font-bold text-primary mb-4 flex items-center gap-2"><TrendingUp size={20} /> Bilateral Trade & Remittances</h3>
-          <div className="grid grid-cols-3 gap-8">
-             <div className="text-center border-r border-gray-100">
-                <p className="text-3xl font-bold text-primary-dark">{data.economicStats.totalExportsToUAE}</p>
-                <p className="text-xs text-gray-500 uppercase mt-1">Exports to UAE</p>
+             <div className="mb-6">
+                <div className="flex justify-between text-xs font-bold text-gray-500 uppercase mb-1">
+                  <span>Higher Ed. Enrollment</span>
+                  <span>{data.educationStats.higherEducationEnrollment}</span>
+                </div>
+                <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                   <div className="h-full bg-accent" style={{ width: data.educationStats.higherEducationEnrollment.replace('%', '') + '%' }}></div>
+                </div>
              </div>
-             <div className="text-center border-r border-gray-100">
-                <p className="text-3xl font-bold text-primary-dark">{data.economicStats.totalImportsFromUAE}</p>
-                <p className="text-xs text-gray-500 uppercase mt-1">Imports from UAE</p>
-             </div>
-             <div className="text-center">
-                <p className="text-3xl font-bold text-green-600">{data.economicStats.remittancesFromUAE}</p>
-                <p className="text-xs text-gray-500 uppercase mt-1">Remittances (From UAE)</p>
-             </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-8 mt-6 pt-6 border-t border-gray-100">
              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase mb-2">Top Exports to UAE</p>
+               <p className="text-xs font-bold text-gray-400 uppercase mb-2">Top Universities</p>
+               <ul className="text-sm space-y-1">
+                 {data.educationStats.topUniversities.slice(0,3).map((u, i) => (
+                   <li key={i} className="flex items-start gap-2 text-gray-700">
+                     <span className="text-accent">•</span> {u}
+                   </li>
+                 ))}
+               </ul>
+             </div>
+          </DataCard>
+       </div>
+       
+       <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
+          <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Top Traded Commodities</h4>
+          <div className="grid grid-cols-2 gap-8">
+             <div>
+                <p className="text-xs font-bold text-primary mb-2">Exports to UAE</p>
                 <div className="flex flex-wrap gap-2">
-                   {data.economicStats.topExportProducts.slice(0, 4).map((p, i) => (
-                      <span key={i} className="bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded border border-blue-100">{p}</span>
+                   {data.economicStats.topExportProducts.slice(0,5).map((p,i) => (
+                      <span key={i} className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded text-gray-600 shadow-sm">{p}</span>
                    ))}
                 </div>
              </div>
              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase mb-2">Top Imports from UAE</p>
+                <p className="text-xs font-bold text-accent mb-2">Imports from UAE</p>
                 <div className="flex flex-wrap gap-2">
-                   {data.economicStats.topImportProducts.slice(0, 4).map((p, i) => (
-                      <span key={i} className="bg-orange-50 text-orange-800 text-xs px-2 py-1 rounded border border-orange-100">{p}</span>
+                   {data.economicStats.topImportProducts.slice(0,5).map((p,i) => (
+                      <span key={i} className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded text-gray-600 shadow-sm">{p}</span>
                    ))}
                 </div>
              </div>
@@ -253,78 +306,87 @@ export default function PrintView() {
   // 3. UAE Workforce
   const UAEWorkforcePage = () => (
      <PageContainer className="page-break">
-        <SectionHeader icon={Building} title="Workforce in UAE" subtitle="MOHRE & ICP Statistics" />
+        <SectionHeader icon={Building} title="Workforce in UAE" subtitle="Domestic Labour Market Analysis" />
 
         <div className="grid grid-cols-2 gap-6 mb-8">
-           <div className="bg-blue-900 text-white rounded-xl p-6 shadow-diplomatic relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10"><Briefcase size={80} /></div>
-              <p className="text-blue-200 text-sm font-medium uppercase tracking-wide mb-1">Total Private Sector</p>
-              <p className="text-4xl font-bold">{data.uaeWorkforceStats.mohre.totalPrivate.value}</p>
-              <p className="text-xs mt-2 opacity-60">Source: MOHRE • {data.uaeWorkforceStats.mohre.totalPrivate.date}</p>
-           </div>
-           <div className="bg-accent text-white rounded-xl p-6 shadow-diplomatic relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10"><Users size={80} /></div>
-              <p className="text-yellow-100 text-sm font-medium uppercase tracking-wide mb-1">Total Domestic Workers</p>
-              <p className="text-4xl font-bold">{data.uaeWorkforceStats.mohre.totalDomestic.value}</p>
-              <p className="text-xs mt-2 opacity-60">Source: MOHRE • {data.uaeWorkforceStats.mohre.totalDomestic.date}</p>
-           </div>
-        </div>
-
-        {/* Custom Stats Grid */}
-        <div className="mb-8 bg-gray-50 border border-gray-100 rounded-xl p-4">
-           <div className="flex justify-around divide-x divide-gray-200">
-              {data.uaeWorkforceStats.custom.map((stat) => (
-                 <div key={stat.id} className="text-center px-4 flex-1">
-                    <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                    <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-1">{stat.label}</p>
-                 </div>
-              ))}
-           </div>
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-2 gap-8 mb-6">
-           <div className="border border-gray-200 rounded-xl p-4">
-              <h4 className="font-bold text-primary mb-4 text-center text-sm uppercase">Distribution by Emirate (MOHRE)</h4>
-              <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} layout="vertical" margin={{ left: 20, right: 20 }}>
-                      <XAxis type="number" hide />
-                      <YAxis type="category" dataKey="name" width={80} tick={{fontSize: 9, fill: '#666'}} interval={0} />
-                      <Bar dataKey="value" fill="#1e3a8a" radius={[0, 4, 4, 0]} barSize={12} isAnimationActive={false} />
-                   </BarChart>
-                </ResponsiveContainer>
+           <div className="bg-primary text-white rounded-lg p-6 shadow-sm relative overflow-hidden">
+              <div className="relative z-10">
+                 <p className="text-primary-foreground/70 text-xs font-bold uppercase tracking-widest mb-1">MOHRE • Private Sector</p>
+                 <p className="text-4xl font-serif font-bold">{data.uaeWorkforceStats.mohre.totalPrivate.value}</p>
+                 <p className="text-[10px] mt-2 opacity-80">Data as of {data.uaeWorkforceStats.mohre.totalPrivate.date}</p>
               </div>
+              <Briefcase className="absolute -bottom-4 -right-4 text-white opacity-10" size={100} />
            </div>
-           <div className="border border-gray-200 rounded-xl p-4">
-              <h4 className="font-bold text-primary mb-4 text-center text-sm uppercase">Top Sectors (MOHRE)</h4>
+           <div className="bg-white border-2 border-accent text-gray-800 rounded-lg p-6 shadow-sm relative overflow-hidden">
+              <div className="relative z-10">
+                 <p className="text-accent text-xs font-bold uppercase tracking-widest mb-1">MOHRE • Domestic Workers</p>
+                 <p className="text-4xl font-serif font-bold">{data.uaeWorkforceStats.mohre.totalDomestic.value}</p>
+                 <p className="text-[10px] mt-2 opacity-60">Data as of {data.uaeWorkforceStats.mohre.totalDomestic.date}</p>
+              </div>
+              <Users className="absolute -bottom-4 -right-4 text-accent opacity-10" size={100} />
+           </div>
+        </div>
+
+        {/* Custom Stats Strip */}
+        {data.uaeWorkforceStats.custom.length > 0 && (
+          <div className="flex flex-wrap gap-4 mb-8">
+             {data.uaeWorkforceStats.custom.map((stat) => (
+               <div key={stat.id} className="flex-1 min-w-[120px] bg-gray-50 border border-gray-100 rounded p-3 text-center">
+                  <p className="text-lg font-bold text-gray-800">{stat.value}</p>
+                  <p className="text-[9px] uppercase font-bold text-gray-400 tracking-wider truncate">{stat.label}</p>
+               </div>
+             ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-8 h-[300px] mb-8">
+           <div>
+              <h4 className="font-bold text-gray-800 text-xs uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">Distribution by Emirate (MOHRE)</h4>
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={data.uaeWorkforceStats.mohre.bySector} margin={{ bottom: 20 }}>
-                      <XAxis dataKey="name" tick={{fontSize: 9, fill: '#666'}} interval={0} />
-                      <YAxis hide />
-                      <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} isAnimationActive={false}>
-                        {data.uaeWorkforceStats.mohre.bySector.map((entry, index) => (
-                           <Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />
+                   <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} layout="vertical" margin={{ left: 40, right: 20 }}>
+                      <XAxis type="number" hide />
+                      <YAxis type="category" dataKey="name" width={80} tick={{fontSize: 9, fill: '#666', fontWeight: 600}} interval={0} axisLine={false} tickLine={false} />
+                      <Bar dataKey="value" fill="#1e3a8a" radius={[0, 2, 2, 0]} barSize={16} isAnimationActive={false}>
+                        {data.uaeWorkforceStats.mohre.byEmirate.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />
                         ))}
                       </Bar>
                    </BarChart>
                 </ResponsiveContainer>
               </div>
            </div>
+           
+           <div>
+              <h4 className="font-bold text-gray-800 text-xs uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">Top Sectors (MOHRE)</h4>
+              <div className="space-y-3">
+                 {data.uaeWorkforceStats.mohre.bySector.slice(0,6).map((sector, i) => (
+                    <div key={i}>
+                       <div className="flex justify-between text-xs mb-1">
+                          <span className="font-medium text-gray-600">{sector.name}</span>
+                          <span className="font-bold text-gray-900">{sector.value}%</span>
+                       </div>
+                       <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-accent" style={{ width: `${Math.min(sector.value, 100)}%` }}></div>
+                       </div>
+                    </div>
+                 ))}
+              </div>
+           </div>
         </div>
 
-        {/* ICP Small Section */}
-        <div className="border-t-2 border-dashed border-gray-200 pt-6">
-           <h4 className="font-bold text-gray-400 uppercase text-xs mb-4 flex items-center gap-2"><span className="w-2 h-2 bg-orange-500 rounded-full"></span> ICP Data Overview</h4>
+        {/* ICP Data Section */}
+        <div className="mt-auto border-t border-dashed border-gray-300 pt-6">
+           <div className="flex items-center gap-2 mb-4">
+              <div className="bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">ICP DATA</div>
+              <span className="text-xs text-gray-400 font-medium">Federal Authority for Identity and Citizenship</span>
+           </div>
+           
            <div className="grid grid-cols-4 gap-4">
               {data.uaeWorkforceStats.icp.byEmirate.slice(0, 4).map((e, i) => (
-                 <div key={i} className="text-center">
-                    <div className="h-1 bg-orange-200 w-full mb-1 rounded-full overflow-hidden">
-                       <div className="h-full bg-orange-500" style={{ width: '60%' }}></div>
-                    </div>
-                    <p className="font-bold text-sm text-gray-700">{e.value}</p>
-                    <p className="text-[10px] text-gray-400 uppercase">{e.name}</p>
+                 <div key={i} className="text-center p-3 border border-gray-100 rounded bg-gray-50/50">
+                    <p className="font-serif font-bold text-lg text-gray-800">{e.value.toLocaleString()}</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-widest">{e.name}</p>
                  </div>
               ))}
            </div>
@@ -335,182 +397,217 @@ export default function PrintView() {
   // 4. Partner Workforce
   const PartnerWorkforcePage = () => (
      <PageContainer className="page-break">
-        <SectionHeader icon={Users} title="Partner Workforce" subtitle="Internal Market & Migration" />
+        <SectionHeader icon={Users} title="Partner Workforce" subtitle="Source Market Analysis" />
 
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8 flex justify-between items-center">
-           <div className="text-center">
-              <p className="text-sm text-gray-500 mb-1">Total Workforce</p>
-              <p className="text-3xl font-bold text-primary-dark">{data.workforceStats.totalWorkforce}</p>
-           </div>
-           <div className="h-12 w-px bg-gray-200"></div>
-           <div className="text-center">
-              <p className="text-sm text-gray-500 mb-1">Avg. Monthly Wage</p>
-              <p className="text-3xl font-bold text-green-600">{data.averageWage}</p>
-           </div>
-           <div className="h-12 w-px bg-gray-200"></div>
-           <div className="text-center">
-              <p className="text-sm text-gray-500 mb-1">Min. Monthly Wage</p>
-              <p className="text-3xl font-bold text-gray-700">{data.minimumWage}</p>
-           </div>
-        </div>
-
-        <div className="flex gap-8 mb-8">
-           <div className="w-1/2">
-              <h4 className="font-bold text-primary mb-4 text-sm uppercase border-b pb-2">Top Migration Destinations</h4>
-              <ul className="space-y-4">
-                 {data.workforceStats.migrationDestinations.map((d, i) => (
-                    <li key={i} className="flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</span>
-                          <span className="font-medium text-gray-700">{d.country}</span>
-                       </div>
-                       <span className="font-mono font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded text-xs">{d.count}</span>
-                    </li>
-                 ))}
-              </ul>
-           </div>
-           <div className="w-1/2">
-              <h4 className="font-bold text-primary mb-4 text-sm uppercase border-b pb-2">Sector Distribution</h4>
-              <div className="h-[200px] w-full flex items-center gap-4">
-                 <div className="flex-1 h-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={data.workforceStats.topSectors}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={70}
-                        paddingAngle={5}
-                        dataKey="value"
-                        isAnimationActive={false}
-                      >
-                        {data.workforceStats.topSectors.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                 </ResponsiveContainer>
+        <div className="grid grid-cols-3 gap-6 mb-8">
+           <div className="col-span-1 bg-gray-900 text-white p-6 rounded-lg flex flex-col justify-center">
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Total Workforce</p>
+              <p className="text-3xl font-serif font-bold text-white">{data.workforceStats.totalWorkforce}</p>
+              <div className="mt-6 flex gap-2 text-[10px]">
+                 <div className="bg-white/10 px-2 py-1 rounded flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-400"></span> Male {data.workforceStats.participationMale}%
                  </div>
-                 <div className="w-32 text-xs space-y-1">
-                    {data.workforceStats.topSectors.map((s, i) => (
-                       <div key={i} className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length]}}></div>
-                          <span className="text-gray-600">{s.name} ({s.value}%)</span>
-                       </div>
-                    ))}
+                 <div className="bg-white/10 px-2 py-1 rounded flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-pink-400"></span> Female {data.workforceStats.participationFemale}%
                  </div>
               </div>
            </div>
+
+           <div className="col-span-2 grid grid-cols-2 gap-6">
+               <DataCard>
+                  <div className="text-center">
+                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Avg. Monthly Wage</p>
+                     <p className="text-2xl font-serif font-bold text-green-700">{data.averageWage}</p>
+                  </div>
+               </DataCard>
+               <DataCard>
+                  <div className="text-center">
+                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Min. Monthly Wage</p>
+                     <p className="text-2xl font-serif font-bold text-gray-700">{data.minimumWage}</p>
+                  </div>
+               </DataCard>
+               
+               <div className="col-span-2 bg-blue-50/50 border border-blue-100 rounded-lg p-4">
+                  <p className="text-xs font-bold text-primary mb-3 uppercase tracking-widest">Global Migration Destinations</p>
+                  <div className="flex justify-between items-end">
+                     {data.workforceStats.migrationDestinations.map((d, i) => (
+                        <div key={i} className="text-center flex-1 relative">
+                           {i < data.workforceStats.migrationDestinations.length - 1 && (
+                              <div className="absolute top-1/2 right-0 w-px h-8 bg-blue-200 -translate-y-1/2"></div>
+                           )}
+                           <p className="text-lg font-bold text-gray-800">{d.count}</p>
+                           <p className="text-[10px] uppercase font-medium text-gray-500">{d.country}</p>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-           <h4 className="font-bold text-primary mb-4 text-sm uppercase flex items-center gap-2"><Briefcase size={16} /> Available Skills for Migration</h4>
-           <div className="flex flex-wrap gap-2">
-              {data.workforceStats.availableSkills.map((skill, i) => (
-                 <span key={i} className="bg-blue-50 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium border border-blue-100">
-                    {skill}
-                 </span>
-              ))}
+        <div className="flex gap-8 mb-8 h-[300px]">
+           <div className="w-1/2">
+              <h4 className="font-bold text-gray-800 text-xs uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">Sector Distribution</h4>
+              <div className="h-[250px] w-full flex items-center">
+                  <div className="flex-1 h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={data.workforceStats.topSectors}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                          isAnimationActive={false}
+                          stroke="none"
+                        >
+                          {data.workforceStats.topSectors.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="w-32 text-[10px] space-y-2">
+                      {data.workforceStats.topSectors.map((s, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length]}}></div>
+                            <span className="text-gray-600 font-medium">{s.name} <span className="text-gray-400">({s.value}%)</span></span>
+                        </div>
+                      ))}
+                  </div>
+              </div>
+           </div>
+
+           <div className="w-1/2">
+              <h4 className="font-bold text-gray-800 text-xs uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">Skills Availability</h4>
+              <div className="bg-gray-50 rounded-lg p-5 h-[250px] overflow-hidden">
+                 <div className="flex flex-wrap gap-2 content-start">
+                    {data.workforceStats.availableSkills.map((skill, i) => (
+                       <span key={i} className="bg-white text-gray-700 px-3 py-1.5 rounded border border-gray-200 text-xs font-medium shadow-sm">
+                          {skill}
+                       </span>
+                    ))}
+                 </div>
+                 <div className="mt-8 pt-6 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 italic">
+                       "These skills represent the primary categories of labor available for international deployment based on current vocational output."
+                    </p>
+                 </div>
+              </div>
            </div>
         </div>
      </PageContainer>
   );
 
-  // 5. Relations & Delegations
+  // 5. Relations
   const RelationsPage = () => (
      <PageContainer className="page-break">
-        <SectionHeader icon={Handshake} title="Relations & Delegations" subtitle="Diplomatic Engagement" />
+        <SectionHeader icon={Handshake} title="Relations & Delegations" subtitle="Bilateral Engagement" />
 
         {/* Agreements Table */}
-        <div className="mb-8">
-           <h3 className="font-serif font-bold text-lg text-primary mb-4">Bilateral Agreements</h3>
-           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="mb-10">
+           <h3 className="font-bold text-primary-dark text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
+              <FileText size={16} /> Key Agreements & MoUs
+           </h3>
+           <div className="border border-gray-200 rounded-lg overflow-hidden">
               <table className="w-full text-sm text-left">
-                 <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-xs">
+                 <thead className="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-wider border-b border-gray-200">
                     <tr>
-                       <th className="p-3">Title</th>
-                       <th className="p-3">Date</th>
-                       <th className="p-3">Status</th>
-                       <th className="p-3">Summary</th>
+                       <th className="px-4 py-3">Title / Protocol</th>
+                       <th className="px-4 py-3 w-24">Date</th>
+                       <th className="px-4 py-3 w-24">Status</th>
+                       <th className="px-4 py-3 w-1/3">Key Provisions</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-gray-100">
                     {data.bilateralAgreements.map((a, i) => (
-                       <tr key={i}>
-                          <td className="p-3 font-bold text-primary">{a.title}</td>
-                          <td className="p-3 text-gray-500 whitespace-nowrap">{a.date}</td>
-                          <td className="p-3">
-                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${a.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                {a.status}
-                             </span>
+                       <tr key={i} className="bg-white">
+                          <td className="px-4 py-3 font-bold text-gray-800">{a.title}</td>
+                          <td className="px-4 py-3 text-gray-500 font-mono text-xs">{a.date}</td>
+                          <td className="px-4 py-3">
+                             {a.status === 'Active' ? (
+                                <span className="flex items-center gap-1 text-green-700 text-[10px] font-bold uppercase bg-green-50 px-2 py-0.5 rounded-full w-fit">
+                                   <CheckCircle2 size={10} /> Active
+                                </span>
+                             ) : (
+                                <span className="flex items-center gap-1 text-yellow-700 text-[10px] font-bold uppercase bg-yellow-50 px-2 py-0.5 rounded-full w-fit">
+                                   Pending
+                                </span>
+                             )}
                           </td>
-                          <td className="p-3 text-gray-600">{a.summary}</td>
+                          <td className="px-4 py-3 text-gray-600 text-xs leading-relaxed">{a.summary}</td>
                        </tr>
                     ))}
+                    {data.bilateralAgreements.length === 0 && (
+                       <tr>
+                          <td colSpan={4} className="px-4 py-6 text-center text-gray-400 text-xs italic">No formal agreements recorded.</td>
+                       </tr>
+                    )}
                  </tbody>
               </table>
            </div>
         </div>
 
-        {/* Recent Interactions (Timeline-ish) */}
-        <div className="mb-8">
-           <h3 className="font-serif font-bold text-lg text-primary mb-4">Recent Interactions</h3>
-           <div className="space-y-4">
+        {/* Interactions Grid */}
+        <div className="mb-10">
+           <h3 className="font-bold text-primary-dark text-sm uppercase tracking-wide mb-4">Recent High-Level Interactions</h3>
+           <div className="grid grid-cols-2 gap-4">
               {data.recentInteractions.map((item, i) => (
-                 <div key={i} className="flex gap-4">
-                    <div className="w-24 text-right pt-1">
-                       <p className="font-bold text-sm text-gray-700">{item.date}</p>
-                       <p className="text-[10px] text-gray-400 uppercase">{item.type}</p>
+                 <div key={i} className="border border-gray-200 rounded p-4 bg-gray-50/30">
+                    <div className="flex justify-between items-start mb-2">
+                       <span className="text-[10px] font-bold text-primary uppercase tracking-wider bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
+                       <span className="text-[10px] font-mono text-gray-400">{item.date}</span>
                     </div>
-                    <div className="relative flex-1 border-l-2 border-primary/20 pl-4 pb-4">
-                       <div className="absolute -left-[5px] top-2 w-2 h-2 rounded-full bg-primary"></div>
-                       <h4 className="font-bold text-primary-dark">{item.title}</h4>
-                       <p className="text-sm text-gray-600 mt-1">{item.details}</p>
-                    </div>
+                    <h4 className="font-bold text-gray-900 text-sm mb-1">{item.title}</h4>
+                    <p className="text-xs text-gray-500 leading-snug">{item.details}</p>
                  </div>
               ))}
            </div>
         </div>
 
-        {/* Delegations Grid */}
-        <div className="mt-8 pt-8 border-t border-gray-200">
-           <div className="grid grid-cols-2 gap-12">
-              <div>
-                 <h4 className="font-bold text-lg mb-4 flex items-center gap-2 border-b border-primary/20 pb-2">
-                    <img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto shadow-sm" alt="UAE" />
-                    UAE Delegation
-                 </h4>
+        {/* Delegations */}
+        <div className="mt-auto pt-6 border-t border-gray-200">
+           <div className="flex gap-12">
+              {/* UAE Column */}
+              <div className="flex-1">
+                 <div className="flex items-center gap-2 mb-6 border-b-2 border-primary pb-2">
+                    <img src="https://flagcdn.com/w40/ae.png" className="h-4 w-auto" alt="UAE" />
+                    <h4 className="font-bold text-gray-900 uppercase tracking-widest text-xs">UAE Delegation</h4>
+                 </div>
                  <div className="space-y-6">
                     {data.delegations.uae.map(d => (
-                       <div key={d.id} className="flex gap-4">
-                          <div className="w-16 h-20 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden border border-gray-200">
+                       <div key={d.id} className="flex gap-4 items-start">
+                          <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border-2 border-white shadow-sm">
                              {d.imageUrl && <img src={d.imageUrl} className="w-full h-full object-cover" />}
                           </div>
                           <div>
-                             <p className="font-bold text-base text-gray-900">{d.name}</p>
-                             <p className="text-xs font-bold text-primary uppercase mb-2">{d.title}</p>
-                             <p className="text-[10px] text-gray-500 leading-tight line-clamp-3">{d.bio}</p>
+                             <p className="font-bold text-sm text-gray-900">{d.name}</p>
+                             <p className="text-[10px] font-bold text-primary uppercase mb-1">{d.title}</p>
+                             <p className="text-[10px] text-gray-500 leading-tight line-clamp-2">{d.bio}</p>
                           </div>
                        </div>
                     ))}
                  </div>
               </div>
-              <div>
-                 <h4 className="font-bold text-lg mb-4 flex items-center gap-2 border-b border-gray-200 pb-2">
-                   <img src={`https://flagcdn.com/w40/${data.country === 'Philippines' ? 'ph' : data.country === 'India' ? 'in' : 'ae'}.png`} className="h-5 w-auto shadow-sm" onError={(e) => e.currentTarget.style.display = 'none'} />
-                   Partner Delegation
-                 </h4>
+
+              {/* Partner Column */}
+              <div className="flex-1">
+                 <div className="flex items-center gap-2 mb-6 border-b-2 border-accent pb-2">
+                    <img src={`https://flagcdn.com/w40/${data.country === 'Philippines' ? 'ph' : data.country === 'India' ? 'in' : 'ae'}.png`} className="h-4 w-auto" onError={(e) => e.currentTarget.style.display = 'none'} />
+                    <h4 className="font-bold text-gray-900 uppercase tracking-widest text-xs">Partner Delegation</h4>
+                 </div>
                  <div className="space-y-6">
                     {data.delegations.partner.map(d => (
-                       <div key={d.id} className="flex gap-4">
-                          <div className="w-16 h-20 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden border border-gray-200">
+                       <div key={d.id} className="flex gap-4 items-start">
+                          <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border-2 border-white shadow-sm">
                              {d.imageUrl && <img src={d.imageUrl} className="w-full h-full object-cover" />}
                           </div>
                           <div>
-                             <p className="font-bold text-base text-gray-900">{d.name}</p>
-                             <p className="text-xs font-bold text-gray-500 uppercase mb-2">{d.title}</p>
-                             <p className="text-[10px] text-gray-500 leading-tight line-clamp-3">{d.bio}</p>
+                             <p className="font-bold text-sm text-gray-900">{d.name}</p>
+                             <p className="text-[10px] font-bold text-accent uppercase mb-1">{d.title}</p>
+                             <p className="text-[10px] text-gray-500 leading-tight line-clamp-2">{d.bio}</p>
                           </div>
                        </div>
                     ))}
@@ -524,10 +621,10 @@ export default function PrintView() {
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="fixed top-4 right-4 z-50 flex gap-2 no-print">
-         <button onClick={() => window.print()} className="bg-primary text-white p-3 rounded-full shadow-lg hover:bg-primary-dark transition-all" title="Print Now">
-            <Printer size={20} />
+         <button onClick={() => window.print()} className="bg-primary text-white px-4 py-2 rounded-lg shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold" title="Print Now">
+            <Printer size={18} /> Print Document
          </button>
-         <button onClick={() => window.close()} className="bg-white text-gray-600 p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all" title="Close">
+         <button onClick={() => window.close()} className="bg-white text-gray-600 p-2.5 rounded-lg shadow-lg hover:bg-gray-100 transition-all border border-gray-200" title="Close">
             <X size={20} />
          </button>
       </div>
