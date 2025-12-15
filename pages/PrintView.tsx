@@ -2,18 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { 
   Globe, Users, TrendingUp, Building, 
   Handshake, Landmark, Plane, Banknote, 
   Printer, X, AlertTriangle, ShieldAlert,
-  FileText, Briefcase, GraduationCap
+  GraduationCap, Briefcase, MessageSquare, FileText, Calendar
 } from 'lucide-react';
 import { PageContainer, HeaderBand, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
 
 const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
-const COLORS = ['#1e3a8a', '#ca8a04', '#15803d', '#475569', '#ea580c', '#7c3aed'];
 
 export default function PrintView() {
   const { id } = useParams();
@@ -130,19 +129,21 @@ export default function PrintView() {
          <div className="h-3 bg-primary w-full"></div>
       </div>
 
-      {/* --- PAGE 2: PROFILE & ECONOMY --- */}
+      {/* --- PAGE 2: COMPREHENSIVE OVERVIEW (Profile, Economy, Education, Partner Workforce) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
         <HeaderBand country={data.country} reportId={report.id} />
 
+        {/* Section 1: Country Profile */}
         <SectionHeader
           icon={Globe}
           title={t('sectionProfile')}
           subtitle={t('strategicOverview')}
+          compact={true}
         />
-
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-3 gap-3 mb-4">
           <KPI icon={Landmark} label={t('capital')} value={data.capital} />
           <KPI icon={Users} label={t('population')} value={data.population} />
+          <KPI icon={Globe} label={t('officialLanguage')} value={data.officialLanguage} />
           <KPI icon={Banknote} label={t('currency')} value={data.currency} />
           <KPI
             icon={Plane}
@@ -150,47 +151,86 @@ export default function PrintView() {
             value={data.directFlight ? t('yesDirect') : t('noDirect')}
             chip={data.directFlight ? "Connected" : "Limited"}
             tone={data.directFlight ? "ok" : "warn"}
-            sub="To UAE Airports"
           />
-          <KPI icon={Building} label={t('uaeEmbassy')} value={data.uaeEmbassyLocation || "N/A"} />
-          <KPI icon={Globe} label={t('officialLanguage')} value={data.officialLanguage} />
+           <KPI icon={Building} label={t('uaeEmbassy')} value={data.uaeEmbassyLocation || "N/A"} />
         </div>
 
+        {/* Section 2: Economic Landscape */}
         <SectionHeader
           icon={TrendingUp}
           title={t('economicLandscape')}
-          subtitle="Trade & Education"
+          subtitle="Trade & Remittances"
+          compact={true}
         />
-
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-4">
            <KPI icon={Banknote} label={t('gdp')} value={data.gdp} />
            <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats.inflation} />
+           <KPI icon={Banknote} label={t('remittances')} value={data.economicStats.remittancesFromUAE} tone="ok" />
         </div>
         
-        <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 mb-6">
-           <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-200 pb-2">{t('bilateralTrade')}</h4>
-           <div className="flex gap-8">
+        <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-4">
+           <h4 className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-2 border-b border-gray-200 pb-1">{t('bilateralTrade')}</h4>
+           <div className="flex gap-4">
               <div className="flex-1">
-                 <p className="text-xs text-primary font-bold mb-1">{t('importsFromUae')}</p>
-                 <p className="text-xl font-serif font-bold text-gray-900">{data.economicStats.totalImportsFromUAE}</p>
-                 <p className="text-[10px] text-gray-500 mt-1 truncate">{data.economicStats.topImportProducts.slice(0,3).join(', ')}</p>
+                 <p className="text-[10px] text-primary font-bold mb-0.5">{t('importsFromUae')}</p>
+                 <p className="text-lg font-serif font-bold text-gray-900 leading-none">{data.economicStats.totalImportsFromUAE}</p>
+                 <p className="text-[9px] text-gray-500 mt-1 truncate">{data.economicStats.topImportProducts.slice(0,3).join(', ')}</p>
               </div>
               <div className="w-px bg-gray-200"></div>
               <div className="flex-1">
-                 <p className="text-xs text-accent font-bold mb-1">{t('exportsToUae')}</p>
-                 <p className="text-xl font-serif font-bold text-gray-900">{data.economicStats.totalExportsToUAE}</p>
-                 <p className="text-[10px] text-gray-500 mt-1 truncate">{data.economicStats.topExportProducts.slice(0,3).join(', ')}</p>
+                 <p className="text-[10px] text-accent font-bold mb-0.5">{t('exportsToUae')}</p>
+                 <p className="text-lg font-serif font-bold text-gray-900 leading-none">{data.economicStats.totalExportsToUAE}</p>
+                 <p className="text-[9px] text-gray-500 mt-1 truncate">{data.economicStats.topExportProducts.slice(0,3).join(', ')}</p>
               </div>
            </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* Section 3: Education */}
+        <SectionHeader
+          icon={GraduationCap}
+          title={t('educationInsights')}
+          subtitle="Academic Landscape"
+          compact={true}
+        />
+        <div className="grid grid-cols-3 gap-3 mb-4">
            <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} />
-           <KPI icon={ShieldAlert} label={t('tipRank')} value={data.economicStats.tipRank} chip="Watch List" tone="warn" />
+           <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} />
+           <div className="bg-gray-50 border border-gray-200 rounded-xl p-2.5">
+              <p className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-1">{t('topUniversities')}</p>
+              <ul className="text-[10px] text-gray-700 leading-tight space-y-0.5">
+                 {data.educationStats.topUniversities.slice(0,3).map((u, i) => (
+                    <li key={i} className="truncate">• {u}</li>
+                 ))}
+              </ul>
+           </div>
         </div>
+
+        {/* Section 4: Partner Workforce */}
+        <SectionHeader
+          icon={Users}
+          title={`${data.country} Workforce`}
+          subtitle="Domestic Labour Market"
+          compact={true}
+        />
+        <div className="grid grid-cols-4 gap-3">
+           <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} />
+           <div className="col-span-2 kpi-card flex items-center justify-around">
+              <div className="text-center">
+                 <p className="kpi-label mb-1">{t('maleParticipation')}</p>
+                 <p className="text-lg font-bold text-blue-600 leading-none">{data.workforceStats.participationMale}%</p>
+              </div>
+              <div className="h-6 w-px bg-gray-200"></div>
+              <div className="text-center">
+                 <p className="kpi-label mb-1">{t('femaleParticipation')}</p>
+                 <p className="text-lg font-bold text-pink-600 leading-none">{data.workforceStats.participationFemale}%</p>
+              </div>
+           </div>
+           <KPI icon={Banknote} label={t('avgWage')} value={data.averageWage} tone="ok" />
+        </div>
+
       </PageContainer>
 
-      {/* --- PAGE 3: WORKFORCE --- */}
+      {/* --- PAGE 3: UAE WORKFORCE (Standalone) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
         <HeaderBand country={data.country} reportId={report.id} />
 
@@ -200,7 +240,7 @@ export default function PrintView() {
           subtitle="MOHRE & ICP Data"
         />
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-8">
            <KPI 
              icon={Briefcase} 
              label={t('totalPrivate')} 
@@ -216,13 +256,13 @@ export default function PrintView() {
            />
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-8 h-48">
-           <div className="col-span-2 border border-gray-200 rounded-xl p-4">
-              <p className="kpi-label mb-2">{t('workersByEmirate')}</p>
+        <div className="mb-8 p-4 border border-gray-200 rounded-xl">
+           <p className="kpi-label mb-4 text-center text-xs">{t('workersByEmirate')} (MOHRE)</p>
+           <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} margin={{top: 5, right: 5, bottom: 5, left: -20}}>
-                     <XAxis dataKey="name" tick={{fontSize: 9}} interval={0} />
-                     <YAxis tick={{fontSize: 9}} />
+                  <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} margin={{top: 5, right: 30, bottom: 5, left: -20}}>
+                     <XAxis dataKey="name" tick={{fontSize: 10}} interval={0} height={40} angle={-15} textAnchor="end" />
+                     <YAxis tick={{fontSize: 10}} />
                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                         {data.uaeWorkforceStats.mohre.byEmirate.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />
@@ -231,74 +271,66 @@ export default function PrintView() {
                   </BarChart>
               </ResponsiveContainer>
            </div>
-           <div className="border border-gray-200 rounded-xl p-4 flex flex-col justify-center">
-              <p className="kpi-label mb-2">{t('workersBySector')}</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
+           <div className="border border-gray-200 rounded-xl p-4">
+              <p className="kpi-label mb-3">{t('workersBySector')} (Top 5)</p>
               <div className="space-y-3">
-                 {data.uaeWorkforceStats.mohre.bySector.slice(0,4).map((s, i) => (
+                 {data.uaeWorkforceStats.mohre.bySector.slice(0,5).map((s, i) => (
                     <div key={i}>
                        <div className="flex justify-between text-[10px] mb-1">
-                          <span className="font-bold text-gray-700 truncate w-24">{s.name}</span>
+                          <span className="font-bold text-gray-700 truncate w-32">{s.name}</span>
                           <span className="font-mono text-gray-500">{s.value}%</span>
                        </div>
-                       <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                       <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                           <div className="h-full bg-primary" style={{width: `${Math.min(s.value, 100)}%`}}></div>
                        </div>
                     </div>
                  ))}
               </div>
            </div>
-        </div>
 
-        <SectionHeader
-          icon={Users}
-          title={t('sectionWorkforce')}
-          subtitle="Source Market Analysis"
-        />
-
-        <div className="grid grid-cols-3 gap-4 mb-6">
-           <div className="col-span-1">
-              <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} />
-           </div>
-           <div className="col-span-2 kpi-card flex items-center justify-around">
-              <div className="text-center">
-                 <p className="kpi-label mb-1">{t('maleParticipation')}</p>
-                 <p className="text-xl font-bold text-blue-600">{data.workforceStats.participationMale}%</p>
-              </div>
-              <div className="h-8 w-px bg-gray-200"></div>
-              <div className="text-center">
-                 <p className="kpi-label mb-1">{t('femaleParticipation')}</p>
-                 <p className="text-xl font-bold text-pink-600">{data.workforceStats.participationFemale}%</p>
+           <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <p className="kpi-label mb-3">Additional Indicators</p>
+              <div className="space-y-4">
+                 {data.uaeWorkforceStats.custom.slice(0, 4).map((stat) => (
+                    <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-2 last:border-0">
+                       <div>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase">{stat.label}</p>
+                          <p className="text-[9px] text-gray-400">{stat.date}</p>
+                       </div>
+                       <p className="text-lg font-serif font-bold text-gray-900">{stat.value}</p>
+                    </div>
+                 ))}
               </div>
            </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-           <KPI icon={Banknote} label={t('avgWage')} value={data.averageWage} tone="ok" />
-           <KPI icon={Banknote} label={t('minWage')} value={data.minimumWage} />
-        </div>
-
       </PageContainer>
 
-      {/* --- PAGE 4: RELATIONS --- */}
+      {/* --- PAGE 4: RELATIONS (Combined) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
         <HeaderBand country={data.country} reportId={report.id} />
 
         <SectionHeader
           icon={Handshake}
           title={t('sectionAgreements')}
-          subtitle="Bilateral Engagement"
+          subtitle="Bilateral Engagement & Dialogue"
         />
 
-        <div className="mb-8">
-           <h3 className="kpi-label mb-4 border-b border-gray-200 pb-2">{t('agreements')}</h3>
+        {/* Agreements */}
+        <div className="mb-8 avoid-break">
+           <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+              <FileText size={12} /> {t('agreements')}
+           </h3>
            <div className="space-y-3">
               {data.bilateralAgreements.map((agreement, idx) => (
-                 <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex justify-between items-start avoid-break">
+                 <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex justify-between items-start">
                     <div>
                        <p className="text-sm font-bold text-gray-900">{agreement.title}</p>
-                       <p className="text-[10px] text-gray-500 mt-1">{agreement.summary}</p>
+                       <p className="text-xs text-gray-600 mt-1 leading-snug max-w-md">{agreement.summary}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0 ml-4">
                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                           {agreement.status}
                        </span>
@@ -307,10 +339,58 @@ export default function PrintView() {
                  </div>
               ))}
               {data.bilateralAgreements.length === 0 && (
-                 <p className="text-xs text-gray-400 italic text-center py-4">No specific agreements recorded.</p>
+                 <p className="text-xs text-gray-400 italic text-center py-2">No specific agreements recorded.</p>
               )}
            </div>
         </div>
+
+        {/* Interactions */}
+        <div className="mb-8 avoid-break">
+           <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+              <Calendar size={12} /> {t('recentInteractions')}
+           </h3>
+           <div className="grid grid-cols-2 gap-4">
+              {data.recentInteractions.map((item, idx) => (
+                 <div key={idx} className="border border-gray-200 rounded-lg p-3 bg-white">
+                    <div className="flex justify-between items-start mb-1">
+                       <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/5 px-1.5 py-0.5 rounded">{item.type}</span>
+                       <span className="text-[9px] font-mono text-gray-400">{item.date}</span>
+                    </div>
+                    <p className="text-xs font-bold text-gray-900 mb-1">{item.title}</p>
+                    <p className="text-xs text-gray-500 leading-snug line-clamp-3">{item.details}</p>
+                 </div>
+              ))}
+              {data.recentInteractions.length === 0 && (
+                 <div className="col-span-2 text-center py-2 text-xs text-gray-400 italic">No recent interactions recorded.</div>
+              )}
+           </div>
+        </div>
+
+        {/* Discussion Points */}
+        <div className="avoid-break">
+           <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+              <MessageSquare size={12} /> {t('pointsDiscussion')}
+           </h3>
+           <ul className="space-y-2">
+              {data.pointsOfDiscussion.map((point, idx) => (
+                 <li key={idx} className="flex gap-3 text-xs text-gray-700 items-start">
+                    <span className="text-accent font-bold mt-0.5">•</span>
+                    <div>
+                       <strong className="block text-gray-900">{point.title}</strong>
+                       <span className="text-gray-600">{point.content}</span>
+                    </div>
+                 </li>
+              ))}
+              {data.pointsOfDiscussion.length === 0 && (
+                 <li className="text-center py-2 text-xs text-gray-400 italic">No discussion points added.</li>
+              )}
+           </ul>
+        </div>
+      </PageContainer>
+
+      {/* --- PAGE 5: DELEGATIONS (Standalone) --- */}
+      <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+        <HeaderBand country={data.country} reportId={report.id} />
 
         <SectionHeader
           icon={Users}
@@ -318,48 +398,51 @@ export default function PrintView() {
           subtitle="Key Officials"
         />
 
-        <div className="grid grid-cols-2 gap-8">
+        <div className="grid grid-cols-2 gap-8 mt-8">
            <div className="avoid-break">
-              <div className="flex items-center gap-2 mb-4">
-                 <img src="https://flagcdn.com/w40/ae.png" className="h-3 w-auto" alt="UAE" />
-                 <p className="text-xs font-bold uppercase text-primary">{t('uaeDelegation')}</p>
+              <div className="flex items-center gap-2 mb-6 border-b-2 border-primary pb-2">
+                 <img src="https://flagcdn.com/w40/ae.png" className="h-4 w-auto" alt="UAE" />
+                 <p className="text-xs font-bold uppercase text-primary tracking-widest">{t('uaeDelegation')}</p>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-6">
                  {data.delegations.uae.map((d) => (
-                    <div key={d.id} className="flex gap-3 items-start border-b border-gray-100 pb-3 last:border-0">
-                       <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-100">
+                    <div key={d.id} className="flex gap-4 items-start">
+                       <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-100 shadow-sm">
                           {d.imageUrl && <img src={d.imageUrl} className="w-full h-full object-cover" />}
                        </div>
                        <div>
                           <p className="text-sm font-bold text-gray-900">{d.name}</p>
-                          <p className="text-[10px] font-bold text-gray-500 uppercase">{d.title}</p>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">{d.title}</p>
+                          <p className="text-[10px] text-gray-400 leading-tight line-clamp-2 italic">{d.bio}</p>
                        </div>
                     </div>
                  ))}
+                 {data.delegations.uae.length === 0 && <p className="text-xs text-gray-400 italic">No delegates listed.</p>}
               </div>
            </div>
 
            <div className="avoid-break">
-              <div className="flex items-center gap-2 mb-4">
-                 <Globe size={12} className="text-accent" />
-                 <p className="text-xs font-bold uppercase text-accent">{t('partnerDelegation')}</p>
+              <div className="flex items-center gap-2 mb-6 border-b-2 border-accent pb-2">
+                 <Globe size={14} className="text-accent" />
+                 <p className="text-xs font-bold uppercase text-accent tracking-widest">{t('partnerDelegation')}</p>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-6">
                  {data.delegations.partner.map((d) => (
-                    <div key={d.id} className="flex gap-3 items-start border-b border-gray-100 pb-3 last:border-0">
-                       <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-100">
+                    <div key={d.id} className="flex gap-4 items-start">
+                       <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-100 shadow-sm">
                           {d.imageUrl && <img src={d.imageUrl} className="w-full h-full object-cover" />}
                        </div>
                        <div>
                           <p className="text-sm font-bold text-gray-900">{d.name}</p>
-                          <p className="text-[10px] font-bold text-gray-500 uppercase">{d.title}</p>
+                          <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">{d.title}</p>
+                          <p className="text-[10px] text-gray-400 leading-tight line-clamp-2 italic">{d.bio}</p>
                        </div>
                     </div>
                  ))}
+                 {data.delegations.partner.length === 0 && <p className="text-xs text-gray-400 italic">No delegates listed.</p>}
               </div>
            </div>
         </div>
-
       </PageContainer>
     </div>
   );

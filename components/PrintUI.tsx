@@ -9,7 +9,7 @@ export const PageContainer = ({
   footer,
   className = ""
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   footer?: React.ReactNode;
   className?: string;
 }) => (
@@ -32,7 +32,7 @@ export const HeaderBand = ({
   country: string;
   reportId: string;
 }) => (
-  <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-8">
+  <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
     <div className="flex items-center gap-3">
       {/* Fallback to flag if logo not available */}
       <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto shadow-sm" alt="UAE" />
@@ -65,18 +65,20 @@ export const SectionHeader = ({
   icon: Icon,
   title,
   subtitle,
+  compact = false
 }: {
   icon: any;
   title: string;
   subtitle?: string;
+  compact?: boolean;
 }) => (
-  <div className="section-rail mb-6 avoid-break mt-4">
+  <div className={`section-rail avoid-break ${compact ? 'mb-4 mt-2' : 'mb-6 mt-4'}`}>
     <div className="flex items-end gap-3 border-b border-gray-200 pb-2">
-      <div className="w-10 h-10 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center">
-        <Icon size={20} className="text-primary-dark" />
+      <div className={`rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center ${compact ? 'w-8 h-8' : 'w-10 h-10'}`}>
+        <Icon size={compact ? 16 : 20} className="text-primary-dark" />
       </div>
       <div>
-        <h2 className="text-2xl font-serif font-bold text-primary-dark leading-none">
+        <h2 className={`font-serif font-bold text-primary-dark leading-none ${compact ? 'text-xl' : 'text-2xl'}`}>
           {title}
         </h2>
         {subtitle && (
@@ -110,15 +112,15 @@ export const KPI = ({
   <div className="kpi-card avoid-break">
     <div className="kpi-row">
       <div className="kpi-icon">
-        <Icon size={18} className="text-primary" />
+        <Icon size={16} className="text-primary" />
       </div>
 
-      <div className="flex-1">
-        <div className="flex justify-between items-center mb-1">
-          <p className="kpi-label">{label}</p>
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-center mb-0.5">
+          <p className="kpi-label truncate pr-2">{label}</p>
           {chip && (
             <span
-              className={`kpi-chip ${
+              className={`kpi-chip shrink-0 ${
                 tone === "ok"
                   ? "chip-ok"
                   : tone === "warn"
@@ -133,7 +135,7 @@ export const KPI = ({
           )}
         </div>
 
-        <p className="kpi-value truncate">{value || 'N/A'}</p>
+        <p className="kpi-value truncate" title={String(value)}>{value || 'N/A'}</p>
         {sub && <p className="kpi-sub mt-0.5">{sub}</p>}
       </div>
     </div>

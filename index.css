@@ -41,7 +41,7 @@
 ================================ */
 @layer components {
   .kpi-card {
-    @apply bg-white border border-gray-200 rounded-xl p-4 shadow-sm;
+    @apply bg-white border border-gray-200 rounded-xl p-3 shadow-sm;
   }
 
   .kpi-row {
@@ -49,24 +49,24 @@
   }
 
   .kpi-icon {
-    @apply w-9 h-9 rounded-lg flex items-center justify-center
+    @apply w-8 h-8 rounded-lg flex items-center justify-center
            border border-gray-200 bg-gray-50;
   }
 
   .kpi-label {
-    @apply text-[10px] font-extrabold uppercase tracking-widest text-gray-500;
+    @apply text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-0.5 block;
   }
 
   .kpi-value {
-    @apply text-2xl font-serif font-bold text-gray-900 leading-tight;
+    @apply text-lg font-serif font-bold text-gray-900 leading-tight;
   }
 
   .kpi-sub {
-    @apply text-[10px] text-gray-500 italic;
+    @apply text-[9px] text-gray-500 italic;
   }
 
   .kpi-chip {
-    @apply text-[10px] font-bold uppercase tracking-wider
+    @apply text-[9px] font-bold uppercase tracking-wider
            px-2 py-0.5 rounded-full border;
   }
 
@@ -90,16 +90,16 @@
      SECTION RAIL
   ================================ */
   .section-rail {
-    @apply relative ps-5;
+    @apply relative ps-4;
   }
 
   .section-rail:before {
     content: "";
     position: absolute;
     inset-inline-start: 0;
-    top: 6px;
-    bottom: 6px;
-    width: 4px;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
     border-radius: 999px;
     background: hsl(var(--primary));
     opacity: 0.18;
