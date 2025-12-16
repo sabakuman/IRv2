@@ -10,12 +10,15 @@ export default defineConfig(({ mode }) => {
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
     },
     server: {
-      host: true, // Listen on all network interfaces (0.0.0.0)
+      host: true, 
       port: 5173,
-    },
-    preview: {
-      host: true, // Listen on all network interfaces for production preview
-      port: 4173,
+      // Proxy API requests to the backend server during dev
+      proxy: {
+        '/api': {
+          target: 'http://localhost:4173',
+          changeOrigin: true,
+        }
+      }
     },
     build: {
       outDir: 'dist',

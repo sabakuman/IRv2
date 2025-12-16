@@ -1,162 +1,110 @@
 import { Report, AuditLog, UserProfile } from '../types';
-import { MOCK_REPORTS, MOCK_AUDIT_LOGS } from '../constants';
 
-const STORAGE_KEYS = {
-  REPORTS: 'uae_lmi_reports',
-  LOGS: 'uae_lmi_logs',
-  USERS: 'uae_lmi_users'
-};
-
-// --- Low Level Helpers ---
-const getStorage = <T>(key: string): T | null => {
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : null;
-  } catch (e) {
-    console.error('LocalStorage Read Error', e);
-    return null;
-  }
-};
-
-const setStorage = (key: string, value: any) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
-    console.error('LocalStorage Write Error', e);
-  }
-};
-
-// --- Initialization Logic (SAFE / LIVE BUILD MODE) ---
-const initializeStorage = () => {
-  // 1. Users - Check if users exist. If NOT, seed default admin. 
-  // This ensures we NEVER delete existing users on update.
-  const users = getStorage<UserProfile[]>(STORAGE_KEYS.USERS);
-  if (!users || (Array.isArray(users) && users.length === 0)) {
-    console.log("System Initialization: Seeding default admin (No existing users found).");
-    const defaultAdmin: UserProfile = {
-      id: 'u-admin',
-      fullName: 'System Administrator',
-      email: 'admin', 
-      role: 'admin',
-      password: 'admin', 
-      avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff'
-    };
-    setStorage(STORAGE_KEYS.USERS, [defaultAdmin]);
-  }
-
-  // 2. Reports - Seed only if missing
-  const reports = getStorage<Report[]>(STORAGE_KEYS.REPORTS);
-  if (!reports) {
-    setStorage(STORAGE_KEYS.REPORTS, MOCK_REPORTS);
-  }
-
-  // 3. Logs - Seed only if missing
-  const logs = getStorage<AuditLog[]>(STORAGE_KEYS.LOGS);
-  if (!logs) {
-    setStorage(STORAGE_KEYS.LOGS, MOCK_AUDIT_LOGS);
-  }
-
-  // Clear legacy keys if they exist to keep storage clean, but do NOT use them for logic
-  localStorage.removeItem('uae_lmi_initialized_v5');
-  localStorage.removeItem('uae_lmi_initialized_v4');
-  localStorage.removeItem('uae_lmi_initialized_v3');
-};
-
-// Run immediately
-initializeStorage();
+// The API runs on the same origin (port 4173) in production
+const API_URL = '/api';
 
 export const MockService = {
   // --- Auth ---
   validateUser: async (emailOrId: string, password: string): Promise<UserProfile | null> => {
-    const users = getStorage<UserProfile[]>(STORAGE_KEYS.USERS) || [];
-    // Basic match: allow login by email OR the raw id 'admin'
-    const user = users.find(u => (u.email === emailOrId || u.email.split('@')[0] === emailOrId) && u.password === password);
-    return user || null;
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailOrId, password })
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.error("Login Error", e);
+      return null;
+    }
   },
 
   // --- Reports ---
   getReports: async (): Promise<Report[]> => {
-    const reports = getStorage<Report[]>(STORAGE_KEYS.REPORTS) || [];
-    return reports.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    try {
+      const res = await fetch(`${API_URL}/reports`);
+      if (!res.ok) return [];
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
   },
 
   getReportById: async (id: string): Promise<Report | undefined> => {
-    const reports = getStorage<Report[]>(STORAGE_KEYS.REPORTS) || [];
-    return reports.find(r => r.id === id);
+    try {
+      const res = await fetch(`${API_URL}/reports/${id}`);
+      if (!res.ok) return undefined;
+      return await res.json();
+    } catch (e) {
+      return undefined;
+    }
   },
 
   saveReport: async (report: Report): Promise<void> => {
-    const reports = getStorage<Report[]>(STORAGE_KEYS.REPORTS) || [];
-    const index = reports.findIndex(r => r.id === report.id);
-    
-    if (index >= 0) {
-      reports[index] = report;
-    } else {
-      reports.push(report);
-    }
-    
-    setStorage(STORAGE_KEYS.REPORTS, reports);
+    await fetch(`${API_URL}/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(report)
+    });
   },
 
   deleteReport: async (id: string): Promise<void> => {
-    const reports = getStorage<Report[]>(STORAGE_KEYS.REPORTS) || [];
-    const filtered = reports.filter(r => r.id !== id);
-    setStorage(STORAGE_KEYS.REPORTS, filtered);
+    await fetch(`${API_URL}/reports/${id}`, { method: 'DELETE' });
   },
 
   // --- Audit Logs ---
   getAuditLogs: async (): Promise<AuditLog[]> => {
-    return getStorage<AuditLog[]>(STORAGE_KEYS.LOGS) || [];
+    try {
+      const res = await fetch(`${API_URL}/logs`);
+      return await res.json();
+    } catch (e) { return []; }
   },
 
   addAuditLog: async (log: AuditLog): Promise<void> => {
-    const logs = getStorage<AuditLog[]>(STORAGE_KEYS.LOGS) || [];
-    logs.unshift(log);
-    setStorage(STORAGE_KEYS.LOGS, logs);
+    await fetch(`${API_URL}/logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(log)
+    });
   },
 
   // --- Users ---
   getUsers: async (): Promise<UserProfile[]> => {
-    return getStorage<UserProfile[]>(STORAGE_KEYS.USERS) || [];
+    try {
+      const res = await fetch(`${API_URL}/users`);
+      return await res.json();
+    } catch (e) { return []; }
   },
 
   addUser: async (user: UserProfile): Promise<void> => {
-    const users = getStorage<UserProfile[]>(STORAGE_KEYS.USERS) || [];
-    users.push(user);
-    setStorage(STORAGE_KEYS.USERS, users);
+    await fetch(`${API_URL}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user)
+    });
   },
 
   deleteUser: async (id: string): Promise<void> => {
-    const users = getStorage<UserProfile[]>(STORAGE_KEYS.USERS) || [];
-    
-    // Safety check: Prevent deleting the root admin
-    if (id === 'u-admin') {
-      throw new Error("Cannot delete the root admin.");
-    }
-
-    const filtered = users.filter(u => u.id !== id);
-    setStorage(STORAGE_KEYS.USERS, filtered);
+    await fetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
   },
 
   updatePassword: async (userId: string, newPass: string): Promise<void> => {
-    const users = getStorage<UserProfile[]>(STORAGE_KEYS.USERS) || [];
-    const index = users.findIndex(u => u.id === userId);
-    
-    if (index !== -1) {
-      users[index].password = newPass;
-      setStorage(STORAGE_KEYS.USERS, users);
-    }
+    await fetch(`${API_URL}/users/${userId}/password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPass })
+    });
   },
 
   updateApiKey: async (userId: string, apiKey: string): Promise<UserProfile | null> => {
-    const users = getStorage<UserProfile[]>(STORAGE_KEYS.USERS) || [];
-    const index = users.findIndex(u => u.id === userId);
-    
-    if (index !== -1) {
-      users[index].apiKey = apiKey;
-      setStorage(STORAGE_KEYS.USERS, users);
-      return users[index];
-    }
-    return null;
+    const res = await fetch(`${API_URL}/users/${userId}/apikey`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey })
+    });
+    if (!res.ok) return null;
+    return await res.json();
   }
 };
