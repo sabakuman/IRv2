@@ -15,6 +15,38 @@ import { useLanguage } from '../context/LanguageContext';
 
 const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
 
+// Common commodity translations for display
+const COMMODITY_TRANSLATIONS: Record<string, string> = {
+  "Petroleum Products": "منتجات بترولية",
+  "Crude Oil": "نفط خام",
+  "Gold": "ذهب",
+  "Diamonds": "ماس",
+  "Jewelry": "مجوهرات",
+  "Machinery": "آلات",
+  "Textiles": "منسوجات",
+  "Plastics": "بلاستيك",
+  "Electronic Goods": "سلع إلكترونية",
+  "Electronics": "إلكترونيات",
+  "Vehicles": "مركبات",
+  "Cars": "سيارات",
+  "Chemicals": "كيماويات",
+  "Iron": "حديد",
+  "Steel": "صلب",
+  "Copper": "نحاس",
+  "Aluminum": "ألمنيوم",
+  "Fruits": "فواكه",
+  "Vegetables": "خضروات",
+  "Spices": "توابل",
+  "Tea": "شاي",
+  "Coffee": "قهوة",
+  "Rice": "أرز",
+  "Pharmaceuticals": "أدوية",
+  "Medical Equipment": "معدات طبية",
+  "Aircraft Parts": "قطع غيار طائرات",
+  "Pearl": "لؤلؤ",
+  "Precious Stones": "أحجار كريمة"
+};
+
 export default function PrintView() {
   const { id } = useParams();
   const { t, language, dir } = useLanguage();
@@ -65,6 +97,20 @@ export default function PrintView() {
     const num = Number(value);
     if (isNaN(num)) return value;
     return new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(num);
+  };
+
+  // Helper to translate commodities if in Arabic mode
+  const translateCommodity = (text: string) => {
+    if (!isRTL) return text;
+    // Try direct match
+    if (COMMODITY_TRANSLATIONS[text]) return COMMODITY_TRANSLATIONS[text];
+    
+    // Try partial match or case-insensitive
+    const lower = text.toLowerCase();
+    const key = Object.keys(COMMODITY_TRANSLATIONS).find(k => k.toLowerCase() === lower);
+    if (key) return COMMODITY_TRANSLATIONS[key];
+
+    return text;
   };
 
   const getSource = (type: string) => {
@@ -266,7 +312,9 @@ export default function PrintView() {
                  <p className="text-base font-serif font-bold text-gray-900 mb-1" dir="ltr" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     {data.economicStats.totalImportsFromUAE}
                  </p>
-                 <p className="text-[8px] text-gray-500 leading-tight whitespace-normal break-words">{data.economicStats.topImportProducts.slice(0,4).join(', ')}</p>
+                 <p className="text-[8px] text-gray-500 leading-tight whitespace-normal break-words">
+                    {data.economicStats.topImportProducts.slice(0,4).map(p => translateCommodity(p)).join(', ')}
+                 </p>
               </div>
               <div className="flex flex-col h-full border-s border-gray-200 ps-6">
                  <div className="flex items-center gap-1.5 mb-1 text-accent">
@@ -276,7 +324,9 @@ export default function PrintView() {
                  <p className="text-base font-serif font-bold text-gray-900 mb-1" dir="ltr" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     {data.economicStats.totalExportsToUAE}
                  </p>
-                 <p className="text-[8px] text-gray-500 leading-tight whitespace-normal break-words">{data.economicStats.topExportProducts.slice(0,4).join(', ')}</p>
+                 <p className="text-[8px] text-gray-500 leading-tight whitespace-normal break-words">
+                    {data.economicStats.topExportProducts.slice(0,4).map(p => translateCommodity(p)).join(', ')}
+                 </p>
               </div>
            </div>
         </div>
@@ -292,7 +342,7 @@ export default function PrintView() {
            <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
            <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
            <div className="bg-gray-50 border border-gray-200 rounded-xl p-2 flex flex-col justify-center">
-              <p className="text-[8px] font-extrabold uppercase tracking-widest text-gray-500 mb-1">{t('topUniversities')} {renderSource('edu')}</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500 mb-1">{t('topUniversities')} {renderSource('edu')}</p>
               <ul className="text-[9px] text-gray-700 leading-tight space-y-0.5">
                  {data.educationStats.topUniversities.slice(0,4).map((u, i) => (
                     <li key={i} className="break-words truncate">• {u}</li>
@@ -339,7 +389,7 @@ export default function PrintView() {
               </div>
            </div>
            <div className="kpi-card p-2">
-              <p className="kpi-label mb-2 flex items-center gap-1"><Briefcase size={10} /> {t('workersBySector')}</p>
+              <p className="text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider flex items-center gap-1"><Briefcase size={10} /> {t('workersBySector')}</p>
               <div className="space-y-1">
                  {data.workforceStats.topSectors.slice(0, 3).map((sec, i) => (
                     <div key={i} className="flex justify-between items-center">
@@ -370,6 +420,7 @@ export default function PrintView() {
              label={t('mohrePrivate')} 
              value={data.uaeWorkforceStats.mohre.totalPrivate.value} 
              sub={getSource('mohre')} 
+             labelClassName="text-xs font-bold"
            />
            <KPI 
              icon={Users} 
@@ -377,6 +428,7 @@ export default function PrintView() {
              value={data.uaeWorkforceStats.mohre.totalDomestic.value} 
              sub={getSource('mohre')}
              tone="warn"
+             labelClassName="text-xs font-bold"
            />
         </div>
 
@@ -439,7 +491,7 @@ export default function PrintView() {
 
         <div className="grid grid-cols-2 gap-4">
            <div className="border border-gray-200 rounded-xl p-3">
-              <p className="kpi-label mb-2">{t('workersBySector')} (Top 10) {renderSource('mohre')}</p>
+              <p className="text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">{t('workersBySector')} (Top 10) {renderSource('mohre')}</p>
               <div className="space-y-2">
                  {data.uaeWorkforceStats.mohre.bySector.slice(0, 10).map((s, i) => (
                     <div key={i}>
@@ -456,7 +508,7 @@ export default function PrintView() {
            </div>
 
            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
-              <p className="kpi-label mb-2">{t('additionalIndicators')}</p>
+              <p className="text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">{t('additionalIndicators')}</p>
               <div className="space-y-3">
                  {data.uaeWorkforceStats.custom.slice(0, 5).map((stat) => (
                     <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-1.5 last:border-0">
@@ -484,8 +536,8 @@ export default function PrintView() {
 
         {/* Agreements */}
         <div className="mb-6 avoid-break">
-           <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
-              <FileText size={12} /> {t('keyAgreements')}
+           <h3 className="text-sm font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+              <FileText size={16} /> {t('keyAgreements')}
            </h3>
            
            <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-gray-400 mb-2 px-2">
@@ -519,10 +571,10 @@ export default function PrintView() {
 
         {/* Recent Interactions (First Batch) */}
         <div className="mb-6 avoid-break">
-           <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
-              <Calendar size={12} /> {t('recentInteractions')}
+           <h3 className="text-sm font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+              <Calendar size={16} /> {t('recentInteractions')}
            </h3>
-           <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-2">{t('relationshipSummary')}</p>
+           <p className="text-xs font-extrabold uppercase tracking-widest text-accent mb-2">{t('relationshipSummary')}</p>
            
            <div className="grid grid-cols-2 gap-4">
               {firstPageInteractions.map((item, idx) => (
@@ -556,8 +608,8 @@ export default function PrintView() {
           {/* Remaining Interactions */}
           {remainingInteractions.length > 0 && (
             <div className="mb-6 avoid-break">
-              <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
-                  <Calendar size={12} /> {t('recentInteractions')} (2)
+              <h3 className="text-sm font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+                  <Calendar size={16} /> {t('recentInteractions')} (2)
               </h3>
               <div className="grid grid-cols-2 gap-4">
                   {remainingInteractions.map((item, idx) => (
@@ -576,8 +628,8 @@ export default function PrintView() {
 
           {/* Discussion Points */}
           <div className="avoid-break mb-6">
-             <h3 className="kpi-label mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
-                <MessageSquare size={12} /> {t('pointsDiscussion')}
+             <h3 className="text-sm font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+                <MessageSquare size={16} /> {t('pointsDiscussion')}
              </h3>
              <ul className="space-y-3">
                 {data.pointsOfDiscussion.map((point, idx) => (

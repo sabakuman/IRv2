@@ -120,6 +120,7 @@ export const KPI = ({
   sub,
   chip,
   tone = "info",
+  labelClassName,
 }: {
   icon: any;
   label: string;
@@ -127,6 +128,7 @@ export const KPI = ({
   sub?: string;
   chip?: string;
   tone?: "ok" | "warn" | "info" | "restrict";
+  labelClassName?: string;
 }) => (
   // Removed 'justify-center' to ensure all icons align to the top consistently
   <div className="kpi-card avoid-break h-full flex flex-col">
@@ -137,7 +139,7 @@ export const KPI = ({
 
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start mb-1.5">
-          <p className="kpi-label pr-1 leading-tight">{label}</p>
+          <p className={`kpi-label pr-1 leading-tight ${labelClassName || ''}`}>{label}</p>
           {chip && (
             <span
               className={`kpi-chip shrink-0 ml-1 ${
