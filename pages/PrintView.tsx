@@ -308,7 +308,7 @@ export default function PrintView() {
           subtitle={t('sourceMarketAnalysis')}
           compact={true}
         />
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2 mb-2">
            <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
            <div className="col-span-2 kpi-card flex items-center justify-around py-2">
               <div className="text-center">
@@ -322,6 +322,34 @@ export default function PrintView() {
               </div>
            </div>
            <KPI icon={Banknote} label={t('avgWage')} value={data.averageWage} tone="ok" sub={getSource('demo')} />
+        </div>
+
+        {/* New Row for Migration and Sectors */}
+        <div className="grid grid-cols-2 gap-2">
+           <div className="kpi-card p-2">
+              <p className="kpi-label mb-2 flex items-center gap-1"><Plane size={10} /> {t('migrationDestinations')}</p>
+              <div className="space-y-1">
+                 {data.workforceStats.migrationDestinations.slice(0, 3).map((dest, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                       <span className="text-[9px] font-bold text-gray-700 truncate">{dest.country}</span>
+                       <span className="text-[9px] font-mono text-gray-500" dir="ltr">{dest.count}</span>
+                    </div>
+                 ))}
+                 {data.workforceStats.migrationDestinations.length === 0 && <p className="text-[8px] text-gray-400 italic">N/A</p>}
+              </div>
+           </div>
+           <div className="kpi-card p-2">
+              <p className="kpi-label mb-2 flex items-center gap-1"><Briefcase size={10} /> {t('workersBySector')}</p>
+              <div className="space-y-1">
+                 {data.workforceStats.topSectors.slice(0, 3).map((sec, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                       <span className="text-[9px] font-bold text-gray-700 truncate">{sec.name}</span>
+                       <span className="text-[9px] font-mono text-gray-500" dir="ltr">{sec.value}%</span>
+                    </div>
+                 ))}
+                 {data.workforceStats.topSectors.length === 0 && <p className="text-[8px] text-gray-400 italic">N/A</p>}
+              </div>
+           </div>
         </div>
       </PageContainer>
 
