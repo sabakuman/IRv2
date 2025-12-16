@@ -301,7 +301,7 @@ export default function PrintView() {
         
         {/* Trade Statistics (Improved Layout with RTL support) */}
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-3">
-           <h4 className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-2 border-b border-gray-200 pb-1">{t('bilateralTrade')} {renderSource('trade')}</h4>
+           <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 border-b border-gray-200 pb-1">{t('bilateralTrade')} {renderSource('trade')}</h4>
            <div className="grid grid-cols-2 gap-6">
               <div className="flex flex-col h-full">
                  <div className="flex items-center gap-1.5 mb-1 text-primary">
@@ -342,7 +342,7 @@ export default function PrintView() {
            <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
            <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
            <div className="bg-gray-50 border border-gray-200 rounded-xl p-2 flex flex-col justify-center">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500 mb-1">{t('topUniversities')} {renderSource('edu')}</p>
+              <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">{t('topUniversities')} {renderSource('edu')}</p>
               <ul className="text-[9px] text-gray-700 leading-tight space-y-0.5">
                  {data.educationStats.topUniversities.slice(0,4).map((u, i) => (
                     <li key={i} className="break-words truncate">• {u}</li>
@@ -362,12 +362,12 @@ export default function PrintView() {
            <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
            <div className="col-span-2 kpi-card flex items-center justify-around py-2">
               <div className="text-center">
-                 <p className="kpi-label mb-1">{t('maleParticipation')}</p>
+                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('maleParticipation')}</p>
                  <p className="text-base font-serif font-bold text-blue-600 leading-none" dir="ltr">{data.workforceStats.participationMale}%</p>
               </div>
               <div className="h-6 w-px bg-gray-200"></div>
               <div className="text-center">
-                 <p className="kpi-label mb-1">{t('femaleParticipation')}</p>
+                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('femaleParticipation')}</p>
                  <p className="text-base font-serif font-bold text-pink-600 leading-none" dir="ltr">{data.workforceStats.participationFemale}%</p>
               </div>
            </div>
@@ -377,7 +377,7 @@ export default function PrintView() {
         {/* New Row for Migration and Sectors */}
         <div className="grid grid-cols-2 gap-2">
            <div className="kpi-card p-2">
-              <p className="kpi-label mb-2 flex items-center gap-1"><Plane size={10} /> {t('migrationDestinations')}</p>
+              <p className="text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider flex items-center gap-1"><Plane size={10} /> {t('migrationDestinations')}</p>
               <div className="space-y-1">
                  {data.workforceStats.migrationDestinations.slice(0, 3).map((dest, i) => (
                     <div key={i} className="flex justify-between items-center">
@@ -420,7 +420,7 @@ export default function PrintView() {
              label={t('mohrePrivate')} 
              value={data.uaeWorkforceStats.mohre.totalPrivate.value} 
              sub={getSource('mohre')} 
-             labelClassName="text-xs font-bold"
+             labelClassName="text-xs font-bold text-gray-700 uppercase tracking-wider"
            />
            <KPI 
              icon={Users} 
@@ -428,7 +428,7 @@ export default function PrintView() {
              value={data.uaeWorkforceStats.mohre.totalDomestic.value} 
              sub={getSource('mohre')}
              tone="warn"
-             labelClassName="text-xs font-bold"
+             labelClassName="text-xs font-bold text-gray-700 uppercase tracking-wider"
            />
         </div>
 
@@ -536,7 +536,7 @@ export default function PrintView() {
 
         {/* Agreements */}
         <div className="mb-6 avoid-break">
-           <h3 className="text-sm font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+           <h3 className="text-xs font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2 uppercase tracking-wider">
               <FileText size={16} /> {t('keyAgreements')}
            </h3>
            
@@ -571,10 +571,10 @@ export default function PrintView() {
 
         {/* Recent Interactions (First Batch) */}
         <div className="mb-6 avoid-break">
-           <h3 className="text-sm font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+           <h3 className="text-xs font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2 uppercase tracking-wider">
               <Calendar size={16} /> {t('recentInteractions')}
            </h3>
-           <p className="text-xs font-extrabold uppercase tracking-widest text-accent mb-2">{t('relationshipSummary')}</p>
+           <p className="text-xs font-bold uppercase tracking-wider text-accent mb-2">{t('relationshipSummary')}</p>
            
            <div className="grid grid-cols-2 gap-4">
               {firstPageInteractions.map((item, idx) => (
@@ -608,7 +608,7 @@ export default function PrintView() {
           {/* Remaining Interactions */}
           {remainingInteractions.length > 0 && (
             <div className="mb-6 avoid-break">
-              <h3 className="text-sm font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+              <h3 className="text-xs font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2 uppercase tracking-wider">
                   <Calendar size={16} /> {t('recentInteractions')} (2)
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -628,7 +628,7 @@ export default function PrintView() {
 
           {/* Discussion Points */}
           <div className="avoid-break mb-6">
-             <h3 className="text-sm font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2">
+             <h3 className="text-xs font-bold text-primary-dark mb-3 border-b border-gray-200 pb-2 flex items-center gap-2 uppercase tracking-wider">
                 <MessageSquare size={16} /> {t('pointsDiscussion')}
              </h3>
              <ul className="space-y-3">
