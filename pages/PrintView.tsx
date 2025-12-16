@@ -253,7 +253,7 @@ export default function PrintView() {
            <KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats.tipRank} tone="warn" sub={getSource('tip')} />
         </div>
         
-        {/* Trade Statistics (Improved Layout) */}
+        {/* Trade Statistics (Improved Layout with RTL support) */}
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-3">
            <h4 className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-2 border-b border-gray-200 pb-1">{t('bilateralTrade')} {renderSource('trade')}</h4>
            <div className="grid grid-cols-2 gap-6">
@@ -262,7 +262,10 @@ export default function PrintView() {
                     <ArrowDownLeft size={14} />
                     <p className="text-[9px] font-bold uppercase">{t('importsFromUae')}</p>
                  </div>
-                 <p className="text-base font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalImportsFromUAE}</p>
+                 {/* Wrapped text in span dir=ltr to preserve English number formatting while keeping alignment */}
+                 <p className="text-base font-serif font-bold text-gray-900 mb-1" dir="ltr" style={{ textAlign: isRTL ? 'right' : 'left' }}>
+                    {data.economicStats.totalImportsFromUAE}
+                 </p>
                  <p className="text-[8px] text-gray-500 leading-tight whitespace-normal break-words">{data.economicStats.topImportProducts.slice(0,4).join(', ')}</p>
               </div>
               <div className="flex flex-col h-full border-s border-gray-200 ps-6">
@@ -270,7 +273,9 @@ export default function PrintView() {
                     <ArrowUpRight size={14} />
                     <p className="text-[9px] font-bold uppercase">{t('exportsToUae')}</p>
                  </div>
-                 <p className="text-base font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalExportsToUAE}</p>
+                 <p className="text-base font-serif font-bold text-gray-900 mb-1" dir="ltr" style={{ textAlign: isRTL ? 'right' : 'left' }}>
+                    {data.economicStats.totalExportsToUAE}
+                 </p>
                  <p className="text-[8px] text-gray-500 leading-tight whitespace-normal break-words">{data.economicStats.topExportProducts.slice(0,4).join(', ')}</p>
               </div>
            </div>
@@ -331,17 +336,18 @@ export default function PrintView() {
         />
 
         <div className="grid grid-cols-2 gap-3 mb-4">
+           {/* Removed "Data as of..." text as requested */}
            <KPI 
              icon={Briefcase} 
              label={t('mohrePrivate')} 
              value={data.uaeWorkforceStats.mohre.totalPrivate.value} 
-             sub={`${t('dataAsOf')} ${data.uaeWorkforceStats.mohre.totalPrivate.date} ${getSource('mohre')}`} 
+             sub={getSource('mohre')} 
            />
            <KPI 
              icon={Users} 
              label={t('mohreDomestic')} 
              value={data.uaeWorkforceStats.mohre.totalDomestic.value} 
-             sub={`${t('dataAsOf')} ${data.uaeWorkforceStats.mohre.totalDomestic.date} ${getSource('mohre')}`}
+             sub={getSource('mohre')}
              tone="warn"
            />
         </div>

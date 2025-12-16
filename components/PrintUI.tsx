@@ -109,14 +109,15 @@ export const KPI = ({
   chip?: string;
   tone?: "ok" | "warn" | "info" | "restrict";
 }) => (
-  <div className="kpi-card avoid-break h-full flex flex-col justify-center">
-    <div className="kpi-row">
+  // Removed 'justify-center' to ensure all icons align to the top consistently
+  <div className="kpi-card avoid-break h-full flex flex-col">
+    <div className="kpi-row items-start">
       <div className="kpi-icon shrink-0 mt-0.5">
         <Icon size={16} className="text-primary" />
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start mb-0.5">
+        <div className="flex justify-between items-start mb-1.5">
           <p className="kpi-label pr-1 leading-tight">{label}</p>
           {chip && (
             <span
@@ -135,8 +136,16 @@ export const KPI = ({
           )}
         </div>
 
-        <p className="kpi-value break-words leading-tight text-base" title={String(value)}>{value || 'N/A'}</p>
-        {sub && <p className="kpi-sub mt-0.5 leading-tight">{sub}</p>}
+        {/* 
+           Reduced font size to text-sm (approx 14px) for better aesthetics.
+           Wrapped value in span dir="ltr" to ensure mixed English/Arabic content (like "50 Billion USD")
+           flows correctly while preserving the parent's text alignment (Right in RTL, Left in LTR).
+        */}
+        <p className="kpi-value break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
+           <span dir="ltr">{value || 'N/A'}</span>
+        </p>
+        
+        {sub && <p className="kpi-sub mt-1.5 leading-tight">{sub}</p>}
       </div>
     </div>
   </div>
