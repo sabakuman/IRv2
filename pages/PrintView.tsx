@@ -8,7 +8,7 @@ import {
   Handshake, Landmark, Plane, Banknote, 
   Printer, X, AlertTriangle, ShieldAlert,
   GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
-  ArrowDownLeft, ArrowUpRight, BookOpen, Shield
+  ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft
 } from 'lucide-react';
 import { PageContainer, HeaderBand, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
@@ -301,7 +301,9 @@ export default function PrintView() {
         
         {/* Trade Statistics (Improved Layout with RTL support) */}
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-3">
-           <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 border-b border-gray-200 pb-1">{t('bilateralTrade')} {renderSource('trade')}</h4>
+           <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 border-b border-gray-200 pb-1 flex items-center gap-1">
+              <ArrowRightLeft size={10} /> {t('bilateralTrade')} {renderSource('trade')}
+           </h4>
            <div className="grid grid-cols-2 gap-6">
               <div className="flex flex-col h-full">
                  <div className="flex items-center gap-1.5 mb-1 text-primary">
@@ -362,12 +364,12 @@ export default function PrintView() {
            <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
            <div className="col-span-2 kpi-card flex items-center justify-around py-2">
               <div className="text-center">
-                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('maleParticipation')}</p>
+                 <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">{t('maleParticipation')}</p>
                  <p className="text-base font-serif font-bold text-blue-600 leading-none" dir="ltr">{data.workforceStats.participationMale}%</p>
               </div>
               <div className="h-6 w-px bg-gray-200"></div>
               <div className="text-center">
-                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('femaleParticipation')}</p>
+                 <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">{t('femaleParticipation')}</p>
                  <p className="text-base font-serif font-bold text-pink-600 leading-none" dir="ltr">{data.workforceStats.participationFemale}%</p>
               </div>
            </div>
