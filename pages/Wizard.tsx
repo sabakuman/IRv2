@@ -449,6 +449,16 @@ export default function Wizard() {
   };
 
   const handleSave = async (status: 'draft' | 'completed' = 'draft') => {
+    // DUPLICATE REPORT CHECK
+    if (!id && data.country) {
+       const allReports = await MockService.getReports();
+       const existing = allReports.find(r => r.data.country.toLowerCase().trim() === data.country.toLowerCase().trim());
+       if (existing) {
+          alert(`${t('duplicateReportMsg')} ${existing.id}`);
+          return;
+       }
+    }
+
     const reportId = id || `r-${uuidv4().slice(0, 8)}`;
     const newReport: Report = {
       id: reportId,

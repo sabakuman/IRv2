@@ -190,11 +190,11 @@ export default function PrintView() {
                <div className="grid grid-cols-2 gap-y-4 gap-x-4">
                   <div>
                      <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('reference')}</p>
-                     <p className="font-mono text-sm text-gray-800 font-sans" dir="ltr">{report.id}</p>
+                     <p className={`font-mono text-sm text-gray-800 font-sans ${isRTL ? 'text-right' : 'text-left'}`} dir="ltr">{report.id}</p>
                   </div>
                   <div>
                      <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('date')}</p>
-                     <p className="font-mono text-sm text-gray-800 font-sans" dir="ltr">{data.reportDate}</p>
+                     <p className={`font-mono text-sm text-gray-800 font-sans ${isRTL ? 'text-right' : 'text-left'}`} dir="ltr">{data.reportDate}</p>
                   </div>
                   <div className="col-span-2">
                      <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('securityClass')}</p>

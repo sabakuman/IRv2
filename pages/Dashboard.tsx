@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,9 +86,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
          <div className="space-y-4">
             <div className="flex justify-between items-center">
-               <h2 className="text-xl font-bold font-serif text-foreground">Recent Reports</h2>
+               <h2 className="text-xl font-bold font-serif text-foreground">{t('recentReports')}</h2>
                <button onClick={() => navigate('/reports')} className="text-sm text-primary hover:underline flex items-center gap-1">
-                  View All <ArrowRight size={14} />
+                  {t('viewAll')} <ArrowRight size={14} className={language === 'ar' ? 'rotate-180' : ''} />
                </button>
             </div>
             <div className="space-y-4">
@@ -112,9 +112,9 @@ export default function Dashboard() {
          </div>
 
          <Card className="bg-primary text-white p-8 flex flex-col justify-center items-start">
-            <h2 className="text-2xl font-serif font-bold mb-4">Start a New Analysis</h2>
+            <h2 className="text-2xl font-serif font-bold mb-4">{t('startNewAnalysis')}</h2>
             <p className="text-blue-100 mb-6 max-w-md">
-               Generate comprehensive bilateral labour market reports powered by AI insights and official data sources.
+               {t('startAnalysisDesc')}
             </p>
             <Button className="bg-accent text-white border-none hover:bg-accent-light" onClick={() => navigate('/wizard')}>
                <Plus size={18} /> {t('launchWizard')}

@@ -298,6 +298,19 @@ export const TRANSLATIONS = {
     workerCountEst: 'Worker Count (Est.)',
     sectorDistribution: 'Sector Distribution',
     interactionHelper: 'Record diplomatic visits, key discussion points, and relevant news.',
+    // Table Headers
+    reportsDescription: 'Manage and generate bilateral intelligence reports.',
+    colReportTitle: 'Report Title',
+    colCreatedBy: 'Created By',
+    colStatus: 'Status',
+    colActions: 'Actions',
+    colLastModified: 'Last Modified',
+    duplicateReportMsg: 'A report for this country already exists. Please update the existing report. REF:',
+    // Dashboard Specific
+    recentReports: 'Recent Reports',
+    startNewAnalysis: 'Start a New Analysis',
+    startAnalysisDesc: 'Generate comprehensive bilateral labour market reports powered by AI insights and official data sources.',
+    viewAll: 'View All',
   },
   ar: {
     dashboard: 'الصفحة الرئيسة',
@@ -448,5 +461,18 @@ export const TRANSLATIONS = {
     workerCountEst: 'عدد العمال',
     sectorDistribution: 'التوزيع على حسب القطاعات',
     interactionHelper: 'اضف معلومات ذات صلة او ملخص العلاقات او محاور النقاش',
+    // Table Headers
+    reportsDescription: 'إدارة وإعداد تقارير ثنائية.',
+    colReportTitle: 'عنوان التقرير',
+    colCreatedBy: 'معد التقرير',
+    colStatus: 'حالة التقرير',
+    colActions: 'التحكم بالتقرير',
+    colLastModified: 'اخر تعديل',
+    duplicateReportMsg: 'يوجد تقرير مسبق لهذه الدولة، يرجى تحديث التقرير الموجود. مرجع:',
+    // Dashboard Specific
+    recentReports: 'التقارير الحديثة',
+    startNewAnalysis: 'بدء تحليل جديد',
+    startAnalysisDesc: 'إنشاء تقارير شاملة عن سوق العمل الثنائي مدعومة برؤى الذكاء الاصطناعي والمصادر الرسمية للبيانات.',
+    viewAll: 'عرض الكل',
   }
 };

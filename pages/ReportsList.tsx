@@ -77,7 +77,7 @@ export default function ReportsList() {
             {t('reports')}
           </h1>
           <p className="text-muted-foreground mt-1 dark:text-gray-400">
-            Manage and generate bilateral intelligence reports.
+            {t('reportsDescription')}
           </p>
         </div>
         <Button onClick={() => navigate('/wizard')}>
@@ -115,11 +115,11 @@ export default function ReportsList() {
             <thead className="bg-secondary/50 dark:bg-gray-700/50 border-b dark:border-gray-700">
               <tr>
                 <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('country')}</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Report Title</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Created By</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Last Modified</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Status</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Actions</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colReportTitle')}</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colCreatedBy')}</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colLastModified')}</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colStatus')}</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">{t('colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y dark:divide-gray-700">
