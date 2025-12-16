@@ -216,7 +216,7 @@ export default function PrintView() {
 
       {/* --- PAGE 2: COMPREHENSIVE OVERVIEW (Compact) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} />
+        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
 
         {/* Section 1: Country Profile */}
         <SectionHeader
@@ -355,7 +355,7 @@ export default function PrintView() {
 
       {/* --- PAGE 3: UAE WORKFORCE (Standalone) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} />
+        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
 
         <SectionHeader
           icon={Building}
@@ -474,7 +474,7 @@ export default function PrintView() {
 
       {/* --- PAGE 4: RELATIONS (Standalone - Part 1) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} />
+        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
 
         <SectionHeader
           icon={Handshake}
@@ -545,7 +545,7 @@ export default function PrintView() {
       {/* --- PAGE 4b: RELATIONS CONTINUED (Only if overflow) --- */}
       {showPage4b && (
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} />
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
           
           <SectionHeader
             icon={Handshake}
@@ -599,7 +599,7 @@ export default function PrintView() {
 
       {/* --- PAGE 5: DELEGATIONS (Standalone) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} />
+        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
 
         <SectionHeader
           icon={Users}

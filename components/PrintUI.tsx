@@ -28,35 +28,54 @@ export const PageContainer = ({
 export const HeaderBand = ({
   country,
   reportId,
+  title,
 }: {
   country: string;
   reportId: string;
-}) => (
-  <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
-    <div className="flex items-center gap-3">
-      {/* Fallback to flag if logo not available */}
-      <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto shadow-sm" alt="UAE" />
-      <div className="h-8 w-px bg-gray-200" />
-      <div>
-        <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">
-          Labour Market Intelligence
-        </p>
-        <p className="text-sm font-bold text-primary-dark uppercase">
-          {country} • Internal Report
-        </p>
+  title: string;
+}) => {
+  // Helper for flag code mapping
+  const getFlagCode = (c: string) => {
+    const lower = c.toLowerCase();
+    if (lower === 'india') return 'in';
+    if (lower === 'philippines') return 'ph';
+    if (lower === 'pakistan') return 'pk';
+    if (lower === 'bangladesh') return 'bd';
+    if (lower === 'vietnam') return 'vn';
+    if (lower === 'uae' || lower === 'united arab emirates') return 'ae';
+    // Fallback: If map doesn't cover, default to UAE or generic
+    return 'ae'; 
+  };
+  
+  const flagCode = getFlagCode(country);
+
+  return (
+    <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
+      <div className="flex items-center gap-3">
+        {/* Dynamic Flag based on Report Country */}
+        <img src={`https://flagcdn.com/w40/${flagCode}.png`} className="h-6 w-auto shadow-sm" alt={country} />
+        <div className="h-8 w-px bg-gray-200" />
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">
+            {title}
+          </p>
+          <p className="text-sm font-bold text-primary-dark uppercase">
+            {country} • Internal Report
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <span className="kpi-chip chip-restrict flex items-center gap-1">
+          <ShieldAlert size={12} /> Restricted
+        </span>
+        <span className="text-[9px] text-gray-400 font-mono">
+          REF: {reportId}
+        </span>
       </div>
     </div>
-
-    <div className="flex items-center gap-3">
-      <span className="kpi-chip chip-restrict flex items-center gap-1">
-        <ShieldAlert size={12} /> Restricted
-      </span>
-      <span className="text-[9px] text-gray-400 font-mono">
-        REF: {reportId}
-      </span>
-    </div>
-  </div>
-);
+  );
+};
 
 /* ===============================
    SECTION HEADER
