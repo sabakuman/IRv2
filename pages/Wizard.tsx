@@ -724,8 +724,8 @@ export default function Wizard() {
                  <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
                       <tr>
-                        <th className="text-left px-4 py-2 text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">Destination Country</th>
-                        <th className="text-left px-4 py-2 text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">Worker Count (Est.)</th>
+                        <th className="text-left px-4 py-2 text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">{t('destinationCountry')}</th>
+                        <th className="text-left px-4 py-2 text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">{t('workerCountEst')}</th>
                         <th className="w-10"></th>
                       </tr>
                     </thead>
@@ -750,7 +750,7 @@ export default function Wizard() {
             </div>
 
              <div>
-               <h3 className="text-sm font-semibold mb-4 text-gray-600 dark:text-gray-300 uppercase tracking-wider">Sector Distribution</h3>
+               <h3 className="text-sm font-semibold mb-4 text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('sectorDistribution')}</h3>
                {data.workforceStats.topSectors.map((sector, idx) => (
                  <div key={idx} className="flex gap-4 mb-2 items-center">
                    <Input placeholder="Sector Name" className="flex-1" value={sector.name} onChange={(e) => { const newSectors = [...data.workforceStats.topSectors]; newSectors[idx].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: newSectors}}); }} />
@@ -902,7 +902,7 @@ export default function Wizard() {
                 <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2">
                    <MessageSquare size={20} /> {t('sectionInteractions')}
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Record diplomatic visits, key discussion points, and relevant news.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('interactionHelper')}</p>
              </div>
 
              {/* Recent Interactions */}

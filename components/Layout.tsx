@@ -44,7 +44,7 @@ export default function Layout() {
           <div className="mb-2 px-4 text-xs font-semibold text-blue-300 uppercase tracking-wider">General</div>
           <NavItem icon={Home} label={t('dashboard')} path="/dashboard" />
           <NavItem icon={FileText} label={t('reports')} path="/reports" />
-          <NavItem icon={Settings} label="Settings" path="/account" />
+          <NavItem icon={Settings} label={t('settings')} path="/account" />
 
           {/* Admin Navigation */}
           {user?.role === 'admin' && (

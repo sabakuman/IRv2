@@ -41,7 +41,7 @@ export default function Dashboard() {
         </div>
         <Button onClick={() => navigate('/wizard')}>
           <Plus size={20} />
-          {t('createNew')}
+          {t('launchWizard')}
         </Button>
       </div>
 
@@ -117,7 +117,7 @@ export default function Dashboard() {
                Generate comprehensive bilateral labour market reports powered by AI insights and official data sources.
             </p>
             <Button className="bg-accent text-white border-none hover:bg-accent-light" onClick={() => navigate('/wizard')}>
-               <Plus size={18} /> Launch Report Wizard
+               <Plus size={18} /> {t('launchWizard')}
             </Button>
          </Card>
       </div>

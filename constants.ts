@@ -152,6 +152,7 @@ export const TRANSLATIONS = {
   en: {
     dashboard: 'Dashboard',
     reports: 'Reports',
+    settings: 'Settings',
     createNew: 'Create Report',
     draft: 'Draft',
     completed: 'Completed',
@@ -292,10 +293,16 @@ export const TRANSLATIONS = {
     workforceMinistry: 'Ministry of Labour',
     workforceOf: 'Workforce of',
     relationshipSummary: 'Relationship Summary',
+    launchWizard: 'Launch Report Wizard',
+    destinationCountry: 'Destination Country',
+    workerCountEst: 'Worker Count (Est.)',
+    sectorDistribution: 'Sector Distribution',
+    interactionHelper: 'Record diplomatic visits, key discussion points, and relevant news.',
   },
   ar: {
-    dashboard: 'لوحة التحكم',
+    dashboard: 'الصفحة الرئيسة',
     reports: 'التقارير',
+    settings: 'الإعدادات',
     createNew: 'إنشاء تقرير',
     draft: 'مسودة',
     completed: 'مكتمل',
@@ -436,5 +443,10 @@ export const TRANSLATIONS = {
     workforceMinistry: 'الجهة المعنية بسوق العمل',
     workforceOf: 'القوى العاملة لدى',
     relationshipSummary: 'ملخص العلاقة',
+    launchWizard: 'اضغط هنا لإعداد تقرير جديد',
+    destinationCountry: 'الدولة',
+    workerCountEst: 'عدد العمال',
+    sectorDistribution: 'التوزيع على حسب القطاعات',
+    interactionHelper: 'اضف معلومات ذات صلة او ملخص العلاقات او محاور النقاش',
   }
 };
