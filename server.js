@@ -144,15 +144,13 @@ function initializeDatabase() {
       details TEXT
     )`);
 
-    // Seed Defaults if empty
-    db.get("SELECT count(*) as count FROM users", (err, row) => {
-      if (row && row.count === 0) {
-        console.log("Seeding default admin...");
-        const stmt = db.prepare("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)");
-        stmt.run(DEFAULT_ADMIN.id, DEFAULT_ADMIN.email, DEFAULT_ADMIN.fullName, DEFAULT_ADMIN.role, DEFAULT_ADMIN.password, DEFAULT_ADMIN.avatarUrl, DEFAULT_ADMIN.apiKey);
-        stmt.finalize();
-      }
-    });
+    // --- FORCE ADMIN SEED ---
+    // This ensures the admin user always exists with the known password, 
+    // fixing login issues if the DB was in a partial state.
+    const adminStmt = db.prepare("INSERT OR REPLACE INTO users (id, email, fullName, role, password, avatarUrl, apiKey) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    adminStmt.run(DEFAULT_ADMIN.id, DEFAULT_ADMIN.email, DEFAULT_ADMIN.fullName, DEFAULT_ADMIN.role, DEFAULT_ADMIN.password, DEFAULT_ADMIN.avatarUrl, DEFAULT_ADMIN.apiKey);
+    adminStmt.finalize();
+    console.log("Admin account ensured: admin / admin");
 
     db.get("SELECT count(*) as count FROM reports", (err, row) => {
       if (row && row.count === 0) {
