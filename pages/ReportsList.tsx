@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -129,13 +130,16 @@ export default function ReportsList() {
                 const isAdmin = user?.role === 'admin';
                 const canEdit = isAdmin || isOwner;
                 const isDeleting = deletingId === report.id;
+                
+                // Flag logic
+                const flagSrc = report.data.flagUrl || `https://flagcdn.com/w40/${report.data.country === 'Philippines' ? 'ph' : report.data.country === 'India' ? 'in' : 'ae'}.png`;
 
                 return (
                   <tr key={report.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}>
                     <td className="p-4 font-medium text-primary dark:text-primary-light flex items-center gap-3">
                        <img 
-                        src={`https://flagcdn.com/w40/${report.data.country === 'Philippines' ? 'ph' : report.data.country === 'India' ? 'in' : 'ae'}.png`} 
-                        className="w-6 h-auto shadow-sm rounded-sm"
+                        src={flagSrc} 
+                        className="w-6 h-auto shadow-sm rounded-sm object-cover"
                         alt="flag"
                         onError={(e) => e.currentTarget.style.display = 'none'}
                        />

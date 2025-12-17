@@ -1,3 +1,4 @@
+
 export type Language = 'en' | 'ar';
 export type ReportStatus = 'draft' | 'completed';
 export type UserRole = 'admin' | 'user';
@@ -75,6 +76,7 @@ export interface UaeWorkforceData {
 // Complex Report Structure
 export interface ReportData {
   reportDate?: string; // Date of the report/meeting
+  flagUrl?: string; // Custom uploaded flag
 
   // Section 1: Country Profile & Diplomacy
   country: string;
@@ -179,6 +181,7 @@ export interface AuditLog {
 
 export const EMPTY_REPORT_DATA: ReportData = {
   reportDate: new Date().toISOString().split('T')[0],
+  flagUrl: '',
   country: '',
   capital: '',
   officialLanguage: '',

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { MockService } from '../services/mockService';
@@ -10,7 +11,7 @@ import {
   GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
   ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft
 } from 'lucide-react';
-import { PageContainer, HeaderBand, SectionHeader, KPI } from '../components/PrintUI';
+import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
 
 const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
@@ -174,13 +175,72 @@ export default function PrintView() {
     </div>
   );
 
+  // Updated HeaderBand to accept flagUrl
+  const HeaderBand = ({
+    country,
+    reportId,
+    title,
+    flagUrl
+  }: {
+    country: string;
+    reportId: string;
+    title: string;
+    flagUrl?: string;
+  }) => {
+    // Helper for flag code mapping fallback
+    const getFlagCode = (c: string) => {
+      const lower = c.toLowerCase();
+      if (lower === 'india') return 'in';
+      if (lower === 'philippines') return 'ph';
+      if (lower === 'pakistan') return 'pk';
+      if (lower === 'bangladesh') return 'bd';
+      if (lower === 'vietnam') return 'vn';
+      if (lower === 'uae' || lower === 'united arab emirates') return 'ae';
+      return 'ae'; 
+    };
+    
+    const flagSrc = flagUrl || `https://flagcdn.com/w40/${getFlagCode(country)}.png`;
+
+    return (
+      <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
+        <div className="flex items-center gap-3">
+          <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
+          <div className="h-8 w-px bg-gray-200" />
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">
+              {title}
+            </p>
+            <p className="text-sm font-bold text-primary-dark uppercase">
+              {country} • Internal Report
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="kpi-chip chip-restrict flex items-center gap-1">
+            <ShieldAlert size={12} /> Restricted
+          </span>
+          <span className="text-[9px] text-gray-400 font-mono">
+            REF: {reportId}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   // Pagination Logic for Page 4
   const interactionsPerPage = 4;
   const firstPageInteractions = data.recentInteractions.slice(0, interactionsPerPage);
   const remainingInteractions = data.recentInteractions.slice(interactionsPerPage);
-  
-  // We need a Page 4b if there are remaining interactions OR if there are discussion points (to avoid overcrowding Page 4)
   const showPage4b = remainingInteractions.length > 0 || data.pointsOfDiscussion.length > 0;
+
+  // Flag logic for Page 1
+  const getCoverFlagSrc = () => {
+    if (data.flagUrl) return data.flagUrl;
+    const lower = data.country.toLowerCase();
+    const code = lower === 'philippines' ? 'ph' : lower === 'india' ? 'in' : 'ae';
+    return `https://flagcdn.com/w320/${code}.png`;
+  };
 
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
@@ -220,9 +280,9 @@ export default function PrintView() {
 
             <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 max-w-lg">
                <div className="flex items-center gap-6 mb-6">
-                  <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
+                  <div className="w-16 h-16 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white flex items-center justify-center">
                       <img 
-                         src={`https://flagcdn.com/w320/${data.country === 'Philippines' ? 'ph' : data.country === 'India' ? 'in' : 'ae'}.png`} 
+                         src={getCoverFlagSrc()} 
                          className="w-full h-full object-cover"
                          onError={(e) => e.currentTarget.style.display = 'none'}
                       />
@@ -262,7 +322,7 @@ export default function PrintView() {
 
       {/* --- PAGE 2: COMPREHENSIVE OVERVIEW (Compact) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
+        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
 
         {/* Section 1: Country Profile */}
         <SectionHeader
@@ -299,7 +359,7 @@ export default function PrintView() {
            <KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats.tipRank} tone="warn" sub={getSource('tip')} />
         </div>
         
-        {/* Trade Statistics (Improved Layout with RTL support) */}
+        {/* Trade Statistics */}
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 mb-3">
            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 border-b border-gray-200 pb-1 flex items-center gap-1">
               <ArrowRightLeft size={10} /> {t('bilateralTrade')} {renderSource('trade')}
@@ -310,7 +370,6 @@ export default function PrintView() {
                     <ArrowDownLeft size={14} />
                     <p className="text-[9px] font-bold uppercase">{t('importsFromUae')}</p>
                  </div>
-                 {/* Wrapped text in span dir=ltr to preserve English number formatting while keeping alignment */}
                  <p className="text-base font-serif font-bold text-gray-900 mb-1" dir="ltr" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     {data.economicStats.totalImportsFromUAE}
                  </p>
@@ -407,7 +466,7 @@ export default function PrintView() {
 
       {/* --- PAGE 3: UAE WORKFORCE (Standalone) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
+        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
 
         <SectionHeader
           icon={Building}
@@ -528,7 +587,7 @@ export default function PrintView() {
 
       {/* --- PAGE 4: RELATIONS (Standalone - Part 1) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
+        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
 
         <SectionHeader
           icon={Handshake}
@@ -599,7 +658,7 @@ export default function PrintView() {
       {/* --- PAGE 4b: RELATIONS CONTINUED (Only if overflow) --- */}
       {showPage4b && (
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           
           <SectionHeader
             icon={Handshake}
@@ -653,7 +712,7 @@ export default function PrintView() {
 
       {/* --- PAGE 5: DELEGATIONS (Standalone) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} />
+        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
 
         <SectionHeader
           icon={Users}
@@ -688,7 +747,14 @@ export default function PrintView() {
            {/* Partner Delegation */}
            <div className="avoid-break">
               <div className="flex items-center gap-3 mb-6 border-b-2 border-accent pb-3">
-                 <Globe size={18} className="text-accent" />
+                 {/* Replace Globe with Custom Flag or Fetched Flag */}
+                 <img 
+                    src={data.flagUrl || `https://flagcdn.com/w40/${data.country.toLowerCase() === 'philippines' ? 'ph' : data.country.toLowerCase() === 'india' ? 'in' : 'ae'}.png`} 
+                    className="h-5 w-auto" 
+                    alt={data.country}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                 />
+                 {/* Fallback Globe if img is hidden (handled by layout if needed, but keeping simpler here) */}
                  <p className="text-xs font-extrabold uppercase text-accent tracking-widest">{t('partnerDelegation')}</p>
               </div>
               <div className="space-y-6">

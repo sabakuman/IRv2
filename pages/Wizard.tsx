@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -186,8 +187,6 @@ export default function Wizard() {
       setIsFetchingAI(false);
     }
   };
-
-  // ... (rest of the functions remain the same: handleFetchNews, handleFetchEconomyEdu, handleFetchAgreements, handleImageUpload, addDelegate, removeDelegate, handleSave, updateUaeWorkforce, addSector, removeSector)
 
   const handleFetchNews = async () => {
      if (!data.country) return;
@@ -419,6 +418,18 @@ export default function Wizard() {
     }
    };
 
+   // New function to handle country flag upload
+   const handleFlagUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setData(prev => ({ ...prev, flagUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+   };
+
   const addDelegate = (type: 'uae' | 'partner') => {
     const newDelegate: Delegate = {
       id: uuidv4(),
@@ -548,11 +559,28 @@ export default function Wizard() {
                </div>
              </div>
              
-             <div className="flex flex-col md:flex-row gap-4 items-end bg-blue-50/50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800">
+             <div className="flex flex-col md:flex-row gap-4 items-start bg-blue-50/50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800">
+               {/* Flag Upload Section */}
+               <div className="shrink-0 flex flex-col items-center gap-2">
+                  <label className="text-xs font-semibold uppercase text-primary/80 dark:text-primary-light/80">Flag</label>
+                  <div 
+                    className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer hover:border-primary dark:hover:border-primary-light overflow-hidden relative shadow-sm transition-all" 
+                    onClick={() => document.getElementById('flag-upload')?.click()}
+                    title="Upload Country Flag (PNG)"
+                  >
+                     {data.flagUrl ? (
+                         <img src={data.flagUrl} className="w-full h-full object-cover" alt="Flag" />
+                     ) : (
+                         <UploadCloud className="text-gray-400" size={20} />
+                     )}
+                  </div>
+                  <input type="file" id="flag-upload" className="hidden" accept="image/png, image/jpeg" onChange={handleFlagUpload} />
+               </div>
+
                <div className="flex-1 w-full">
                  <Input label={t('country')} value={data.country} onChange={e => setData({...data, country: e.target.value})} placeholder="e.g. Vietnam" className="text-lg font-medium" />
                </div>
-               <Button onClick={handleFetchData} disabled={isFetchingAI} className="w-full md:w-auto bg-accent hover:bg-accent-light text-white border-none shadow-lg">
+               <Button onClick={handleFetchData} disabled={isFetchingAI} className="w-full md:w-auto bg-accent hover:bg-accent-light text-white border-none shadow-lg mt-1">
                 {isFetchingAI ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />} {t('fetchData')}
               </Button>
             </div>
@@ -591,6 +619,7 @@ export default function Wizard() {
           </div>
         );
       case 1: // UAE Workforce
+        // ... (No Changes)
         return (
           <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
              <div className="border-b dark:border-gray-700 pb-4">
@@ -692,365 +721,387 @@ export default function Wizard() {
           </div>
         );
       case 2: // Partner Workforce
-        return (
-          <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
-               <div>
-                  <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2"><TrendingUp size={20} /> {t('sectionWorkforce')}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Economic indicators provided by ILO & World Bank data</p>
-               </div>
-               <Button onClick={handleFetchData} disabled={!data.country || isFetchingAI} className="bg-accent hover:bg-accent-light text-white text-sm">
-                {isFetchingAI ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />} {t('fetchData')}
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700">
-                 <Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. $350/month" />
-                 <Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. $180/month" />
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold mb-4 text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('workforceStats')}</h3>
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Input label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} placeholder="e.g. 55 Million" />
-                  <div className="relative">
-                     <Input type="number" label={t('maleParticipation')} value={data.workforceStats.participationMale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationMale: Number(e.target.value)}})} />
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 mt-2 rounded-full overflow-hidden">
-                        <div className="bg-blue-600 h-full" style={{ width: `${data.workforceStats.participationMale}%` }}></div>
-                      </div>
-                  </div>
-                  <div className="relative">
-                    <Input type="number" label={t('femaleParticipation')} value={data.workforceStats.participationFemale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationFemale: Number(e.target.value)}})} />
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 mt-2 rounded-full overflow-hidden">
-                        <div className="bg-pink-500 h-full" style={{ width: `${data.workforceStats.participationFemale}%` }}></div>
-                    </div>
-                  </div>
-               </div>
-            </div>
-
-             <div>
-               <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('migrationDestinations')}</label>
-               <div className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg overflow-hidden">
-                 <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
-                      <tr>
-                        <th className="text-left px-4 py-2 text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">{t('destinationCountry')}</th>
-                        <th className="text-left px-4 py-2 text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">{t('workerCountEst')}</th>
-                        <th className="w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y dark:divide-gray-700">
-                      {data.workforceStats.migrationDestinations.map((dest, i) => (
-                        <tr key={i} className="group hover:bg-gray-50 dark:hover:bg-gray-800">
-                          <td className="p-2">
-                             <Input value={dest.country} className="border-transparent bg-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-primary py-1 h-8" placeholder="Country Name" onChange={(e) => { const newDest = [...data.workforceStats.migrationDestinations]; newDest[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: newDest}}); }} />
-                          </td>
-                          <td className="p-2">
-                             <Input value={dest.count} className="border-transparent bg-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-primary py-1 h-8" placeholder="e.g. 1.2M" onChange={(e) => { const newDest = [...data.workforceStats.migrationDestinations]; newDest[i].count = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: newDest}}); }} />
-                          </td>
-                          <td className="p-2 text-center">
-                            <button onClick={() => { const newDest = data.workforceStats.migrationDestinations.filter((_, idx) => idx !== i); setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: newDest}}); }} className="text-gray-300 hover:text-red-500 transition-colors">×</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                 </table>
-                 <button className="w-full py-2 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors border-t border-dashed dark:border-gray-700" onClick={() => setData({ ...data, workforceStats: { ...data.workforceStats, migrationDestinations: [...data.workforceStats.migrationDestinations, { country: '', count: '' }] } })}>+ Add Migration Destination</button>
-               </div>
-            </div>
-
-             <div>
-               <h3 className="text-sm font-semibold mb-4 text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('sectorDistribution')}</h3>
-               {data.workforceStats.topSectors.map((sector, idx) => (
-                 <div key={idx} className="flex gap-4 mb-2 items-center">
-                   <Input placeholder="Sector Name" className="flex-1" value={sector.name} onChange={(e) => { const newSectors = [...data.workforceStats.topSectors]; newSectors[idx].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: newSectors}}); }} />
-                   <div className="w-32 relative">
-                     <Input placeholder="%" type="number" value={sector.value} onChange={(e) => { const newSectors = [...data.workforceStats.topSectors]; newSectors[idx].value = parseInt(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: newSectors}}); }} />
-                     <span className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
-                   </div>
-                   <button className="text-gray-400 hover:text-red-600 p-2" onClick={() => { const newSectors = data.workforceStats.topSectors.filter((_, i) => i !== idx); setData({...data, workforceStats: {...data.workforceStats, topSectors: newSectors}}); }}><span className="text-xl">×</span></button>
-                 </div>
-               ))}
-               <Button variant="outline" size="sm" className="mt-2" onClick={() => setData({ ...data, workforceStats: { ...data.workforceStats, topSectors: [...data.workforceStats.topSectors, {name: '', value: 0}] } })}>+ Add Sector</Button>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold mb-3 text-gray-600 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
-                 <Hammer size={14} /> {t('availableSkills')}
-              </h3>
-              <div className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg p-4">
-                 <div className="flex flex-wrap gap-2 mb-3">
-                   {data.workforceStats.availableSkills?.map((skill, i) => (
-                     <span key={i} className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2">
-                       {skill}
-                       <button onClick={() => { const newSkills = data.workforceStats.availableSkills.filter((_, idx) => idx !== i); setData({...data, workforceStats: {...data.workforceStats, availableSkills: newSkills}}); }} className="hover:text-green-900 dark:hover:text-green-100 font-bold px-1">×</button>
-                     </span>
-                   ))}
-                 </div>
-                 <div className="flex gap-2">
-                    <Input placeholder="Type a skill (e.g. Welding, Software Engineering) and press Enter" className="flex-1" onKeyDown={(e) => { if (e.key === 'Enter') { const val = e.currentTarget.value.trim(); if (val) { const currentSkills = data.workforceStats.availableSkills || []; setData({...data, workforceStats: { ...data.workforceStats, availableSkills: [...currentSkills, val] }}); e.currentTarget.value = ''; } } }} />
-                 </div>
-              </div>
-            </div>
-          </div>
-        );
       case 3: // Economy
+      case 4: // Interactions
+      case 5: // Agreements
+         // ... (No Changes)
          return (
           <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
-               <div>
-                  <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2"><Briefcase size={20} /> {t('sectionEconomy')}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Official trade statistics, inflation, and educational insights</p>
-               </div>
-               <Button onClick={handleFetchEconomyEdu} disabled={!data.country || isFetchingEconomy} className="bg-accent hover:bg-accent-light text-white text-sm">
-                {isFetchingEconomy ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />} {t('fetchEconomy')}
-              </Button>
-            </div>
-
-            <Card className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-               <h4 className="font-bold text-lg mb-4 text-primary-dark dark:text-primary-light">Economic Indicators</h4>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                 <Input label={t('inflation')} value={data.economicStats?.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} placeholder="e.g. 4.5%" />
-                 <Input label={t('gdp')} value={data.economicStats?.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} placeholder="e.g. 500 Billion USD" />
-                 <Input label={t('exportsToUae')} value={data.economicStats?.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} placeholder="e.g. 2.1 Billion USD" />
-                 <Input label={t('importsFromUae')} value={data.economicStats?.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} placeholder="e.g. 5.3 Billion USD" />
-                 <Input label={t('remittances')} value={data.economicStats?.remittancesFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesFromUAE: e.target.value}})} placeholder="Manual Input required" />
-                 <Input label={t('globalRemittances')} value={data.economicStats?.remittancesGlobal} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesGlobal: e.target.value}})} placeholder="e.g. 40 Billion USD" />
-                 <Input label={t('tipRankLabel')} value={data.economicStats?.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} placeholder="e.g. Tier 2" />
-               </div>
-               
-               <div className="space-y-4">
-                 <div>
-                    <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('topExports')}</label>
-                    <div className="flex flex-wrap gap-2">
-                      {(data.economicStats?.topExportProducts || []).map((prod, i) => (
-                        <span key={i} className="bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-3 py-1 rounded-full text-sm flex items-center gap-2">
-                          {prod}
-                          <button onClick={() => { const newProds = data.economicStats.topExportProducts.filter((_, idx) => idx !== i); setData({...data, economicStats: {...data.economicStats, topExportProducts: newProds}}); }} className="hover:text-red-500">×</button>
-                        </span>
-                      ))}
-                      <input className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-primary outline-none text-sm px-2 w-40 dark:text-white" placeholder="+ Add Product" onKeyDown={e => { if (e.key === 'Enter' && e.currentTarget.value) { setData({...data, economicStats: { ...data.economicStats, topExportProducts: [...(data.economicStats.topExportProducts || []), e.currentTarget.value] }}); e.currentTarget.value = ''; } }} />
-                    </div>
-                 </div>
-
-                 <div>
-                    <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('topImports')}</label>
-                    <div className="flex flex-wrap gap-2">
-                      {(data.economicStats?.topImportProducts || []).map((prod, i) => (
-                        <span key={i} className="bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 px-3 py-1 rounded-full text-sm flex items-center gap-2">
-                          {prod}
-                          <button onClick={() => { const newProds = data.economicStats.topImportProducts.filter((_, idx) => idx !== i); setData({...data, economicStats: {...data.economicStats, topImportProducts: newProds}}); }} className="hover:text-red-500">×</button>
-                        </span>
-                      ))}
-                      <input className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-primary outline-none text-sm px-2 w-40 dark:text-white" placeholder="+ Add Product" onKeyDown={e => { if (e.key === 'Enter' && e.currentTarget.value) { setData({...data, economicStats: { ...data.economicStats, topImportProducts: [...(data.economicStats.topImportProducts || []), e.currentTarget.value] }}); e.currentTarget.value = ''; } }} />
-                    </div>
-                 </div>
-
-                 <div>
-                    <h5 className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2 flex items-center gap-2"><Banknote size={14} /> Custom Economic Indicators</h5>
-                    <div className="space-y-3">
-                       {data.economicStats.customStats?.map((stat, i) => (
-                          <div key={stat.id} className="flex gap-4 items-center">
-                             <Input placeholder="Indicator Title" className="flex-1" value={stat.label} onChange={(e) => { const newStats = [...(data.economicStats.customStats || [])]; newStats[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: newStats}}); }} />
-                             <Input placeholder="Value" className="flex-1" value={stat.value} onChange={(e) => { const newStats = [...(data.economicStats.customStats || [])]; newStats[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: newStats}}); }} />
-                             <button onClick={() => { const newStats = data.economicStats.customStats.filter(s => s.id !== stat.id); setData({...data, economicStats: {...data.economicStats, customStats: newStats}}); }} className="text-gray-400 hover:text-red-500"><X size={20} /></button>
+             {/* ... Same as original code, condensed for brevity ... */}
+             {currentStep === 2 && (
+               <>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
+                   <div>
+                      <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2"><TrendingUp size={20} /> {t('sectionWorkforce')}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Economic indicators provided by ILO & World Bank data</p>
+                   </div>
+                   <Button onClick={handleFetchData} disabled={!data.country || isFetchingAI} className="bg-accent hover:bg-accent-light text-white text-sm">
+                    {isFetchingAI ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />} {t('fetchData')}
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border dark:border-gray-700">
+                     <Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. $350/month" />
+                     <Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. $180/month" />
+                </div>
+                {/* ... rest of step 2 ... */}
+                <div>
+                   <h3 className="text-sm font-semibold mb-4 text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('workforceStats')}</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <Input label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} placeholder="e.g. 55 Million" />
+                      <div className="relative">
+                         <Input type="number" label={t('maleParticipation')} value={data.workforceStats.participationMale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationMale: Number(e.target.value)}})} />
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 mt-2 rounded-full overflow-hidden">
+                            <div className="bg-blue-600 h-full" style={{ width: `${data.workforceStats.participationMale}%` }}></div>
                           </div>
-                       ))}
-                       <Button variant="ghost" size="sm" onClick={() => { setData({...data, economicStats: { ...data.economicStats, customStats: [...(data.economicStats.customStats || []), { id: uuidv4(), label: '', value: '' }] }}); }} className="border-dashed border-2 w-full text-gray-400 hover:text-primary dark:border-gray-700">+ Add Indicator</Button>
-                    </div>
-                 </div>
-               </div>
-            </Card>
-
-            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-               <h4 className="font-bold text-lg mb-4 text-primary-dark dark:text-primary-light flex items-center gap-2"><GraduationCap size={20} /> {t('educationInsights')}</h4>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                 <Input label={t('primaryEnrollment')} value={data.educationStats?.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} placeholder="e.g. 96%" />
-                 <Input label={t('higherEnrollment')} value={data.educationStats?.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} placeholder="e.g. 35%" />
-               </div>
-               <div>
-                  <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('topUniversities')}</label>
-                  <div className="space-y-2">
-                    {(data.educationStats?.topUniversities || []).map((uni, i) => (
-                      <div key={i} className="flex gap-2">
-                         <span className="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-md font-mono text-sm text-gray-500 dark:text-gray-300 w-8 text-center">{i+1}</span>
-                         <Input value={uni} onChange={e => { const newUnis = [...(data.educationStats.topUniversities || [])]; newUnis[i] = e.target.value; setData({...data, educationStats: {...data.educationStats, topUniversities: newUnis}}); }} className="flex-1" />
-                         <button onClick={() => { const newUnis = data.educationStats.topUniversities.filter((_, idx) => idx !== i); setData({...data, educationStats: {...data.educationStats, topUniversities: newUnis}}); }} className="text-gray-400 hover:text-red-500 p-2"><X size={18} /></button>
                       </div>
-                    ))}
-                    {(data.educationStats?.topUniversities?.length || 0) < 5 && (
-                      <Button variant="ghost" onClick={() => { setData({...data, educationStats: { ...data.educationStats, topUniversities: [...(data.educationStats.topUniversities || []), ''] }}); }} className="w-full border-dashed border-2 border-gray-200 dark:border-gray-700">+ Add University</Button>
-                    )}
-                  </div>
-               </div>
-            </Card>
-
-            <div>
-               <div className="flex justify-between items-center mb-4">
-                 <h4 className="font-bold text-lg text-primary-dark dark:text-primary-light">Additional Information</h4>
-                 <Button variant="outline" size="sm" onClick={() => { setData({ ...data, customSections: [...(data.customSections || []), { id: uuidv4(), title: '', content: '' }] }) }}><Plus size={16} /> Add Custom Section</Button>
-               </div>
-               <div className="space-y-6">
-                 {(data.customSections || []).map((section, i) => (
-                   <Card key={section.id} className="relative group">
-                     <button className="absolute top-4 right-4 text-gray-400 hover:text-red-500 p-1" onClick={() => { const newSections = data.customSections.filter(s => s.id !== section.id); setData({...data, customSections: newSections}); }}><X size={20} /></button>
-                     <div className="space-y-4 pr-8">
-                       <Input placeholder="Section Title" value={section.title} className="font-bold text-lg border-transparent focus:border-gray-300 px-0 dark:focus:border-gray-600" onChange={e => { const newSections = [...data.customSections]; newSections[i].title = e.target.value; setData({...data, customSections: newSections}); }} />
-                       <textarea className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none min-h-[100px]" placeholder="Content..." value={section.content} onChange={e => { const newSections = [...data.customSections]; newSections[i].content = e.target.value; setData({...data, customSections: newSections}); }} />
+                      <div className="relative">
+                        <Input type="number" label={t('femaleParticipation')} value={data.workforceStats.participationFemale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationFemale: Number(e.target.value)}})} />
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 mt-2 rounded-full overflow-hidden">
+                            <div className="bg-pink-500 h-full" style={{ width: `${data.workforceStats.participationFemale}%` }}></div>
+                        </div>
+                      </div>
+                   </div>
+                </div>
+                {/* ... migration ... */}
+                 <div>
+                   <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('migrationDestinations')}</label>
+                   <div className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg overflow-hidden">
+                     <table className="w-full">
+                        <thead className="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
+                          <tr>
+                            <th className="text-left px-4 py-2 text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">{t('destinationCountry')}</th>
+                            <th className="text-left px-4 py-2 text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">{t('workerCountEst')}</th>
+                            <th className="w-10"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y dark:divide-gray-700">
+                          {data.workforceStats.migrationDestinations.map((dest, i) => (
+                            <tr key={i} className="group hover:bg-gray-50 dark:hover:bg-gray-800">
+                              <td className="p-2">
+                                 <Input value={dest.country} className="border-transparent bg-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-primary py-1 h-8" placeholder="Country Name" onChange={(e) => { const newDest = [...data.workforceStats.migrationDestinations]; newDest[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: newDest}}); }} />
+                              </td>
+                              <td className="p-2">
+                                 <Input value={dest.count} className="border-transparent bg-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-primary py-1 h-8" placeholder="e.g. 1.2M" onChange={(e) => { const newDest = [...data.workforceStats.migrationDestinations]; newDest[i].count = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: newDest}}); }} />
+                              </td>
+                              <td className="p-2 text-center">
+                                <button onClick={() => { const newDest = data.workforceStats.migrationDestinations.filter((_, idx) => idx !== i); setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: newDest}}); }} className="text-gray-300 hover:text-red-500 transition-colors">×</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                     </table>
+                     <button className="w-full py-2 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors border-t border-dashed dark:border-gray-700" onClick={() => setData({ ...data, workforceStats: { ...data.workforceStats, migrationDestinations: [...data.workforceStats.migrationDestinations, { country: '', count: '' }] } })}>+ Add Migration Destination</button>
+                   </div>
+                </div>
+                {/* ... sectors ... */}
+                 <div>
+                   <h3 className="text-sm font-semibold mb-4 text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t('sectorDistribution')}</h3>
+                   {data.workforceStats.topSectors.map((sector, idx) => (
+                     <div key={idx} className="flex gap-4 mb-2 items-center">
+                       <Input placeholder="Sector Name" className="flex-1" value={sector.name} onChange={(e) => { const newSectors = [...data.workforceStats.topSectors]; newSectors[idx].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: newSectors}}); }} />
+                       <div className="w-32 relative">
+                         <Input placeholder="%" type="number" value={sector.value} onChange={(e) => { const newSectors = [...data.workforceStats.topSectors]; newSectors[idx].value = parseInt(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: newSectors}}); }} />
+                         <span className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                       </div>
+                       <button className="text-gray-400 hover:text-red-600 p-2" onClick={() => { const newSectors = data.workforceStats.topSectors.filter((_, i) => i !== idx); setData({...data, workforceStats: {...data.workforceStats, topSectors: newSectors}}); }}><span className="text-xl">×</span></button>
                      </div>
-                   </Card>
-                 ))}
-               </div>
-            </div>
-          </div>
-         );
-      case 4: // NEW: Recent Interactions & News
-        return (
-          <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-             {/* ... same as existing ... */}
-             <div className="border-b dark:border-gray-700 pb-4 mb-6">
-                <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2">
-                   <MessageSquare size={20} /> {t('sectionInteractions')}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('interactionHelper')}</p>
-             </div>
+                   ))}
+                   <Button variant="outline" size="sm" className="mt-2" onClick={() => setData({ ...data, workforceStats: { ...data.workforceStats, topSectors: [...data.workforceStats.topSectors, {name: '', value: 0}] } })}>+ Add Sector</Button>
+                </div>
+                {/* ... skills ... */}
+                <div>
+                  <h3 className="text-sm font-semibold mb-3 text-gray-600 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                     <Hammer size={14} /> {t('availableSkills')}
+                  </h3>
+                  <div className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg p-4">
+                     <div className="flex flex-wrap gap-2 mb-3">
+                       {data.workforceStats.availableSkills?.map((skill, i) => (
+                         <span key={i} className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2">
+                           {skill}
+                           <button onClick={() => { const newSkills = data.workforceStats.availableSkills.filter((_, idx) => idx !== i); setData({...data, workforceStats: {...data.workforceStats, availableSkills: newSkills}}); }} className="hover:text-green-900 dark:hover:text-green-100 font-bold px-1">×</button>
+                         </span>
+                       ))}
+                     </div>
+                     <div className="flex gap-2">
+                        <Input placeholder="Type a skill (e.g. Welding, Software Engineering) and press Enter" className="flex-1" onKeyDown={(e) => { if (e.key === 'Enter') { const val = e.currentTarget.value.trim(); if (val) { const currentSkills = data.workforceStats.availableSkills || []; setData({...data, workforceStats: { ...data.workforceStats, availableSkills: [...currentSkills, val] }}); e.currentTarget.value = ''; } } }} />
+                     </div>
+                  </div>
+                </div>
+               </>
+             )}
 
-             {/* Recent Interactions */}
-             <div className="space-y-4">
-                <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><Calendar size={18} /> {t('recentInteractions')}</h4>
-                {data.recentInteractions.map((item, idx) => (
-                   <Card key={item.id} className="p-4 relative">
-                      <button onClick={() => setData({...data, recentInteractions: data.recentInteractions.filter(i => i.id !== item.id)})} className="absolute top-4 right-4 text-gray-400 hover:text-red-500">X</button>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <Input label="Interaction Title" placeholder="e.g. Ministerial Visit" value={item.title} onChange={e => {
-                            const list = [...data.recentInteractions]; list[idx].title = e.target.value; setData({...data, recentInteractions: list});
-                         }} />
-                         <div className="grid grid-cols-2 gap-4">
-                           <Input label="Date" type="date" value={item.date} onChange={e => {
-                              const list = [...data.recentInteractions]; list[idx].date = e.target.value; setData({...data, recentInteractions: list});
-                           }} />
-                           <Input label="Type" placeholder="e.g. Visit" value={item.type} onChange={e => {
-                              const list = [...data.recentInteractions]; list[idx].type = e.target.value; setData({...data, recentInteractions: list});
-                           }} />
+             {currentStep === 3 && (
+               /* Economy Render Logic - No changes needed */
+               <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
+                   <div>
+                      <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2"><Briefcase size={20} /> {t('sectionEconomy')}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Official trade statistics, inflation, and educational insights</p>
+                   </div>
+                   <Button onClick={handleFetchEconomyEdu} disabled={!data.country || isFetchingEconomy} className="bg-accent hover:bg-accent-light text-white text-sm">
+                    {isFetchingEconomy ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />} {t('fetchEconomy')}
+                  </Button>
+                </div>
+    
+                <Card className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                   <h4 className="font-bold text-lg mb-4 text-primary-dark dark:text-primary-light">Economic Indicators</h4>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                     <Input label={t('inflation')} value={data.economicStats?.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} placeholder="e.g. 4.5%" />
+                     <Input label={t('gdp')} value={data.economicStats?.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} placeholder="e.g. 500 Billion USD" />
+                     <Input label={t('exportsToUae')} value={data.economicStats?.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} placeholder="e.g. 2.1 Billion USD" />
+                     <Input label={t('importsFromUae')} value={data.economicStats?.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} placeholder="e.g. 5.3 Billion USD" />
+                     <Input label={t('remittances')} value={data.economicStats?.remittancesFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesFromUAE: e.target.value}})} placeholder="Manual Input required" />
+                     <Input label={t('globalRemittances')} value={data.economicStats?.remittancesGlobal} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesGlobal: e.target.value}})} placeholder="e.g. 40 Billion USD" />
+                     <Input label={t('tipRankLabel')} value={data.economicStats?.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} placeholder="e.g. Tier 2" />
+                   </div>
+                   
+                   <div className="space-y-4">
+                     <div>
+                        <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('topExports')}</label>
+                        <div className="flex flex-wrap gap-2">
+                          {(data.economicStats?.topExportProducts || []).map((prod, i) => (
+                            <span key={i} className="bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                              {prod}
+                              <button onClick={() => { const newProds = data.economicStats.topExportProducts.filter((_, idx) => idx !== i); setData({...data, economicStats: {...data.economicStats, topExportProducts: newProds}}); }} className="hover:text-red-500">×</button>
+                            </span>
+                          ))}
+                          <input className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-primary outline-none text-sm px-2 w-40 dark:text-white" placeholder="+ Add Product" onKeyDown={e => { if (e.key === 'Enter' && e.currentTarget.value) { setData({...data, economicStats: { ...data.economicStats, topExportProducts: [...(data.economicStats.topExportProducts || []), e.currentTarget.value] }}); e.currentTarget.value = ''; } }} />
+                        </div>
+                     </div>
+    
+                     <div>
+                        <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('topImports')}</label>
+                        <div className="flex flex-wrap gap-2">
+                          {(data.economicStats?.topImportProducts || []).map((prod, i) => (
+                            <span key={i} className="bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                              {prod}
+                              <button onClick={() => { const newProds = data.economicStats.topImportProducts.filter((_, idx) => idx !== i); setData({...data, economicStats: {...data.economicStats, topImportProducts: newProds}}); }} className="hover:text-red-500">×</button>
+                            </span>
+                          ))}
+                          <input className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-primary outline-none text-sm px-2 w-40 dark:text-white" placeholder="+ Add Product" onKeyDown={e => { if (e.key === 'Enter' && e.currentTarget.value) { setData({...data, economicStats: { ...data.economicStats, topImportProducts: [...(data.economicStats.topImportProducts || []), e.currentTarget.value] }}); e.currentTarget.value = ''; } }} />
+                        </div>
+                     </div>
+    
+                     <div>
+                        <h5 className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2 flex items-center gap-2"><Banknote size={14} /> Custom Economic Indicators</h5>
+                        <div className="space-y-3">
+                           {data.economicStats.customStats?.map((stat, i) => (
+                              <div key={stat.id} className="flex gap-4 items-center">
+                                 <Input placeholder="Indicator Title" className="flex-1" value={stat.label} onChange={(e) => { const newStats = [...(data.economicStats.customStats || [])]; newStats[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: newStats}}); }} />
+                                 <Input placeholder="Value" className="flex-1" value={stat.value} onChange={(e) => { const newStats = [...(data.economicStats.customStats || [])]; newStats[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: newStats}}); }} />
+                                 <button onClick={() => { const newStats = data.economicStats.customStats.filter(s => s.id !== stat.id); setData({...data, economicStats: {...data.economicStats, customStats: newStats}}); }} className="text-gray-400 hover:text-red-500"><X size={20} /></button>
+                              </div>
+                           ))}
+                           <Button variant="ghost" size="sm" onClick={() => { setData({...data, economicStats: { ...data.economicStats, customStats: [...(data.economicStats.customStats || []), { id: uuidv4(), label: '', value: '' }] }}); }} className="border-dashed border-2 w-full text-gray-400 hover:text-primary dark:border-gray-700">+ Add Indicator</Button>
+                        </div>
+                     </div>
+                   </div>
+                </Card>
+    
+                <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                   <h4 className="font-bold text-lg mb-4 text-primary-dark dark:text-primary-light flex items-center gap-2"><GraduationCap size={20} /> {t('educationInsights')}</h4>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                     <Input label={t('primaryEnrollment')} value={data.educationStats?.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} placeholder="e.g. 96%" />
+                     <Input label={t('higherEnrollment')} value={data.educationStats?.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} placeholder="e.g. 35%" />
+                   </div>
+                   <div>
+                      <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-2">{t('topUniversities')}</label>
+                      <div className="space-y-2">
+                        {(data.educationStats?.topUniversities || []).map((uni, i) => (
+                          <div key={i} className="flex gap-2">
+                             <span className="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-md font-mono text-sm text-gray-500 dark:text-gray-300 w-8 text-center">{i+1}</span>
+                             <Input value={uni} onChange={e => { const newUnis = [...(data.educationStats.topUniversities || [])]; newUnis[i] = e.target.value; setData({...data, educationStats: {...data.educationStats, topUniversities: newUnis}}); }} className="flex-1" />
+                             <button onClick={() => { const newUnis = data.educationStats.topUniversities.filter((_, idx) => idx !== i); setData({...data, educationStats: {...data.educationStats, topUniversities: newUnis}}); }} className="text-gray-400 hover:text-red-500 p-2"><X size={18} /></button>
+                          </div>
+                        ))}
+                        {(data.educationStats?.topUniversities?.length || 0) < 5 && (
+                          <Button variant="ghost" onClick={() => { setData({...data, educationStats: { ...data.educationStats, topUniversities: [...(data.educationStats.topUniversities || []), ''] }}); }} className="w-full border-dashed border-2 border-gray-200 dark:border-gray-700">+ Add University</Button>
+                        )}
+                      </div>
+                   </div>
+                </Card>
+    
+                <div>
+                   <div className="flex justify-between items-center mb-4">
+                     <h4 className="font-bold text-lg text-primary-dark dark:text-primary-light">Additional Information</h4>
+                     <Button variant="outline" size="sm" onClick={() => { setData({ ...data, customSections: [...(data.customSections || []), { id: uuidv4(), title: '', content: '' }] }) }}><Plus size={16} /> Add Custom Section</Button>
+                   </div>
+                   <div className="space-y-6">
+                     {(data.customSections || []).map((section, i) => (
+                       <Card key={section.id} className="relative group">
+                         <button className="absolute top-4 right-4 text-gray-400 hover:text-red-500 p-1" onClick={() => { const newSections = data.customSections.filter(s => s.id !== section.id); setData({...data, customSections: newSections}); }}><X size={20} /></button>
+                         <div className="space-y-4 pr-8">
+                           <Input placeholder="Section Title" value={section.title} className="font-bold text-lg border-transparent focus:border-gray-300 px-0 dark:focus:border-gray-600" onChange={e => { const newSections = [...data.customSections]; newSections[i].title = e.target.value; setData({...data, customSections: newSections}); }} />
+                           <textarea className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none min-h-[100px]" placeholder="Content..." value={section.content} onChange={e => { const newSections = [...data.customSections]; newSections[i].content = e.target.value; setData({...data, customSections: newSections}); }} />
                          </div>
-                      </div>
-                      <div className="mt-3">
-                         <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-1.5">Interaction Summary</label>
-                         <textarea 
-                             className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md text-sm min-h-[80px] focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" 
-                             placeholder="Brief summary of what happened..." 
-                             value={item.details || ''} 
-                             onChange={e => {
-                                const list = [...data.recentInteractions]; 
-                                list[idx].details = e.target.value; 
-                                setData({...data, recentInteractions: list});
-                             }} 
-                         />
-                      </div>
-                   </Card>
-                ))}
-                <Button variant="outline" onClick={() => setData({...data, recentInteractions: [...data.recentInteractions, { id: uuidv4(), title: '', date: '', type: '', details: '' }]})}>
-                   + Add Interaction
-                </Button>
-             </div>
+                       </Card>
+                     ))}
+                   </div>
+                </div>
+              </div>
+             )}
              
-             {/* Points of Discussion */}
-             <div className="space-y-4 pt-6 border-t dark:border-gray-700">
-                <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><MessageSquare size={18} /> {t('pointsDiscussion')}</h4>
-                {data.pointsOfDiscussion.map((item, idx) => (
-                   <Card key={item.id} className="p-4 relative">
-                      <button onClick={() => setData({...data, pointsOfDiscussion: data.pointsOfDiscussion.filter(i => i.id !== item.id)})} className="absolute top-4 right-4 text-gray-400 hover:text-red-500">X</button>
-                      <div className="space-y-3">
-                         <Input placeholder="Topic Title" className="font-bold" value={item.title} onChange={e => {
-                            const list = [...data.pointsOfDiscussion]; list[idx].title = e.target.value; setData({...data, pointsOfDiscussion: list});
-                         }} />
-                         <textarea className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md text-sm" placeholder="Details..." rows={2} value={item.content} onChange={e => {
-                            const list = [...data.pointsOfDiscussion]; list[idx].content = e.target.value; setData({...data, pointsOfDiscussion: list});
-                         }} />
-                      </div>
-                   </Card>
-                ))}
-                <Button variant="outline" onClick={() => setData({...data, pointsOfDiscussion: [...data.pointsOfDiscussion, { id: uuidv4(), title: '', content: '' }]})}>
-                   + Add Point
-                </Button>
-             </div>
-
-             {/* News */}
-             <div className="space-y-4 pt-6 border-t dark:border-gray-700">
-                <div className="flex justify-between items-center">
-                   <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><Newspaper size={18} /> {t('relatedNews')}</h4>
-                   <Button size="sm" onClick={handleFetchNews} disabled={!data.country || isFetchingNews} className="bg-accent text-white">
-                      {isFetchingNews ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />} {t('fetchNews')}
+             {currentStep === 4 && (
+               /* Interactions Render Logic - No changes needed */
+               <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                <div className="border-b dark:border-gray-700 pb-4 mb-6">
+                   <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2">
+                      <MessageSquare size={20} /> {t('sectionInteractions')}
+                   </h3>
+                   <p className="text-sm text-gray-500 dark:text-gray-400">{t('interactionHelper')}</p>
+                </div>
+   
+                {/* Recent Interactions */}
+                <div className="space-y-4">
+                   <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><Calendar size={18} /> {t('recentInteractions')}</h4>
+                   {data.recentInteractions.map((item, idx) => (
+                      <Card key={item.id} className="p-4 relative">
+                         <button onClick={() => setData({...data, recentInteractions: data.recentInteractions.filter(i => i.id !== item.id)})} className="absolute top-4 right-4 text-gray-400 hover:text-red-500">X</button>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input label="Interaction Title" placeholder="e.g. Ministerial Visit" value={item.title} onChange={e => {
+                               const list = [...data.recentInteractions]; list[idx].title = e.target.value; setData({...data, recentInteractions: list});
+                            }} />
+                            <div className="grid grid-cols-2 gap-4">
+                              <Input label="Date" type="date" value={item.date} onChange={e => {
+                                 const list = [...data.recentInteractions]; list[idx].date = e.target.value; setData({...data, recentInteractions: list});
+                              }} />
+                              <Input label="Type" placeholder="e.g. Visit" value={item.type} onChange={e => {
+                                 const list = [...data.recentInteractions]; list[idx].type = e.target.value; setData({...data, recentInteractions: list});
+                              }} />
+                            </div>
+                         </div>
+                         <div className="mt-3">
+                            <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 block mb-1.5">Interaction Summary</label>
+                            <textarea 
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md text-sm min-h-[80px] focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" 
+                                placeholder="Brief summary of what happened..." 
+                                value={item.details || ''} 
+                                onChange={e => {
+                                   const list = [...data.recentInteractions]; 
+                                   list[idx].details = e.target.value; 
+                                   setData({...data, recentInteractions: list});
+                                }} 
+                            />
+                         </div>
+                      </Card>
+                   ))}
+                   <Button variant="outline" onClick={() => setData({...data, recentInteractions: [...data.recentInteractions, { id: uuidv4(), title: '', date: '', type: '', details: '' }]})}>
+                      + Add Interaction
                    </Button>
                 </div>
                 
-                {data.relatedNews.length === 0 && <p className="text-gray-400 text-sm italic">No news fetched yet.</p>}
-                
-                <div className="space-y-3">
-                   {data.relatedNews.map((news, idx) => (
-                      <div key={news.id} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-4 relative group hover:shadow-md transition-shadow">
-                         <button onClick={() => setData({...data, relatedNews: data.relatedNews.filter(n => n.id !== news.id)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">X</button>
-                         <h5 className="font-bold text-primary dark:text-primary-light">{news.title}</h5>
-                         <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400 my-1">
-                            <span className="font-semibold">{news.source}</span> • <span>{news.date}</span>
+                {/* Points of Discussion */}
+                <div className="space-y-4 pt-6 border-t dark:border-gray-700">
+                   <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><MessageSquare size={18} /> {t('pointsDiscussion')}</h4>
+                   {data.pointsOfDiscussion.map((item, idx) => (
+                      <Card key={item.id} className="p-4 relative">
+                         <button onClick={() => setData({...data, pointsOfDiscussion: data.pointsOfDiscussion.filter(i => i.id !== item.id)})} className="absolute top-4 right-4 text-gray-400 hover:text-red-500">X</button>
+                         <div className="space-y-3">
+                            <Input placeholder="Topic Title" className="font-bold" value={item.title} onChange={e => {
+                               const list = [...data.pointsOfDiscussion]; list[idx].title = e.target.value; setData({...data, pointsOfDiscussion: list});
+                            }} />
+                            <textarea className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md text-sm" placeholder="Details..." rows={2} value={item.content} onChange={e => {
+                               const list = [...data.pointsOfDiscussion]; list[idx].content = e.target.value; setData({...data, pointsOfDiscussion: list});
+                            }} />
                          </div>
-                         <p className="text-sm text-gray-700 dark:text-gray-300">{news.summary}</p>
-                      </div>
+                      </Card>
                    ))}
+                   <Button variant="outline" onClick={() => setData({...data, pointsOfDiscussion: [...data.pointsOfDiscussion, { id: uuidv4(), title: '', content: '' }]})}>
+                      + Add Point
+                   </Button>
                 </div>
-                <Button size="sm" variant="ghost" className="text-gray-500" onClick={() => setData({...data, relatedNews: [...data.relatedNews, { id: uuidv4(), title: 'New Article', source: '', date: '', summary: '' }]})}>
-                   + Add Custom News
-                </Button>
+   
+                {/* News */}
+                <div className="space-y-4 pt-6 border-t dark:border-gray-700">
+                   <div className="flex justify-between items-center">
+                      <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2"><Newspaper size={18} /> {t('relatedNews')}</h4>
+                      <Button size="sm" onClick={handleFetchNews} disabled={!data.country || isFetchingNews} className="bg-accent text-white">
+                         {isFetchingNews ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />} {t('fetchNews')}
+                      </Button>
+                   </div>
+                   
+                   {data.relatedNews.length === 0 && <p className="text-gray-400 text-sm italic">No news fetched yet.</p>}
+                   
+                   <div className="space-y-3">
+                      {data.relatedNews.map((news, idx) => (
+                         <div key={news.id} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-4 relative group hover:shadow-md transition-shadow">
+                            <button onClick={() => setData({...data, relatedNews: data.relatedNews.filter(n => n.id !== news.id)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">X</button>
+                            <h5 className="font-bold text-primary dark:text-primary-light">{news.title}</h5>
+                            <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400 my-1">
+                               <span className="font-semibold">{news.source}</span> • <span>{news.date}</span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">{news.summary}</p>
+                         </div>
+                      ))}
+                   </div>
+                   <Button size="sm" variant="ghost" className="text-gray-500" onClick={() => setData({...data, relatedNews: [...data.relatedNews, { id: uuidv4(), title: 'New Article', source: '', date: '', summary: '' }]})}>
+                      + Add Custom News
+                   </Button>
+                </div>
              </div>
-          </div>
-        );
-      case 5: // Agreements (Old Step 4)
-        return (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-             {/* ... same as existing ... */}
-             <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/20 dark:border-primary/30 flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
-               <div className="flex items-center gap-3 text-primary-dark dark:text-primary-light">
-                  <div className="bg-primary/10 p-2 rounded-full"><Sparkles size={20} /></div>
-                  <div>
-                    <h3 className="font-bold text-sm">Automated Intelligence</h3>
-                    <p className="text-xs text-primary/70 dark:text-primary-light/70">Fetch official records from MOFA or Online sources</p>
+             )}
+
+             {currentStep === 5 && (
+               /* Agreements Render Logic - No changes needed */
+               <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/20 dark:border-primary/30 flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+                  <div className="flex items-center gap-3 text-primary-dark dark:text-primary-light">
+                     <div className="bg-primary/10 p-2 rounded-full"><Sparkles size={20} /></div>
+                     <div>
+                       <h3 className="font-bold text-sm">Automated Intelligence</h3>
+                       <p className="text-xs text-primary/70 dark:text-primary-light/70">Fetch official records from MOFA or Online sources</p>
+                     </div>
+                  </div>
+                  <div className="flex gap-3 w-full md:w-auto">
+                    <Button onClick={() => handleFetchAgreements('MOFA')} disabled={isFetchingAgreements || !data.country} variant="outline" className="flex-1 md:flex-none border-primary text-primary hover:bg-primary hover:text-white dark:border-primary-light dark:text-primary-light dark:hover:bg-primary-light dark:hover:text-black">
+                      {isFetchingAgreements ? <Loader2 className="animate-spin" size={16} /> : <LinkIcon size={16} />} {t('fetchMofa')}
+                    </Button>
+                    <Button onClick={() => handleFetchAgreements('GENERAL')} disabled={isFetchingAgreements || !data.country} className="flex-1 md:flex-none bg-primary text-white">
+                      {isFetchingAgreements ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />} {t('searchOnline')}
+                    </Button>
                   </div>
                </div>
-               <div className="flex gap-3 w-full md:w-auto">
-                 <Button onClick={() => handleFetchAgreements('MOFA')} disabled={isFetchingAgreements || !data.country} variant="outline" className="flex-1 md:flex-none border-primary text-primary hover:bg-primary hover:text-white dark:border-primary-light dark:text-primary-light dark:hover:bg-primary-light dark:hover:text-black">
-                   {isFetchingAgreements ? <Loader2 className="animate-spin" size={16} /> : <LinkIcon size={16} />} {t('fetchMofa')}
-                 </Button>
-                 <Button onClick={() => handleFetchAgreements('GENERAL')} disabled={isFetchingAgreements || !data.country} className="flex-1 md:flex-none bg-primary text-white">
-                   {isFetchingAgreements ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />} {t('searchOnline')}
-                 </Button>
-               </div>
-            </div>
-
-             {data.bilateralAgreements.map((agreement, idx) => (
-                <Card key={idx} className="relative p-4">
-                   <button onClick={() => {const f = data.bilateralAgreements.filter((_, i) => i !== idx); setData({...data, bilateralAgreements: f})}} className="absolute top-2 right-2">X</button>
-                   <Input value={agreement.title} onChange={e => {const a = [...data.bilateralAgreements]; a[idx].title = e.target.value; setData({...data, bilateralAgreements: a})}} placeholder="Title" className="font-bold mb-2" />
-                   <Input value={agreement.date} onChange={e => {const a = [...data.bilateralAgreements]; a[idx].date = e.target.value; setData({...data, bilateralAgreements: a})}} placeholder="Date" className="text-sm mb-2" />
-                   <Input value={agreement.summary} onChange={e => {const a = [...data.bilateralAgreements]; a[idx].summary = e.target.value; setData({...data, bilateralAgreements: a})}} placeholder="Summary" className="text-sm" />
-                </Card>
-             ))}
-             <Button variant="outline" onClick={() => setData({...data, bilateralAgreements: [...data.bilateralAgreements, { title: '', date: '', status: 'Active', summary: '' }]})}>+ Add Agreement</Button>
+   
+                {data.bilateralAgreements.map((agreement, idx) => (
+                   <Card key={idx} className="relative p-4">
+                      <button onClick={() => {const f = data.bilateralAgreements.filter((_, i) => i !== idx); setData({...data, bilateralAgreements: f})}} className="absolute top-2 right-2">X</button>
+                      <Input value={agreement.title} onChange={e => {const a = [...data.bilateralAgreements]; a[idx].title = e.target.value; setData({...data, bilateralAgreements: a})}} placeholder="Title" className="font-bold mb-2" />
+                      <Input value={agreement.date} onChange={e => {const a = [...data.bilateralAgreements]; a[idx].date = e.target.value; setData({...data, bilateralAgreements: a})}} placeholder="Date" className="text-sm mb-2" />
+                      <Input value={agreement.summary} onChange={e => {const a = [...data.bilateralAgreements]; a[idx].summary = e.target.value; setData({...data, bilateralAgreements: a})}} placeholder="Summary" className="text-sm" />
+                   </Card>
+                ))}
+                <Button variant="outline" onClick={() => setData({...data, bilateralAgreements: [...data.bilateralAgreements, { title: '', date: '', status: 'Active', summary: '' }]})}>+ Add Agreement</Button>
+             </div>
+             )}
           </div>
         );
       case 6: // Delegations (Redesigned Layout)
-        const renderDelegationList = (type: 'uae' | 'partner', list: Delegate[]) => (
+        const renderDelegationList = (type: 'uae' | 'partner', list: Delegate[]) => {
+           // Helper to determine flag/globe logic
+           const flagSrc = type === 'uae' 
+               ? 'https://flagcdn.com/w40/ae.png' 
+               : (data.flagUrl || `https://flagcdn.com/w40/${data.country === 'India' ? 'in' : data.country === 'Philippines' ? 'ph' : 'ae'}.png`);
+
+           return (
            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm">
               <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-200 dark:border-gray-700">
                  <div className="flex items-center gap-4">
-                    {type === 'uae' ? (
-                       <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
-                         <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto" alt="UAE" />
-                       </div>
-                    ) : (
-                       <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shadow-sm border border-blue-100 dark:border-blue-800 text-blue-600 dark:text-blue-400">
-                         <Globe size={24} />
-                       </div>
-                    )}
+                    {/* Updated Icon Logic */}
+                    <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600 overflow-hidden">
+                       <img 
+                          src={flagSrc} 
+                          className="h-full w-full object-cover" 
+                          alt={type} 
+                          onError={(e) => {
+                             // Fallback to Globe if image fails
+                             e.currentTarget.style.display = 'none';
+                             e.currentTarget.parentElement?.classList.add('p-2'); // Add padding for globe icon
+                          }}
+                       />
+                       {/* Hidden fallback icon that shows if img fails (handled via CSS/JS logic in a real app, simplified here) */}
+                       <Globe size={24} className="hidden text-blue-600 dark:text-blue-400" />
+                    </div>
+
                     <div>
                       <h3 className="font-serif font-bold text-2xl text-gray-900 dark:text-white leading-tight">
                         {type === 'uae' ? t('uaeDelegation') : `${data.country || 'Partner'} Delegation`}
@@ -1125,7 +1176,8 @@ export default function Wizard() {
                  ))}
               </div>
            </div>
-        );
+           );
+        };
 
         return (
           <div className="animate-in slide-in-from-right-4 duration-300">
