@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -19,12 +20,13 @@ export default function Login() {
     setError('');
     setIsLoggingIn(true);
     
-    const success = await signIn(email, password);
+    // Trim spaces to prevent copy-paste errors
+    const success = await signIn(email.trim(), password.trim());
     
     if (success) {
       navigate('/dashboard');
     } else {
-      setError('Invalid credentials. Please try again.');
+      setError('Invalid credentials or Server Offline. Please check terminal.');
       setIsLoggingIn(false);
     }
   };
