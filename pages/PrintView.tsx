@@ -208,8 +208,8 @@ export default function PrintView() {
         <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-6">
            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('trade')}</span></h4>
            <div className="grid grid-cols-2 gap-8">
-              <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalImportsFromUAE}</p><p className="text-[11px] text-gray-600 leading-snug font-medium">{data.economicStats.topImportProducts.slice(0,5).join(', ')}</p></div>
-              <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalExportsToUAE}</p><p className="text-[11px] text-gray-600 leading-snug font-medium">{data.economicStats.topExportProducts.slice(0,5).join(', ')}</p></div>
+              <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalImportsFromUAE}</p><p className="text-[14px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topImportProducts.slice(0,5).join(', ')}</p></div>
+              <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalExportsToUAE}</p><p className="text-[14px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topExportProducts.slice(0,5).join(', ')}</p></div>
            </div>
         </div>
         <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact={true} />
@@ -228,9 +228,11 @@ export default function PrintView() {
            <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre')} labelClassName="text-xs font-bold" />
            <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre')} tone="warn" labelClassName="text-xs font-bold" />
         </div>
-        <div className="grid grid-cols-1 gap-6 mb-6">
-           <div className="p-4 border border-gray-200 rounded-2xl bg-white">
-              <p className="text-center text-xs font-bold text-primary mb-4">{t('workersByEmirate')} (MOHRE)</p>
+        
+        {/* SIDE-BY-SIDE CHARTS */}
+        <div className="grid grid-cols-2 gap-6 mb-6">
+           <div className="p-4 border border-gray-200 rounded-2xl bg-white flex flex-col items-center">
+              <p className="text-center text-[11px] font-bold text-primary mb-4 uppercase tracking-wider">{t('workersByEmirate')}</p>
               <div className="h-44 w-full" dir="ltr">
                  <ResponsiveContainer width="100%" height="100%">
                      <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} margin={{top: 20, right: 10, bottom: 0, left: 10}}>
@@ -243,9 +245,10 @@ export default function PrintView() {
                      </BarChart>
                  </ResponsiveContainer>
               </div>
+              <p className="text-[7px] text-gray-400 mt-2">{getSource('mohre')}</p>
            </div>
-           <div className="p-4 border border-gray-200 rounded-2xl bg-white">
-              <p className="text-center text-xs font-bold text-accent mb-4">{t('residentsByEmirate')} (ICP)</p>
+           <div className="p-4 border border-gray-200 rounded-2xl bg-white flex flex-col items-center">
+              <p className="text-center text-[11px] font-bold text-accent mb-4 uppercase tracking-wider">{t('residentsByEmirate')}</p>
               <div className="h-44 w-full" dir="ltr">
                  <ResponsiveContainer width="100%" height="100%">
                      <BarChart data={data.uaeWorkforceStats.icp.byEmirate} margin={{top: 20, right: 10, bottom: 0, left: 10}}>
@@ -258,20 +261,24 @@ export default function PrintView() {
                      </BarChart>
                  </ResponsiveContainer>
               </div>
+              <p className="text-[7px] text-gray-400 mt-2">{getSource('icp')}</p>
            </div>
         </div>
-        <div className="grid grid-cols-2 gap-6">
+
+        <div className="grid grid-cols-2 gap-6 flex-1 min-h-0">
            {/* SECTOR DISTRIBUTION (Top 10) */}
-           <div className="border border-gray-200 rounded-2xl p-5">
-              <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">{t('workersBySector')} (Top 10) <span className="text-[10px] text-gray-400 italic font-normal">{getSource('mohre')}</span></p>
-              <div className="space-y-4">
+           <div className="border border-gray-200 rounded-2xl p-6 flex flex-col">
+              <p className="text-lg font-bold text-gray-800 mb-4 uppercase tracking-wider">
+                {t('workersBySector')} (Top 10) <span className="text-[10px] text-gray-400 italic font-normal">{getSource('mohre')}</span>
+              </p>
+              <div className="space-y-4 flex-1 overflow-hidden">
                  {mohreSectors.map((s, i) => (
                     <div key={i}>
                        <div className="flex justify-between text-xs mb-1.5">
-                          <span className="font-bold text-gray-700 truncate">{s.name}</span>
-                          <span className="font-mono text-gray-900 font-bold" dir="ltr">{formatCompactNumber(s.value)}</span>
+                          <span className="font-bold text-gray-700 truncate text-[13px]">{s.name}</span>
+                          <span className="font-mono text-gray-900 font-bold text-[13px]" dir="ltr">{formatCompactNumber(s.value)}</span>
                        </div>
-                       <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden" dir="ltr">
+                       <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden" dir="ltr">
                           <div 
                             className="h-full bg-primary transition-all duration-500" 
                             style={{ width: `${(s.value / maxMohreVal) * 100}%` }}
@@ -283,13 +290,13 @@ export default function PrintView() {
            </div>
            
            {/* ADDITIONAL INDICATORS */}
-           <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
-              <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">{t('additionalIndicators')}</p>
-              <div className="space-y-5">
+           <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+              <p className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-wider">{t('additionalIndicators')}</p>
+              <div className="space-y-6">
                  {data.uaeWorkforceStats.custom.slice(0, 6).map((stat) => (
-                    <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-3 last:border-0">
-                       <div><p className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">{stat.label}</p><p className="text-[10px] text-gray-400 font-sans">{stat.date}</p></div>
-                       <p className="text-xl font-serif font-bold text-gray-900" dir="ltr">{stat.value}</p>
+                    <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-4 last:border-0">
+                       <div><p className="text-[14px] font-bold text-gray-500 uppercase tracking-wide">{stat.label}</p><p className="text-[11px] text-gray-400 font-sans">{stat.date}</p></div>
+                       <p className="text-2xl font-serif font-bold text-gray-900" dir="ltr">{stat.value}</p>
                     </div>
                  ))}
               </div>
