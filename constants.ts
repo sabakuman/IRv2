@@ -1,3 +1,4 @@
+
 import { Report, AuditLog, EMPTY_REPORT_DATA } from './types';
 
 export const FLAGS: Record<string, string> = {
@@ -385,7 +386,7 @@ export const TRANSLATIONS = {
     totalWorkforce: 'إجمالي القوى العاملة',
     maleParticipation: 'ذكور',
     femaleParticipation: 'إناث',
-    migrationDestinations: 'وجهات الهجرة الرئيسية',
+    migrationDestinations: 'وجهات العمل الرئيسية',
     availableSkills: 'توافر المهارات',
     skillsDisclaimer: 'تمثل هذه المهارات الفئات الرئيسية للعمالة المتاحة للعمل خارجياً بناءً على مخرجات التعليم/التدريب المهني الحالية.',
     inflation: 'معدل التضخم',
