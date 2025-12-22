@@ -312,6 +312,7 @@ export const TRANSLATIONS = {
     startNewAnalysis: 'Start a New Analysis',
     startAnalysisDesc: 'Generate comprehensive bilateral labour market reports powered by AI insights and official data sources.',
     viewAll: 'View All',
+    totalWorkersUaeLabel: 'Total Workers in UAE',
   },
   ar: {
     dashboard: 'الصفحة الرئيسة',
@@ -475,5 +476,6 @@ export const TRANSLATIONS = {
     startNewAnalysis: 'بدء تحليل جديد',
     startAnalysisDesc: 'إنشاء تقارير شاملة عن سوق العمل الثنائي مدعومة برؤى الذكاء الاصطناعي والمصادر الرسمية للبيانات.',
     viewAll: 'عرض الكل',
+    totalWorkersUaeLabel: 'إجمالي العمالة في الإمارات',
   }
 };

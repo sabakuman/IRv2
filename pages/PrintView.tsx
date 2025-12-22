@@ -224,61 +224,61 @@ export default function PrintView() {
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
         <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
         <SectionHeader icon={Building} title={t('sectionUaeWorkforce')} subtitle={t('domesticAnalysis')} />
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-4">
            <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre')} labelClassName="text-xs font-bold" />
            <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre')} tone="warn" labelClassName="text-xs font-bold" />
         </div>
         
-        {/* SIDE-BY-SIDE CHARTS */}
-        <div className="grid grid-cols-2 gap-6 mb-6">
-           <div className="p-4 border border-gray-200 rounded-2xl bg-white flex flex-col items-center">
-              <p className="text-center text-[11px] font-bold text-primary mb-4 uppercase tracking-wider">{t('workersByEmirate')}</p>
-              <div className="h-44 w-full" dir="ltr">
+        {/* SIDE-BY-SIDE CHARTS - OPTIMIZED SPACE */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+           <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center">
+              <p className="text-center text-[10px] font-bold text-primary mb-2 uppercase tracking-wider">{t('workersByEmirate')}</p>
+              <div className="h-36 w-full" dir="ltr">
                  <ResponsiveContainer width="100%" height="100%">
-                     <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} margin={{top: 20, right: 10, bottom: 0, left: 10}}>
-                        <XAxis dataKey="name" tick={{fontSize: 8}} interval={0} height={20} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
+                     <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
+                        <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                         <YAxis hide />
-                        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                           <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '10px', fill: '#333', fontWeight: 'bold' }} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                           <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '9px', fill: '#333', fontWeight: 'bold' }} />
                            {data.uaeWorkforceStats.mohre.byEmirate.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />))}
                         </Bar>
                      </BarChart>
                  </ResponsiveContainer>
               </div>
-              <p className="text-[7px] text-gray-400 mt-2">{getSource('mohre')}</p>
+              <p className="text-[6px] text-gray-400 mt-1">{getSource('mohre')}</p>
            </div>
-           <div className="p-4 border border-gray-200 rounded-2xl bg-white flex flex-col items-center">
-              <p className="text-center text-[11px] font-bold text-accent mb-4 uppercase tracking-wider">{t('residentsByEmirate')}</p>
-              <div className="h-44 w-full" dir="ltr">
+           <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center">
+              <p className="text-center text-[10px] font-bold text-accent mb-2 uppercase tracking-wider">{t('residentsByEmirate')}</p>
+              <div className="h-36 w-full" dir="ltr">
                  <ResponsiveContainer width="100%" height="100%">
-                     <BarChart data={data.uaeWorkforceStats.icp.byEmirate} margin={{top: 20, right: 10, bottom: 0, left: 10}}>
-                        <XAxis dataKey="name" tick={{fontSize: 8}} interval={0} height={20} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
+                     <BarChart data={data.uaeWorkforceStats.icp.byEmirate} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
+                        <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                         <YAxis hide />
-                        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                           <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '10px', fill: '#333', fontWeight: 'bold' }} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                           <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '9px', fill: '#333', fontWeight: 'bold' }} />
                            {data.uaeWorkforceStats.icp.byEmirate.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[(index + 3) % BLUE_PALETTE.length]} />))}
                         </Bar>
                      </BarChart>
                  </ResponsiveContainer>
               </div>
-              <p className="text-[7px] text-gray-400 mt-2">{getSource('icp')}</p>
+              <p className="text-[6px] text-gray-400 mt-1">{getSource('icp')}</p>
            </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 flex-1 min-h-0">
-           {/* SECTOR DISTRIBUTION (Top 10) */}
-           <div className="border border-gray-200 rounded-2xl p-6 flex flex-col">
-              <p className="text-lg font-bold text-gray-800 mb-4 uppercase tracking-wider">
-                {t('workersBySector')} (Top 10) <span className="text-[10px] text-gray-400 italic font-normal">{getSource('mohre')}</span>
+        <div className="grid grid-cols-2 gap-4 flex-1">
+           {/* SECTOR DISTRIBUTION (Top 10) - VERTICALLY COMPRESSED */}
+           <div className="border border-gray-200 rounded-2xl p-4 flex flex-col">
+              <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
+                {t('workersBySector')} (Top 10) <span className="text-[8px] text-gray-400 italic font-normal">{getSource('mohre')}</span>
               </p>
-              <div className="space-y-4 flex-1 overflow-hidden">
+              <div className="space-y-2.5 flex-1 overflow-hidden">
                  {mohreSectors.map((s, i) => (
                     <div key={i}>
-                       <div className="flex justify-between text-xs mb-1.5">
-                          <span className="font-bold text-gray-700 truncate text-[13px]">{s.name}</span>
-                          <span className="font-mono text-gray-900 font-bold text-[13px]" dir="ltr">{formatCompactNumber(s.value)}</span>
+                       <div className="flex justify-between text-[11px] mb-0.5">
+                          <span className="font-bold text-gray-700 truncate">{s.name}</span>
+                          <span className="font-mono text-gray-900 font-bold" dir="ltr">{formatCompactNumber(s.value)}</span>
                        </div>
-                       <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden" dir="ltr">
+                       <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden" dir="ltr">
                           <div 
                             className="h-full bg-primary transition-all duration-500" 
                             style={{ width: `${(s.value / maxMohreVal) * 100}%` }}
@@ -289,14 +289,19 @@ export default function PrintView() {
               </div>
            </div>
            
-           {/* ADDITIONAL INDICATORS */}
-           <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-              <p className="text-lg font-bold text-gray-800 mb-6 uppercase tracking-wider">{t('additionalIndicators')}</p>
-              <div className="space-y-6">
+           {/* ADDITIONAL INDICATORS - VERTICALLY COMPRESSED */}
+           <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+              <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">{t('additionalIndicators')}</p>
+              <div className="space-y-3">
                  {data.uaeWorkforceStats.custom.slice(0, 6).map((stat) => (
-                    <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-4 last:border-0">
-                       <div><p className="text-[14px] font-bold text-gray-500 uppercase tracking-wide">{stat.label}</p><p className="text-[11px] text-gray-400 font-sans">{stat.date}</p></div>
-                       <p className="text-2xl font-serif font-bold text-gray-900" dir="ltr">{stat.value}</p>
+                    <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-2 last:border-0">
+                       <div>
+                          <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">
+                            {stat.label === 'Total Workers in UAE' ? t('totalWorkersUaeLabel') : stat.label}
+                          </p>
+                          <p className="text-[9px] text-gray-400 font-sans">{stat.date}</p>
+                       </div>
+                       <p className="text-xl font-serif font-bold text-gray-900" dir="ltr">{stat.value}</p>
                     </div>
                  ))}
               </div>
