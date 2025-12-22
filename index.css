@@ -71,7 +71,7 @@
 @media print {
   @page {
     size: A4;
-    margin: 0; /* Handle margins in PageContainer for precision */
+    margin: 0;
   }
 
   html, body {
@@ -97,6 +97,7 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    padding-bottom: 20mm; /* Safety margin for content at bottom */
   }
 
   .avoid-break {
