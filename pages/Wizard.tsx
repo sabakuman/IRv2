@@ -7,7 +7,7 @@ import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
 import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 
 // Custom Textarea with Rich Text Toolbar
@@ -94,8 +94,6 @@ export default function Wizard() {
     }
   }, [id]);
 
-  const getApiKey = () => user?.apiKey || process.env.API_KEY;
-
   const extractAndParseJSON = (text: string | undefined) => {
     if (!text) return null;
     try {
@@ -113,42 +111,113 @@ export default function Wizard() {
 
   const handleFetchData = async () => {
     if (!data.country) return;
-    const apiKey = getApiKey();
-    if (!apiKey) return;
     setIsFetchingAI(true);
     try {
-      const ai = new GoogleGenAI({ apiKey });
-      const prompt = `Fetch latest labour market data for ${data.country}. Return JSON: capital, officialLanguage, population, currency, gdp, hdi, directFlight, uaeEmbassyLocation, foreignEmbassyLocation, averageWage, minimumWage, crimeRate, literacyRate, governmentType, workforceMinistry, totalWorkforce, participationMale, participationFemale, migrationDestinations: [{country, count}], topSectors: [{name, value}], availableSkills: [string].`;
+      // Initialize GoogleGenAI exclusively with process.env.API_KEY.
+      // Use gemini-3-flash-preview for basic data extraction tasks.
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. Return a JSON object containing information for the country profile, workforce, and economy.`;
+      
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: [{ parts: [{ text: prompt }] }],
-        config: { responseMimeType: 'application/json' }
+        config: { 
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              capital: { type: Type.STRING },
+              officialLanguage: { type: Type.STRING },
+              population: { type: Type.STRING },
+              currency: { type: Type.STRING },
+              gdp: { type: Type.STRING },
+              hdi: { type: Type.STRING },
+              averageWage: { type: Type.STRING },
+              minimumWage: { type: Type.STRING },
+              crimeRate: { type: Type.STRING },
+              literacyRate: { type: Type.STRING },
+              governmentType: { type: Type.STRING },
+              workforceMinistry: { type: Type.STRING },
+              totalWorkforce: { type: Type.STRING },
+              participationMale: { type: Type.NUMBER },
+              participationFemale: { type: Type.NUMBER },
+              migrationDestinations: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    country: { type: Type.STRING },
+                    count: { type: Type.STRING }
+                  }
+                }
+              },
+              topSectors: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    name: { type: Type.STRING },
+                    value: { type: Type.NUMBER }
+                  }
+                }
+              },
+              availableSkills: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              }
+            }
+          }
+        }
       });
+      
       const aiData = extractAndParseJSON(response.text);
       if (aiData) {
-        setData(prev => ({ ...prev, ...aiData, workforceStats: { ...prev.workforceStats, ...aiData } }));
+        setData(prev => ({ 
+          ...prev, 
+          ...aiData, 
+          workforceStats: { ...prev.workforceStats, ...aiData } 
+        }));
       }
-    } catch (error) { console.error(error); } finally { setIsFetchingAI(false); }
+    } catch (error) { 
+      console.error(error); 
+    } finally { 
+      setIsFetchingAI(false); 
+    }
   };
 
   const handleFetchNews = async () => {
      if (!data.country) return;
-     const apiKey = getApiKey();
-     if (!apiKey) return;
      setIsFetchingNews(true);
      try {
-       const ai = new GoogleGenAI({ apiKey });
-       const prompt = `Search recent relevant news for UAE and ${data.country} labour relations. JSON array: title, source, date, summary.`;
+       // Using gemini-3-flash-preview with search grounding to fetch recent news.
+       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+       const prompt = `Find 5 recent news articles about workforce cooperation or bilateral agreements between the UAE and ${data.country}. Output a JSON array with: title, source, date, summary.`;
+       
        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3-flash-preview',
           contents: [{ parts: [{ text: prompt }] }],
-          config: { tools: [{ googleSearch: {} }] },
+          config: { 
+            tools: [{ googleSearch: {} }] 
+          },
        });
+       
        const newsItems = extractAndParseJSON(response.text);
        if (Array.isArray(newsItems)) {
-          setData(prev => ({ ...prev, relatedNews: [...(prev.relatedNews || []), ...newsItems.map(n => ({ ...n, id: uuidv4() }))] }));
+          setData(prev => ({ 
+            ...prev, 
+            relatedNews: [...(prev.relatedNews || []), ...newsItems.map(n => ({ ...n, id: uuidv4() }))] 
+          }));
        }
-     } catch (error) { console.error(error); } finally { setIsFetchingNews(false); }
+       
+       // Handle grounding metadata if URLs are required in the UI.
+       if (response.candidates?.[0]?.groundingMetadata?.groundingChunks) {
+         console.debug('Search Grounding Chunks:', response.candidates[0].groundingMetadata.groundingChunks);
+       }
+     } catch (error) { 
+       console.error(error); 
+     } finally { 
+       setIsFetchingNews(false); 
+     }
   };
 
   const addDelegate = (type: 'uae' | 'partner') => {
@@ -278,6 +347,12 @@ export default function Wizard() {
                    <Card key={item.id} className="p-4"><Input value={item.title} className="font-bold mb-4" placeholder="Topic Title" onChange={e => { const list = [...data.pointsOfDiscussion]; list[idx].title = e.target.value; setData({...data, pointsOfDiscussion: list}); }} /><RichTextarea label="Content" value={item.content} onChange={(val: string) => { const list = [...data.pointsOfDiscussion]; list[idx].content = val; setData({...data, pointsOfDiscussion: list}); }} /></Card>
                 ))}
                 <Button variant="outline" onClick={() => setData({...data, pointsOfDiscussion: [...data.pointsOfDiscussion, { id: uuidv4(), title: '', content: '' }]})}>+ Add Point</Button>
+             </div>
+             <div className="pt-6 border-t">
+               <Button onClick={handleFetchNews} disabled={isFetchingNews} className="w-full flex items-center justify-center gap-2">
+                 {isFetchingNews ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
+                 {t('fetchNews')}
+               </Button>
              </div>
           </div>
         );

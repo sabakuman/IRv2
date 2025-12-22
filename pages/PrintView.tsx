@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { MockService } from '../services/mockService';
@@ -138,9 +139,28 @@ export default function PrintView() {
     );
   };
 
-  // Logic for scaling bars based on MAX value
-  const mohreSectors = data.uaeWorkforceStats.mohre.bySector.slice(0, 10);
+  const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
+
+  // Pagination Logic for Long Sections
+  // We use chunks of data to manually force Page Containers if the lists are very long.
+  const CHUNK_SIZE_INTERACTIONS = 6;
+  const interactionChunks = [];
+  for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
+    interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE_INTERACTIONS));
+  }
+
+  const CHUNK_SIZE_POINTS = 8;
+  const pointsChunks = [];
+  for (let i = 0; i < data.pointsOfDiscussion.length; i += CHUNK_SIZE_POINTS) {
+    pointsChunks.push(data.pointsOfDiscussion.slice(i, i + CHUNK_SIZE_POINTS));
+  }
+
+  const CHUNK_SIZE_AGREEMENTS = 8;
+  const agreementChunks = [];
+  for (let i = 0; i < sortedAgreements.length; i += CHUNK_SIZE_AGREEMENTS) {
+    agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE_AGREEMENTS));
+  }
 
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
@@ -208,15 +228,15 @@ export default function PrintView() {
         <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-6">
            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('trade')}</span></h4>
            <div className="grid grid-cols-2 gap-8">
-              <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalImportsFromUAE}</p><p className="text-[14px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topImportProducts.slice(0,5).join(', ')}</p></div>
-              <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalExportsToUAE}</p><p className="text-[14px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topExportProducts.slice(0,5).join(', ')}</p></div>
+              <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalImportsFromUAE}</p><p className="text-[14px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topImportProducts.join(', ')}</p></div>
+              <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalExportsToUAE}</p><p className="text-[14px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topExportProducts.join(', ')}</p></div>
            </div>
         </div>
         <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact={true} />
         <div className="grid grid-cols-3 gap-3">
            <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
            <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
-           <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center"><p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-2">{t('topUniversities')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('edu')}</span></p><ul className="text-[11px] text-gray-700 leading-tight space-y-1">{data.educationStats.topUniversities.slice(0,5).map((u, i) => (<li key={i} className="truncate">• {u}</li>))}</ul></div>
+           <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center"><p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-2">{t('topUniversities')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('edu')}</span></p><ul className="text-[11px] text-gray-700 leading-tight space-y-1">{data.educationStats.topUniversities.map((u, i) => (<li key={i} className="truncate">• {u}</li>))}</ul></div>
         </div>
       </PageContainer>
 
@@ -229,7 +249,6 @@ export default function PrintView() {
            <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre')} tone="warn" labelClassName="text-xs font-bold" />
         </div>
         
-        {/* SIDE-BY-SIDE CHARTS - OPTIMIZED SPACE */}
         <div className="grid grid-cols-2 gap-4 mb-4">
            <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center">
               <p className="text-center text-[10px] font-bold text-primary mb-2 uppercase tracking-wider">{t('workersByEmirate')}</p>
@@ -266,13 +285,12 @@ export default function PrintView() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 flex-1">
-           {/* SECTOR DISTRIBUTION (Top 10) - VERTICALLY COMPRESSED */}
            <div className="border border-gray-200 rounded-2xl p-4 flex flex-col">
               <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
                 {t('workersBySector')} (Top 10) <span className="text-[8px] text-gray-400 italic font-normal">{getSource('mohre')}</span>
               </p>
               <div className="space-y-2.5 flex-1 overflow-hidden">
-                 {mohreSectors.map((s, i) => (
+                 {mohreSectors.slice(0, 10).map((s, i) => (
                     <div key={i}>
                        <div className="flex justify-between text-[11px] mb-0.5">
                           <span className="font-bold text-gray-700 truncate">{s.name}</span>
@@ -289,11 +307,10 @@ export default function PrintView() {
               </div>
            </div>
            
-           {/* ADDITIONAL INDICATORS - VERTICALLY COMPRESSED */}
            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
               <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">{t('additionalIndicators')}</p>
               <div className="space-y-3">
-                 {data.uaeWorkforceStats.custom.slice(0, 6).map((stat) => (
+                 {data.uaeWorkforceStats.custom.map((stat) => (
                     <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-2 last:border-0">
                        <div>
                           <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">
@@ -326,7 +343,7 @@ export default function PrintView() {
            <div className="kpi-card p-4">
               <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Plane size={16} /> {t('migrationDestinations')}</p>
               <div className="space-y-3">
-                 {data.workforceStats.migrationDestinations.slice(0, 5).map((dest, i) => (
+                 {data.workforceStats.migrationDestinations.map((dest, i) => (
                     <div key={i} className="flex justify-between items-center pb-2 border-b border-gray-50 last:border-0">
                        <span className="text-xs font-bold text-gray-700">{dest.country}</span>
                        <span className="text-xs font-mono text-gray-500" dir="ltr">{dest.count}</span>
@@ -337,7 +354,7 @@ export default function PrintView() {
            <div className="kpi-card p-4">
               <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Briefcase size={16} /> {t('workersBySector')}</p>
               <div className="space-y-3">
-                 {data.workforceStats.topSectors.slice(0, 5).map((sec, i) => (
+                 {data.workforceStats.topSectors.map((sec, i) => (
                     <div key={i} className="flex justify-between items-center pb-2 border-b border-gray-50 last:border-0">
                        <span className="text-xs font-bold text-gray-700">{sec.name}</span>
                        <span className="text-xs font-mono text-gray-500" dir="ltr">{sec.value}</span>
@@ -355,66 +372,86 @@ export default function PrintView() {
         </div>
       </PageContainer>
 
-      {/* --- PAGE 5: RELATIONS & INTERACTIONS --- */}
-      <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-        <SectionHeader icon={Handshake} title={t('relationsDelegations')} subtitle={t('bilateralEngagement')} />
-        
-        {/* RECENT INTERACTIONS (TOP) */}
-        <div className="mb-10">
-           <h3 className="text-sm font-bold text-primary-dark mb-4 border-b border-gray-200 pb-2 flex items-center gap-2 uppercase tracking-wider"><Calendar size={18} /> {t('recentInteractions')}</h3>
-           <div className="grid grid-cols-2 gap-6">
-              {data.recentInteractions.slice(0, 4).map((item, idx) => (
-                 <div key={idx} className="border border-gray-100 rounded-xl p-4 bg-gray-50 shadow-sm flex flex-col h-full">
-                    <div className="flex justify-between items-center mb-2"><span className="text-[10px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span><span className="text-[10px] font-mono text-gray-400" dir="ltr">{item.date}</span></div>
-                    <p className="text-sm font-bold text-gray-900 mb-1.5">{item.title}</p>
-                    <div className="text-[11px] text-gray-600 leading-relaxed flex-1">{renderRichText(item.details)}</div>
-                 </div>
-              ))}
-              {data.recentInteractions.length === 0 && <p className="text-center text-gray-400 italic text-xs col-span-2 py-4">No recent interactions recorded.</p>}
-           </div>
-        </div>
+      {/* --- PAGE 5+: RELATIONSHIP SUMMARY & DISCUSSION POINTS --- */}
+      {interactionChunks.map((chunk, cIdx) => (
+        <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader 
+            icon={Handshake} 
+            title={`${t('relationshipSummary')} ${cIdx > 0 ? `(${cIdx + 1})` : ''}`} 
+            subtitle={t('bilateralEngagement')} 
+          />
+          <div className="grid grid-cols-2 gap-6 mt-4">
+            {chunk.map((item, idx) => (
+               <div key={idx} className="border border-gray-100 rounded-xl p-4 bg-gray-50 shadow-sm flex flex-col h-full">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[10px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
+                    <span className="text-[10px] font-mono text-gray-400" dir="ltr">{item.date}</span>
+                  </div>
+                  <p className="text-sm font-bold text-gray-900 mb-1.5">{item.title}</p>
+                  <div className="text-[11px] text-gray-600 leading-relaxed flex-1">{renderRichText(item.details)}</div>
+               </div>
+            ))}
+          </div>
+        </PageContainer>
+      ))}
 
-        {/* POINTS OF DISCUSSION */}
-        <div className="mb-10 avoid-break">
-           <h3 className="text-sm font-bold text-primary-dark mb-4 border-b border-gray-200 pb-2 flex items-center gap-2 uppercase tracking-wider"><MessageSquare size={18} /> {t('pointsDiscussion')}</h3>
-           <div className="space-y-4">
-              {data.pointsOfDiscussion.slice(0, 5).map((point, idx) => (
-                 <div key={idx} className="flex gap-4 bg-white border border-gray-100 p-4 rounded-xl">
-                    <span className="text-accent font-bold mt-0.5 text-lg">•</span>
-                    <div><strong className="block text-[13px] text-gray-900 mb-1 uppercase tracking-wide">{point.title}</strong><div className="text-[11px] text-gray-600 leading-snug">{renderRichText(point.content)}</div></div>
-                 </div>
-              ))}
-           </div>
-        </div>
-      </PageContainer>
+      {pointsChunks.map((chunk, cIdx) => (
+        <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader 
+            icon={MessageSquare} 
+            title={`${t('pointsDiscussion')} ${cIdx > 0 ? `(${cIdx + 1})` : ''}`} 
+          />
+          <div className="space-y-4 mt-6">
+            {chunk.map((point, idx) => (
+               <div key={idx} className="flex gap-4 bg-white border border-gray-100 p-4 rounded-xl shadow-sm">
+                  <span className="text-accent font-bold mt-0.5 text-lg">•</span>
+                  <div>
+                    <strong className="block text-[13px] text-gray-900 mb-1 uppercase tracking-wide">{point.title}</strong>
+                    <div className="text-[11px] text-gray-600 leading-snug">{renderRichText(point.content)}</div>
+                  </div>
+               </div>
+            ))}
+          </div>
+        </PageContainer>
+      ))}
 
-      {/* --- PAGE 6: AGREEMENTS & OVERFLOW --- */}
-      <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-        <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-        
-        <div className="mb-10">
-           <h3 className="text-sm font-bold text-primary-dark mb-4 border-b border-gray-200 pb-2 flex items-center gap-2 uppercase tracking-wider"><FileText size={18} /> {t('keyAgreements')}</h3>
-           <div className="space-y-4">
-              {sortedAgreements.slice(0, 8).map((agreement, idx) => (
-                 <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-4 grid grid-cols-12 gap-6 items-center">
-                    <div className="col-span-3"><p className="text-sm font-bold text-gray-900 leading-tight">{agreement.title}</p><p className="text-[10px] font-mono text-gray-400 mt-1" dir="ltr">{agreement.date}</p></div>
-                    <div className="col-span-7"><p className="text-[11px] text-gray-600 leading-relaxed font-medium">{renderRichText(agreement.summary)}</p></div>
-                    <div className="col-span-2 text-end"><span className={`text-[9px] font-bold px-3 py-1 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>{agreement.status === 'Active' ? t('active') : t('pending')}</span></div>
-                 </div>
-              ))}
-              {sortedAgreements.length === 0 && <p className="text-center text-gray-400 italic text-xs py-4">No formal agreements recorded.</p>}
-           </div>
-        </div>
-      </PageContainer>
+      {/* --- PAGE 6+: AGREEMENTS --- */}
+      {agreementChunks.map((chunk, cIdx) => (
+        <PageContainer key={`agr-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader 
+            icon={FileText} 
+            title={`${t('keyAgreements')} ${cIdx > 0 ? `(${cIdx + 1})` : ''}`} 
+          />
+          <div className="space-y-4 mt-6">
+            {chunk.map((agreement, idx) => (
+               <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-4 grid grid-cols-12 gap-6 items-center shadow-sm">
+                  <div className="col-span-3">
+                    <p className="text-sm font-bold text-gray-900 leading-tight">{agreement.title}</p>
+                    <p className="text-[10px] font-mono text-gray-400 mt-1" dir="ltr">{agreement.date}</p>
+                  </div>
+                  <div className="col-span-7">
+                    <div className="text-[11px] text-gray-600 leading-relaxed font-medium">{renderRichText(agreement.summary)}</div>
+                  </div>
+                  <div className="col-span-2 text-end">
+                    <span className={`text-[9px] font-bold px-3 py-1 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
+                      {agreement.status === 'Active' ? t('active') : t('pending')}
+                    </span>
+                  </div>
+               </div>
+            ))}
+          </div>
+        </PageContainer>
+      ))}
 
-      {/* --- PAGE 7: DELEGATIONS --- */}
+      {/* --- DELEGATIONS --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
         <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
         <SectionHeader icon={Users} title={t('sectionDelegation')} />
         
         <div className="grid grid-cols-1 gap-12 mt-8">
-           {/* UAE DELEGATION */}
            <div className="avoid-break">
               <div className="flex items-center gap-4 mb-6 border-b-2 border-primary pb-3">
                  <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto shadow-sm" alt="UAE" />
@@ -436,7 +473,6 @@ export default function PrintView() {
               </div>
            </div>
 
-           {/* PARTNER DELEGATION */}
            <div className="avoid-break pt-6">
               <div className="flex items-center gap-4 mb-6 border-b-2 border-accent pb-3">
                  <img src={data.flagUrl || `https://flagcdn.com/w40/${data.country.toLowerCase().includes('india')?'in':'ph'}.png`} className="h-6 w-auto shadow-sm" alt={data.country} />

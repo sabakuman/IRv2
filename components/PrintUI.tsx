@@ -4,14 +4,15 @@ import { ShieldAlert } from "lucide-react";
 /* ===============================
    PAGE CONTAINER
 ================================ */
-export const PageContainer = ({
-  children,
-  footer,
-  className = ""
-}: {
+// Use React.FC to ensure common props like 'key' are correctly handled when mapping components.
+export const PageContainer: React.FC<{
   children?: React.ReactNode;
   footer?: React.ReactNode;
   className?: string;
+}> = ({
+  children,
+  footer,
+  className = ""
 }) => (
   <div className={`w-[210mm] min-h-[297mm] bg-white mx-auto flex flex-col page-break ${className}`}>
     <div className="px-12 pt-8 flex-1">{children}</div>
@@ -29,10 +30,12 @@ export const HeaderBand = ({
   country,
   reportId,
   title,
+  flagUrl
 }: {
   country: string;
   reportId: string;
   title: string;
+  flagUrl?: string;
 }) => {
   // Helper for flag code mapping
   const getFlagCode = (c: string) => {
@@ -48,12 +51,13 @@ export const HeaderBand = ({
   };
   
   const flagCode = getFlagCode(country);
+  const flagSrc = flagUrl || `https://flagcdn.com/w40/${flagCode}.png`;
 
   return (
     <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
       <div className="flex items-center gap-3">
-        {/* Dynamic Flag based on Report Country */}
-        <img src={`https://flagcdn.com/w40/${flagCode}.png`} className="h-6 w-auto shadow-sm" alt={country} />
+        {/* Dynamic Flag based on Report Country or provided URL */}
+        <img src={flagSrc} className="h-6 w-auto shadow-sm" alt={country} />
         <div className="h-8 w-px bg-gray-200" />
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">
@@ -159,8 +163,8 @@ export const KPI = ({
 
         {/* 
            Reduced font size to text-sm (approx 14px) for better aesthetics.
-           Wrapped value in span dir="ltr" to ensure mixed English/Arabic content (like "50 Billion USD")
-           flows correctly while preserving the parent's text alignment (Right in RTL, Left in LTR).
+           Wrapped value in span dir="ltr" to ensure mixed English/Arabic content
+           flows correctly while preserving the parent's text alignment.
         */}
         <p className="kpi-value break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
            <span dir="ltr">{value || 'N/A'}</span>
