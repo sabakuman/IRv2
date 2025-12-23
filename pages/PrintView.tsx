@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
@@ -15,7 +16,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
 
-const renderRichText = (text: string) => {
+const renderRichText = (text: string, sizeClass: string = "text-[13px]") => {
   if (!text) return null;
   let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
@@ -37,7 +38,7 @@ const renderRichText = (text: string) => {
     }
   });
   if (inList) { result.push(<ul key="list-final" className="list-disc mb-1">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
-  return <div className="rich-text-content">{result.length > 0 ? result : text}</div>;
+  return <div className={`rich-text-content ${sizeClass}`}>{result.length > 0 ? result : text}</div>;
 };
 
 export default function PrintView() {
@@ -149,6 +150,7 @@ export default function PrintView() {
   const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
 
+  // Pagination Logic for Sections
   const CHUNK_SIZE_INTERACTIONS = 6; 
   const interactionChunks = [];
   for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
@@ -180,27 +182,42 @@ export default function PrintView() {
     const options = {
       margin: 0,
       filename: `${data.country}_Intelligence_Report.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      image: { type: 'jpeg', quality: 1.0 },
       html2canvas: { 
         scale: 2, 
         useCORS: true, 
         logging: false,
-        letterRendering: true
+        letterRendering: true,
+        scrollX: 0,
+        scrollY: 0,
       },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
     };
 
     try {
-      // Robust retrieval for html2pdf (CDN global or module)
-      // @ts-ignore
-      const html2pdfLib = (window as any).html2pdf || (await import('html2pdf.js')).default;
+      // Dynamic import from CDN if local fails
+      let html2pdfLib = (window as any).html2pdf;
       
-      if (!html2pdfLib) throw new Error('PDF Generation Library (html2pdf) not loaded.');
+      if (!html2pdfLib) {
+         // Try to load script manually if global is missing
+         await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = () => {
+               html2pdfLib = (window as any).html2pdf;
+               resolve(true);
+            };
+            script.onerror = reject;
+            document.head.appendChild(script);
+         });
+      }
+      
+      if (!html2pdfLib) throw new Error('PDF library failed to initialize.');
       
       await html2pdfLib().set(options).from(element).save();
     } catch (err) {
       console.error('PDF Generation Error:', err);
-      alert('Failed to generate PDF directly. Please use the "Print Now" button and "Save as PDF" instead.');
+      alert('Automatic download failed. Please use "Print Now" and select "Save as PDF" instead.');
     } finally {
       setIsDownloading(false);
     }
@@ -400,22 +417,22 @@ export default function PrintView() {
           <div className="grid grid-cols-2 gap-6 mb-8">
             <div className="kpi-card p-4 shadow-sm">
                 <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Plane size={16} /> {t('migrationDestinations')}</p>
-                <div className="space-y-3">
+                <div className="space-y-3 text-[13px]">
                   {data.workforceStats.migrationDestinations.slice(0, 5).map((dest, i) => (
                       <div key={i} className="flex justify-between items-center pb-2 border-b border-gray-50 last:border-0">
-                        <span className="text-xs font-bold text-gray-700">{dest.country}</span>
-                        <span className="text-xs font-mono text-gray-500" dir="ltr">{dest.count}</span>
+                        <span className="font-bold text-gray-700">{dest.country}</span>
+                        <span className="font-mono text-gray-500" dir="ltr">{dest.count}</span>
                       </div>
                   ))}
                 </div>
             </div>
             <div className="kpi-card p-4 shadow-sm">
                 <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Briefcase size={16} /> {t('workersBySector')}</p>
-                <div className="space-y-3">
+                <div className="space-y-3 text-[13px]">
                   {data.workforceStats.topSectors.slice(0, 5).map((sec, i) => (
                       <div key={i} className="flex justify-between items-center pb-2 border-b border-gray-50 last:border-0">
-                        <span className="text-xs font-bold text-gray-700">{sec.name}</span>
-                        <span className="text-xs font-mono text-gray-500" dir="ltr">{sec.value}</span>
+                        <span className="font-bold text-gray-700">{sec.name}</span>
+                        <span className="font-mono text-gray-500" dir="ltr">{sec.value}</span>
                       </div>
                   ))}
                 </div>
@@ -424,7 +441,7 @@ export default function PrintView() {
           <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 shadow-sm">
             <h4 className="text-sm font-bold text-primary-dark uppercase mb-4 flex items-center gap-2"><Hammer size={18} /> {t('availableSkills')}</h4>
             <div className="flex flex-wrap gap-3">
-                {data.workforceStats.availableSkills.slice(0, 12).map((skill, i) => (<span key={i} className="bg-white border border-primary/20 text-primary-dark px-4 py-2 rounded-xl text-xs font-bold shadow-sm">{skill}</span>))}
+                {data.workforceStats.availableSkills.slice(0, 12).map((skill, i) => (<span key={i} className="bg-white border border-primary/20 text-primary-dark px-4 py-2 rounded-xl text-sm font-bold shadow-sm">{skill}</span>))}
             </div>
             <p className="text-[9px] text-gray-400 mt-4 italic">{t('skillsDisclaimer')}</p>
           </div>
@@ -441,13 +458,15 @@ export default function PrintView() {
             />
             <div className="grid grid-cols-2 gap-4 mt-2 flex-1 overflow-hidden">
               {chunk.map((item, idx) => (
-                <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50 shadow-sm flex flex-col h-full overflow-hidden avoid-break">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[9px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
-                      <span className="text-[9px] font-mono text-gray-400" dir="ltr">{item.date}</span>
+                <div key={idx} className="border border-gray-100 rounded-xl p-4 bg-gray-50 shadow-sm flex flex-col h-full overflow-hidden avoid-break">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-[10px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
+                      <span className="text-[10px] font-mono text-gray-400" dir="ltr">{item.date}</span>
                     </div>
-                    <p className="text-xs font-bold text-gray-900 mb-1 leading-tight">{item.title}</p>
-                    <div className="text-[10px] text-gray-600 leading-normal flex-1 overflow-y-auto">{renderRichText(item.details)}</div>
+                    <p className="text-sm font-bold text-gray-900 mb-1.5 leading-tight">{item.title}</p>
+                    <div className="flex-1 overflow-y-auto">
+                      {renderRichText(item.details, "text-[14px]")}
+                    </div>
                 </div>
               ))}
             </div>
@@ -470,11 +489,13 @@ export default function PrintView() {
             />
             <div className="grid grid-cols-2 gap-4 mt-4 flex-1 overflow-hidden">
               {chunk.map((point, idx) => (
-                <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm h-full avoid-break">
+                <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-4 rounded-xl shadow-sm h-full avoid-break">
                     <span className="text-accent font-bold mt-0.5 text-base">•</span>
                     <div className="overflow-hidden">
-                      <strong className="block text-[11px] text-gray-900 mb-1 uppercase tracking-wide leading-tight">{point.title}</strong>
-                      <div className="text-[10px] text-gray-600 leading-normal overflow-y-auto">{renderRichText(point.content)}</div>
+                      <strong className="block text-[14px] text-gray-900 mb-1.5 uppercase tracking-wide leading-tight">{point.title}</strong>
+                      <div className="overflow-y-auto">
+                        {renderRichText(point.content, "text-[14px]")}
+                      </div>
                     </div>
                 </div>
               ))}
@@ -490,18 +511,18 @@ export default function PrintView() {
               icon={FileText} 
               title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
             />
-            <div className="space-y-3 mt-4 flex-1 overflow-hidden">
+            <div className="space-y-4 mt-6 flex-1 overflow-hidden">
               {chunk.map((agreement, idx) => (
-                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 grid grid-cols-12 gap-4 items-center shadow-sm avoid-break">
+                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-4 grid grid-cols-12 gap-4 items-start shadow-sm avoid-break">
                     <div className="col-span-3">
-                      <p className="text-xs font-bold text-gray-900 leading-tight">{agreement.title}</p>
-                      <p className="text-[9px] font-mono text-gray-400 mt-1" dir="ltr">{agreement.date}</p>
+                      <p className="text-sm font-bold text-gray-900 leading-tight">{agreement.title}</p>
+                      <p className="text-[10px] font-mono text-gray-400 mt-1" dir="ltr">{agreement.date}</p>
                     </div>
                     <div className="col-span-7">
-                      <div className="text-[10px] text-gray-600 leading-snug font-medium">{renderRichText(agreement.summary)}</div>
+                      {renderRichText(agreement.summary, "text-[14px] font-medium")}
                     </div>
                     <div className="col-span-2 text-end">
-                      <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
+                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
                         {agreement.status === 'Active' ? t('active') : t('pending')}
                       </span>
                     </div>
@@ -524,14 +545,16 @@ export default function PrintView() {
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   {data.delegations.uae.slice(0, 1).map((d) => (
-                      <div key={d.id} className="flex gap-8 items-start p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden h-64">
-                        <div className="w-32 h-44 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-lg">
+                      <div key={d.id} className="flex gap-8 items-start p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden h-[300px]">
+                        <div className="w-36 h-48 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-lg">
                             {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-[10px] font-bold">No Portrait</div>}
                         </div>
                         <div className="flex-1 pt-1 overflow-hidden">
-                            <p className="text-xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
-                            <p className="text-xs font-bold text-primary uppercase mb-2 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>
-                            <div className="text-[12px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1 overflow-y-auto">{renderRichText(d.bio)}</div>
+                            <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
+                            <p className="text-sm font-bold text-primary uppercase mb-3 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>
+                            <div className="overflow-y-auto max-h-[160px]">
+                               {renderRichText(d.bio, "text-[14px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1")}
+                            </div>
                         </div>
                       </div>
                   ))}
@@ -545,14 +568,16 @@ export default function PrintView() {
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   {data.delegations.partner.slice(0, 1).map((d) => (
-                      <div key={d.id} className="flex gap-8 items-start p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden h-64">
-                        <div className="w-32 h-44 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-lg">
+                      <div key={d.id} className="flex gap-8 items-start p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden h-[300px]">
+                        <div className="w-36 h-48 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-lg">
                             {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-[10px] font-bold">No Portrait</div>}
                         </div>
                         <div className="flex-1 pt-1 overflow-hidden">
-                            <p className="text-xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
-                            <p className="text-xs font-bold text-accent uppercase mb-2 tracking-[0.15em] border-b border-accent/10 pb-1 inline-block">{d.title}</p>
-                            <div className="text-[12px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1 overflow-y-auto">{renderRichText(d.bio)}</div>
+                            <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
+                            <p className="text-sm font-bold text-accent uppercase mb-3 tracking-[0.15em] border-b border-accent/10 pb-1 inline-block">{d.title}</p>
+                            <div className="overflow-y-auto max-h-[160px]">
+                               {renderRichText(d.bio, "text-[14px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1")}
+                            </div>
                         </div>
                       </div>
                   ))}
