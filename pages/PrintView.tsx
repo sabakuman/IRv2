@@ -40,17 +40,16 @@ const renderRichText = (text: string, sizeClass: string = "text-[13px]") => {
       listItems.push(trimmed.substring(2));
     } else {
       if (inList) {
-        result.push(<ul key={`list-${i}`} className="list-disc mb-1.5 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
+        result.push(<ul key={`list-${i}`} className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
         inList = false;
       }
-      if (trimmed) { result.push(<p key={i} className="mb-1.5" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
+      if (trimmed) { result.push(<p key={i} className="mb-1" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
     }
   });
-  if (inList) { result.push(<ul key="list-final" className="list-disc mb-1.5 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
+  if (inList) { result.push(<ul key="list-final" className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
   return <div className={`rich-text-content ${sizeClass} leading-[1.6] overflow-visible`}>{result.length > 0 ? result : text}</div>;
 };
 
-// Fix: Removed corrupted import line and resolved duplicate identifiers 'React', 'useEffect', and 'useState'
 export default function PrintView() {
   const getParamId = () => {
     const hash = window.location.hash;
@@ -120,7 +119,7 @@ export default function PrintView() {
   };
 
   const DefaultFooter = () => (
-    <div className="border-t border-gray-100 pt-2 flex justify-between items-center bg-white">
+    <div className="pt-2 flex justify-between items-center bg-white w-full">
       <p className="text-[8px] text-gray-400 font-sans">
         {t('generatedOn')} <span className="font-sans" dir="ltr">2025 December 22</span>
       </p>
@@ -159,20 +158,23 @@ export default function PrintView() {
   const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
 
-  // High-Density Pagination Chunks (Increased to 4 to maximize page usage)
-  const CHUNK_SIZE_INTERACTIONS = 4; 
+  // High-Density Pagination Chunks
+  // Optimized for Relationship Summary (3 items per page)
+  const CHUNK_SIZE_INTERACTIONS = 3; 
   const interactionChunks = [];
   for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
     interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE_INTERACTIONS));
   }
 
-  const CHUNK_SIZE_POINTS = 4; 
+  // Optimized for Points of Discussion (Fixed clipping by using 3 items max per page)
+  const CHUNK_SIZE_POINTS = 3; 
   const pointsChunks = [];
   for (let i = 0; i < data.pointsOfDiscussion.length; i += CHUNK_SIZE_POINTS) {
     pointsChunks.push(data.pointsOfDiscussion.slice(i, i + CHUNK_SIZE_POINTS));
   }
 
-  const CHUNK_SIZE_AGREEMENTS = 5;
+  // Optimized for Agreements (4 items per page to ensure safe margins)
+  const CHUNK_SIZE_AGREEMENTS = 4;
   const agreementChunks = [];
   for (let i = 0; i < sortedAgreements.length; i += CHUNK_SIZE_AGREEMENTS) {
     agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE_AGREEMENTS));
@@ -407,7 +409,8 @@ export default function PrintView() {
               title={`${t('relationshipSummary')}${interactionChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
               subtitle={t('bilateralEngagement')} 
             />
-            <div className="flex flex-col gap-3 mt-2 flex-1 pb-16 overflow-visible">
+            {/* Relationship summary items (3 per page) */}
+            <div className="flex flex-col gap-3 mt-2 flex-1 pb-8 overflow-visible">
               {chunk.map((item, idx) => (
                 <div key={idx} className="border border-gray-100 rounded-xl p-4 bg-gray-50 shadow-sm flex flex-col overflow-visible avoid-break">
                     <div className="flex justify-between items-center mb-1">
@@ -432,7 +435,8 @@ export default function PrintView() {
               icon={MessageSquare} 
               title={`${t('pointsDiscussion')}${pointsChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
             />
-            <div className="flex flex-col gap-3 mt-4 flex-1 pb-16 overflow-visible">
+            {/* Points of discussion items (Strictly 3 per page to avoid clipping) */}
+            <div className="flex flex-col gap-3 mt-2 flex-1 pb-8 overflow-visible">
               {chunk.map((point, idx) => (
                 <div key={idx} className="flex gap-4 bg-white border border-gray-100 p-4 rounded-xl shadow-sm avoid-break overflow-visible">
                     <span className="text-accent font-bold mt-0 text-xl">•</span>
@@ -456,7 +460,8 @@ export default function PrintView() {
               icon={FileText} 
               title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
             />
-            <div className="space-y-4 mt-6 flex-1 overflow-visible pb-16">
+            {/* Agreement items (4 per page) */}
+            <div className="space-y-4 mt-6 flex-1 overflow-visible pb-8">
               {chunk.map((agreement, idx) => (
                 <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-5 grid grid-cols-12 gap-5 items-start shadow-sm avoid-break overflow-visible">
                     <div className="col-span-3">
@@ -464,7 +469,7 @@ export default function PrintView() {
                       <p className="text-[10px] font-mono font-bold text-gray-500 mt-2" dir="ltr">{formatDate(agreement.date)}</p>
                     </div>
                     <div className="col-span-7 overflow-visible">
-                      {renderRichText(agreement.summary, "text-[14px] font-medium")}
+                      {renderRichText(agreement.summary, "text-[13px] font-medium")}
                     </div>
                     <div className="col-span-2 text-end">
                       <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
@@ -498,7 +503,7 @@ export default function PrintView() {
                             <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
                             <p className="text-sm font-bold text-primary uppercase mb-3 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>
                             <div className="overflow-visible">
-                               {renderRichText(d.bio, "text-[14px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1")}
+                               {renderRichText(d.bio, "text-[13px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1")}
                             </div>
                         </div>
                       </div>
@@ -521,7 +526,7 @@ export default function PrintView() {
                             <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
                             <p className="text-sm font-bold text-accent uppercase mb-3 tracking-[0.15em] border-b border-accent/10 pb-1 inline-block">{d.title}</p>
                             <div className="overflow-visible">
-                               {renderRichText(d.bio, "text-[14px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1")}
+                               {renderRichText(d.bio, "text-[13px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1")}
                             </div>
                         </div>
                       </div>
