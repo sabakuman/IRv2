@@ -22,8 +22,7 @@
     "recharts": "^2.12.2",
     "tailwind-merge": "^2.2.1",
     "uuid": "^9.0.1",
-    "sqlite3": "^5.1.7",
-    "html2pdf.js": "^0.10.1"
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",
