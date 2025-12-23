@@ -14,12 +14,12 @@ export const PageContainer: React.FC<{
   footer,
   className = ""
 }) => (
-  <div className={`w-[210mm] h-[297mm] bg-white mx-auto flex flex-col page-break relative ${className}`}>
-    {/* Added pb-24 to explicitly reserve space for the footer at the bottom of the A4 page */}
-    <div className="px-12 pt-8 pb-24 flex-1 overflow-visible">{children}</div>
+  <div className={`w-[210mm] h-[297mm] bg-white mx-auto flex flex-col page-break relative overflow-hidden ${className}`}>
+    {/* Explicitly defined safe-zone for content to prevent footer overlap (pb-28) */}
+    <div className="px-12 pt-8 pb-28 flex-1 overflow-visible">{children}</div>
 
     {footer && (
-      <div className="absolute bottom-6 left-12 right-12">
+      <div className="absolute bottom-6 left-12 right-12 h-16 flex flex-col justify-end bg-white">
         {footer}
       </div>
     )}
