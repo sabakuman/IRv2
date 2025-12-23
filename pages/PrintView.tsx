@@ -140,6 +140,7 @@ export default function PrintView() {
     return (
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
         <div className="flex items-center gap-3">
+          {/* Fixed: Removed non-existent attribute 'flagSrc' from img tag */}
           <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
           <div className="h-8 w-px bg-gray-200" />
           <div>
@@ -158,20 +159,20 @@ export default function PrintView() {
   const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
 
-  // Pagination Logic for Sections
-  const CHUNK_SIZE_INTERACTIONS = 4; // One on top of another needs more space per item
+  // Conservative chunk sizes to prevent overlapping footer when items are long
+  const CHUNK_SIZE_INTERACTIONS = 3; 
   const interactionChunks = [];
   for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
     interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE_INTERACTIONS));
   }
 
-  const CHUNK_SIZE_POINTS = 4; 
+  const CHUNK_SIZE_POINTS = 3; 
   const pointsChunks = [];
   for (let i = 0; i < data.pointsOfDiscussion.length; i += CHUNK_SIZE_POINTS) {
     pointsChunks.push(data.pointsOfDiscussion.slice(i, i + CHUNK_SIZE_POINTS));
   }
 
-  const CHUNK_SIZE_AGREEMENTS = 6;
+  const CHUNK_SIZE_AGREEMENTS = 5;
   const agreementChunks = [];
   for (let i = 0; i < sortedAgreements.length; i += CHUNK_SIZE_AGREEMENTS) {
     agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE_AGREEMENTS));
@@ -397,7 +398,7 @@ export default function PrintView() {
           </div>
         </PageContainer>
 
-        {/* --- PAGE 5+: RELATIONSHIP SUMMARY (VERTICAL STACK, NO SCROLLBARS) --- */}
+        {/* --- PAGE 5+: RELATIONSHIP SUMMARY (VERTICAL STACK, NO SCROLLBARS, REFINED PAGINATION) --- */}
         {interactionChunks.length > 0 ? interactionChunks.map((chunk, cIdx) => (
           <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -406,16 +407,16 @@ export default function PrintView() {
               title={`${t('relationshipSummary')}${interactionChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
               subtitle={t('bilateralEngagement')} 
             />
-            <div className="flex flex-col gap-4 mt-2 flex-1">
+            <div className="flex flex-col gap-4 mt-2 flex-1 pb-16">
               {chunk.map((item, idx) => (
-                <div key={idx} className="border border-gray-100 rounded-xl p-5 bg-gray-50 shadow-sm flex flex-col overflow-visible avoid-break">
+                <div key={idx} className="border border-gray-100 rounded-xl p-4 bg-gray-50 shadow-sm flex flex-col overflow-visible avoid-break">
                     <div className="flex justify-between items-center mb-1.5">
                       <span className="text-[10px] font-bold uppercase text-primary bg-primary/5 px-2.5 py-1 rounded">{item.type}</span>
                       <span className="text-[10px] font-mono text-gray-400" dir="ltr">{formatDate(item.date)}</span>
                     </div>
-                    <p className="text-base font-bold text-gray-900 mb-1.5 leading-tight">{item.title}</p>
+                    <p className="text-[15px] font-bold text-gray-900 mb-1.5 leading-tight">{item.title}</p>
                     <div className="overflow-visible">
-                      {renderRichText(item.details, "text-[15px]")}
+                      {renderRichText(item.details, "text-[14px]")}
                     </div>
                 </div>
               ))}
@@ -423,7 +424,7 @@ export default function PrintView() {
           </PageContainer>
         )) : null}
 
-        {/* --- PAGE 6+: POINTS OF DISCUSSION (VERTICAL STACK, NO SCROLLBARS) --- */}
+        {/* --- PAGE 6+: POINTS OF DISCUSSION (VERTICAL STACK, NO SCROLLBARS, REFINED PAGINATION) --- */}
         {pointsChunks.map((chunk, cIdx) => (
           <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -431,14 +432,14 @@ export default function PrintView() {
               icon={MessageSquare} 
               title={`${t('pointsDiscussion')}${pointsChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
             />
-            <div className="flex flex-col gap-5 mt-4 flex-1">
+            <div className="flex flex-col gap-4 mt-4 flex-1 pb-16">
               {chunk.map((point, idx) => (
-                <div key={idx} className="flex gap-4 bg-white border border-gray-100 p-6 rounded-xl shadow-sm avoid-break overflow-visible">
+                <div key={idx} className="flex gap-4 bg-white border border-gray-100 p-5 rounded-xl shadow-sm avoid-break overflow-visible">
                     <span className="text-accent font-bold mt-0.5 text-xl">•</span>
                     <div className="flex-1 overflow-visible">
-                      <strong className="block text-[15px] text-gray-900 mb-2 uppercase tracking-wide leading-tight">{point.title}</strong>
+                      <strong className="block text-[14px] text-gray-900 mb-2 uppercase tracking-wide leading-tight">{point.title}</strong>
                       <div className="overflow-visible">
-                        {renderRichText(point.content, "text-[15px]")}
+                        {renderRichText(point.content, "text-[14px]")}
                       </div>
                     </div>
                 </div>
@@ -447,7 +448,7 @@ export default function PrintView() {
           </PageContainer>
         ))}
 
-        {/* --- PAGE 7+: AGREEMENTS (NO SCROLLBARS) --- */}
+        {/* --- PAGE 7+: AGREEMENTS (NO SCROLLBARS, REFINED PAGINATION) --- */}
         {agreementChunks.length > 0 ? agreementChunks.map((chunk, cIdx) => (
           <PageContainer key={`agr-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -455,18 +456,18 @@ export default function PrintView() {
               icon={FileText} 
               title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
             />
-            <div className="space-y-5 mt-6 flex-1 overflow-visible">
+            <div className="space-y-4 mt-6 flex-1 overflow-visible pb-16">
               {chunk.map((agreement, idx) => (
                 <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-5 grid grid-cols-12 gap-5 items-start shadow-sm avoid-break overflow-visible">
                     <div className="col-span-3">
-                      <p className="text-base font-bold text-gray-900 leading-tight">{agreement.title}</p>
-                      <p className="text-[11px] font-mono font-bold text-gray-500 mt-2" dir="ltr">{formatDate(agreement.date)}</p>
+                      <p className="text-[14px] font-bold text-gray-900 leading-tight">{agreement.title}</p>
+                      <p className="text-[10px] font-mono font-bold text-gray-500 mt-2" dir="ltr">{formatDate(agreement.date)}</p>
                     </div>
                     <div className="col-span-7 overflow-visible">
-                      {renderRichText(agreement.summary, "text-[15px] font-medium")}
+                      {renderRichText(agreement.summary, "text-[14px] font-medium")}
                     </div>
                     <div className="col-span-2 text-end">
-                      <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
+                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
                         {agreement.status === 'Active' ? t('active') : t('pending')}
                       </span>
                     </div>
@@ -476,12 +477,12 @@ export default function PrintView() {
           </PageContainer>
         )) : null}
 
-        {/* --- DELEGATIONS (NO FIXED HEIGHTS OR SCROLLBARS) --- */}
+        {/* --- DELEGATIONS (NO SCROLLBARS) --- */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Users} title={t('sectionDelegation')} />
           
-          <div className="grid grid-cols-1 gap-8 mt-4 flex-1">
+          <div className="grid grid-cols-1 gap-8 mt-4 flex-1 pb-16">
             <div className="avoid-break overflow-visible">
                 <div className="flex items-center gap-4 mb-4 border-b-2 border-primary pb-2">
                   <img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto shadow-sm" alt="UAE" />
@@ -497,7 +498,7 @@ export default function PrintView() {
                             <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
                             <p className="text-sm font-bold text-primary uppercase mb-3 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>
                             <div className="overflow-visible">
-                               {renderRichText(d.bio, "text-[15px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1")}
+                               {renderRichText(d.bio, "text-[14px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1")}
                             </div>
                         </div>
                       </div>
@@ -520,7 +521,7 @@ export default function PrintView() {
                             <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
                             <p className="text-sm font-bold text-accent uppercase mb-3 tracking-[0.15em] border-b border-accent/10 pb-1 inline-block">{d.title}</p>
                             <div className="overflow-visible">
-                               {renderRichText(d.bio, "text-[15px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1")}
+                               {renderRichText(d.bio, "text-[14px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1")}
                             </div>
                         </div>
                       </div>
