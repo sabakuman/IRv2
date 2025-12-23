@@ -25,7 +25,7 @@ const formatDate = (dateStr: string) => {
   return `${d}/${m}/${y}`;
 };
 
-const renderRichText = (text: string, sizeClass: string = "text-[12.5px]") => {
+const renderRichText = (text: string, sizeClass: string = "text-[12px]") => {
   if (!text) return null;
   let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
@@ -47,7 +47,7 @@ const renderRichText = (text: string, sizeClass: string = "text-[12.5px]") => {
     }
   });
   if (inList) { result.push(<ul key="list-final" className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
-  return <div className={`rich-text-content ${sizeClass} leading-[1.6] overflow-visible`}>{result.length > 0 ? result : text}</div>;
+  return <div className={`rich-text-content ${sizeClass} leading-[1.5] overflow-visible`}>{result.length > 0 ? result : text}</div>;
 };
 
 export default function PrintView() {
@@ -158,23 +158,21 @@ export default function PrintView() {
   const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
 
-  // Optimized Pagination Logic
-  // Relationship Summary: 3 per page is safe with the new pb-36
-  const CHUNK_SIZE_INTERACTIONS = 3; 
+  // High-Density Pagination Chunks
+  // Fit 4 items per page to maximize space and avoid empty space
+  const CHUNK_SIZE_INTERACTIONS = 4; 
   const interactionChunks = [];
   for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
     interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE_INTERACTIONS));
   }
 
-  // Points of Discussion: Reduced to 2 per page to guarantee no footer collision
-  const CHUNK_SIZE_POINTS = 2; 
+  const CHUNK_SIZE_POINTS = 4; 
   const pointsChunks = [];
   for (let i = 0; i < data.pointsOfDiscussion.length; i += CHUNK_SIZE_POINTS) {
     pointsChunks.push(data.pointsOfDiscussion.slice(i, i + CHUNK_SIZE_POINTS));
   }
 
-  // Agreements: 3 per page to avoid clipping
-  const CHUNK_SIZE_AGREEMENTS = 3;
+  const CHUNK_SIZE_AGREEMENTS = 4;
   const agreementChunks = [];
   for (let i = 0; i < sortedAgreements.length; i += CHUNK_SIZE_AGREEMENTS) {
     agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE_AGREEMENTS));
@@ -400,7 +398,7 @@ export default function PrintView() {
           </div>
         </PageContainer>
 
-        {/* --- PAGE 5+: RELATIONSHIP SUMMARY --- */}
+        {/* --- PAGE 5+: RELATIONSHIP SUMMARY (HIGH DENSITY) --- */}
         {interactionChunks.length > 0 ? interactionChunks.map((chunk, cIdx) => (
           <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -412,13 +410,13 @@ export default function PrintView() {
             <div className="flex flex-col gap-2 mt-2 flex-1 pb-4 overflow-visible">
               {chunk.map((item, idx) => (
                 <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50 shadow-sm flex flex-col overflow-visible avoid-break">
-                    <div className="flex justify-between items-center mb-1">
+                    <div className="flex justify-between items-center mb-0.5">
                       <span className="text-[8px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
                       <span className="text-[8px] font-mono text-gray-400" dir="ltr">{formatDate(item.date)}</span>
                     </div>
-                    <p className="text-[13px] font-bold text-gray-900 mb-0.5 leading-tight">{item.title}</p>
+                    <p className="text-[12.5px] font-bold text-gray-900 mb-0.5 leading-tight">{item.title}</p>
                     <div className="overflow-visible">
-                      {renderRichText(item.details, "text-[12.5px]")}
+                      {renderRichText(item.details, "text-[12px]")}
                     </div>
                 </div>
               ))}
@@ -426,7 +424,7 @@ export default function PrintView() {
           </PageContainer>
         )) : null}
 
-        {/* --- PAGE 6+: POINTS OF DISCUSSION --- */}
+        {/* --- PAGE 6+: POINTS OF DISCUSSION (HIGH DENSITY) --- */}
         {pointsChunks.map((chunk, cIdx) => (
           <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -434,15 +432,14 @@ export default function PrintView() {
               icon={MessageSquare} 
               title={`${t('pointsDiscussion')}${pointsChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
             />
-            {/* Strictly 2 items per page to prevent clipping during Arabic text expansion */}
-            <div className="flex flex-col gap-3 mt-4 flex-1 pb-4 overflow-visible">
+            <div className="flex flex-col gap-2 mt-2 flex-1 pb-4 overflow-visible">
               {chunk.map((point, idx) => (
-                <div key={idx} className="flex gap-4 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break overflow-visible">
-                    <span className="text-accent font-bold mt-0 text-xl">•</span>
+                <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break overflow-visible">
+                    <span className="text-accent font-bold mt-0 text-lg leading-none">•</span>
                     <div className="flex-1 overflow-visible">
-                      <strong className="block text-[13px] text-gray-900 mb-1 uppercase tracking-wide leading-tight">{point.title}</strong>
+                      <strong className="block text-[12.5px] text-gray-900 mb-0.5 uppercase tracking-wide leading-tight">{point.title}</strong>
                       <div className="overflow-visible">
-                        {renderRichText(point.content, "text-[12.5px]")}
+                        {renderRichText(point.content, "text-[12px]")}
                       </div>
                     </div>
                 </div>
@@ -451,7 +448,7 @@ export default function PrintView() {
           </PageContainer>
         ))}
 
-        {/* --- PAGE 7+: AGREEMENTS --- */}
+        {/* --- PAGE 7+: AGREEMENTS (HIGH DENSITY) --- */}
         {agreementChunks.length > 0 ? agreementChunks.map((chunk, cIdx) => (
           <PageContainer key={`agr-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -459,18 +456,18 @@ export default function PrintView() {
               icon={FileText} 
               title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
             />
-            <div className="space-y-4 mt-6 flex-1 overflow-visible pb-4">
+            <div className="space-y-3 mt-4 flex-1 overflow-visible pb-4">
               {chunk.map((agreement, idx) => (
-                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-4 grid grid-cols-12 gap-4 items-start shadow-sm avoid-break overflow-visible">
+                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 grid grid-cols-12 gap-3 items-start shadow-sm avoid-break overflow-visible">
                     <div className="col-span-3">
-                      <p className="text-[13px] font-bold text-gray-900 leading-tight">{agreement.title}</p>
-                      <p className="text-[9px] font-mono font-bold text-gray-500 mt-2" dir="ltr">{formatDate(agreement.date)}</p>
+                      <p className="text-[12.5px] font-bold text-gray-900 leading-tight">{agreement.title}</p>
+                      <p className="text-[8px] font-mono font-bold text-gray-500 mt-1" dir="ltr">{formatDate(agreement.date)}</p>
                     </div>
                     <div className="col-span-7 overflow-visible">
-                      {renderRichText(agreement.summary, "text-[12.5px] font-medium")}
+                      {renderRichText(agreement.summary, "text-[12px] font-medium")}
                     </div>
                     <div className="col-span-2 text-end">
-                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
+                      <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
                         {agreement.status === 'Active' ? t('active') : t('pending')}
                       </span>
                     </div>
@@ -501,7 +498,7 @@ export default function PrintView() {
                             <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
                             <p className="text-sm font-bold text-primary uppercase mb-3 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>
                             <div className="overflow-visible">
-                               {renderRichText(d.bio, "text-[12.5px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1")}
+                               {renderRichText(d.bio, "text-[12px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1")}
                             </div>
                         </div>
                       </div>
@@ -524,7 +521,7 @@ export default function PrintView() {
                             <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
                             <p className="text-sm font-bold text-accent uppercase mb-3 tracking-[0.15em] border-b border-accent/10 pb-1 inline-block">{d.title}</p>
                             <div className="overflow-visible">
-                               {renderRichText(d.bio, "text-[12.5px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1")}
+                               {renderRichText(d.bio, "text-[12px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1")}
                             </div>
                         </div>
                       </div>
