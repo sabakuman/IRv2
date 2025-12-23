@@ -159,20 +159,20 @@ export default function PrintView() {
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
 
   // High-Density Pagination Chunks
-  // Fit 4 items per page to maximize space and avoid empty space
-  const CHUNK_SIZE_INTERACTIONS = 4; 
+  // Increased sizes for Agreements and Points to fit more per page as requested
+  const CHUNK_SIZE_INTERACTIONS = 5; 
   const interactionChunks = [];
   for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
     interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE_INTERACTIONS));
   }
 
-  const CHUNK_SIZE_POINTS = 4; 
+  const CHUNK_SIZE_POINTS = 5; 
   const pointsChunks = [];
   for (let i = 0; i < data.pointsOfDiscussion.length; i += CHUNK_SIZE_POINTS) {
     pointsChunks.push(data.pointsOfDiscussion.slice(i, i + CHUNK_SIZE_POINTS));
   }
 
-  const CHUNK_SIZE_AGREEMENTS = 4;
+  const CHUNK_SIZE_AGREEMENTS = 5;
   const agreementChunks = [];
   for (let i = 0; i < sortedAgreements.length; i += CHUNK_SIZE_AGREEMENTS) {
     agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE_AGREEMENTS));
@@ -263,7 +263,20 @@ export default function PrintView() {
           <div className="grid grid-cols-3 gap-3">
             <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
             <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center shadow-sm"><p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">{t('topUniversities')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('edu')}</span></p><ul className="text-[11px] text-gray-700 leading-tight space-y-0.5">{data.educationStats.topUniversities.slice(0, 5).map((u, i) => (<li key={i} className="truncate">• {u}</li>))}</ul></div>
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center shadow-sm">
+              <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                {t('topUniversities')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('edu')}</span>
+              </p>
+              {/* Fix: University List alignment and wrapping */}
+              <ul className="text-[11px] text-gray-700 leading-snug space-y-1">
+                {data.educationStats.topUniversities.slice(0, 5).map((u, i) => (
+                  <li key={i} className="flex gap-1.5 items-start">
+                    <span className="shrink-0 font-bold text-primary opacity-60">•</span>
+                    <span className="break-words leading-tight flex-1">{u}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </PageContainer>
 
