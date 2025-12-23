@@ -158,8 +158,7 @@ export default function PrintView() {
   const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
 
-  // High-Density Pagination Chunks
-  // Increased sizes for Agreements and Points to fit more per page as requested
+  // High-Density Pagination Chunks (Increased to 5 per page)
   const CHUNK_SIZE_INTERACTIONS = 5; 
   const interactionChunks = [];
   for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
@@ -177,6 +176,10 @@ export default function PrintView() {
   for (let i = 0; i < sortedAgreements.length; i += CHUNK_SIZE_AGREEMENTS) {
     agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE_AGREEMENTS));
   }
+
+  // Sorted Emirate Charts (Descending order: Largest to Smallest)
+  const sortedMohreEmirates = [...data.uaeWorkforceStats.mohre.byEmirate].sort((a, b) => b.value - a.value);
+  const sortedIcpEmirates = [...data.uaeWorkforceStats.icp.byEmirate].sort((a, b) => b.value - a.value);
 
   const handlePrint = () => {
     window.print();
@@ -267,12 +270,11 @@ export default function PrintView() {
               <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
                 {t('topUniversities')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('edu')}</span>
               </p>
-              {/* Fix: University List alignment and wrapping */}
               <ul className="text-[11px] text-gray-700 leading-snug space-y-1">
                 {data.educationStats.topUniversities.slice(0, 5).map((u, i) => (
                   <li key={i} className="flex gap-1.5 items-start">
                     <span className="shrink-0 font-bold text-primary opacity-60">•</span>
-                    <span className="break-words leading-tight flex-1">{u}</span>
+                    <span className="break-words leading-tight flex-1 font-medium">{u}</span>
                   </li>
                 ))}
               </ul>
@@ -294,12 +296,12 @@ export default function PrintView() {
                 <p className="text-center text-[10px] font-bold text-primary mb-2 uppercase tracking-wider">{t('workersByEmirate')}</p>
                 <div className="h-32 w-full" dir="ltr">
                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
+                      <BarChart data={sortedMohreEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
                           <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                           <YAxis hide />
                           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '8px', fill: '#333', fontWeight: 'bold' }} />
-                            {data.uaeWorkforceStats.mohre.byEmirate.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />))}
+                            {sortedMohreEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />))}
                           </Bar>
                       </BarChart>
                   </ResponsiveContainer>
@@ -309,12 +311,12 @@ export default function PrintView() {
                 <p className="text-center text-[10px] font-bold text-accent mb-2 uppercase tracking-wider">{t('residentsByEmirate')}</p>
                 <div className="h-32 w-full" dir="ltr">
                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data.uaeWorkforceStats.icp.byEmirate} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
+                      <BarChart data={sortedIcpEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
                           <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                           <YAxis hide />
                           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                             <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '8px', fill: '#333', fontWeight: 'bold' }} />
-                            {data.uaeWorkforceStats.icp.byEmirate.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[(index + 3) % BLUE_PALETTE.length]} />))}
+                            {sortedIcpEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[(index + 3) % BLUE_PALETTE.length]} />))}
                           </Bar>
                       </BarChart>
                   </ResponsiveContainer>
