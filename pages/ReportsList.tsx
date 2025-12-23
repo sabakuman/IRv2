@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { MockService } from '../services/mockService';
-import { Report } from '../types';
+import { Report, UserProfile } from '../types';
 import { Card, Button, Badge } from '../components/ui/LayoutComponents';
 import { Search, Plus, Edit3, Trash2, Printer, FileText, Lock, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
@@ -11,24 +11,34 @@ import { format } from 'date-fns';
 export default function ReportsList() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  // Fixed: Replaced missing useNavigate hook with manual hash navigation
+  // Manual hash navigation
   const navigate = (path: string) => {
     window.location.hash = path.startsWith('/') ? path : `/${path}`;
   };
   const [reports, setReports] = useState<Report[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchReports = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    const data = await MockService.getReports();
-    setReports(data);
-    setLoading(false);
+    try {
+      const [reportsData, usersData] = await Promise.all([
+        MockService.getReports(),
+        MockService.getUsers()
+      ]);
+      setReports(reportsData);
+      setUsers(usersData);
+    } catch (error) {
+      console.error("Fetch failed", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchReports();
+    fetchData();
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -36,8 +46,7 @@ export default function ReportsList() {
       setDeletingId(id);
       try {
         await MockService.deleteReport(id);
-        // Force refresh from service to ensure sync
-        await fetchReports();
+        await fetchData();
       } catch (error) {
         console.error("Delete failed", error);
         alert("Failed to delete report.");
@@ -48,23 +57,17 @@ export default function ReportsList() {
   };
 
   const handlePrint = (id: string) => {
-    // Robust URL construction for any hosting environment (Root, Subfolder, Docker, etc.)
-    // We utilize the current location to preserve protocol, domain, port, and sub-paths.
     const href = window.location.href;
     const hashIndex = href.indexOf('#');
-    
-    // Extract base URL (everything before the hash)
     let baseUrl = hashIndex !== -1 ? href.substring(0, hashIndex) : href;
-    
-    // Ensure we don't end up with double slashes if the base ends with one
-    if (baseUrl.endsWith('/')) {
-      baseUrl = baseUrl.slice(0, -1);
-    }
-    
-    // Construct the print view URL
+    if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
     const printUrl = `${baseUrl}/#/print/${id}`;
-    
     window.open(printUrl, '_blank');
+  };
+
+  const getUserName = (userId: string) => {
+    const found = users.find(u => u.id === userId);
+    return found ? found.fullName : 'Unknown User';
   };
 
   const filteredReports = reports.filter(r => 
@@ -97,7 +100,7 @@ export default function ReportsList() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <button onClick={fetchReports} className="text-gray-400 hover:text-primary transition-colors" title="Refresh">
+        <button onClick={fetchData} className="text-gray-400 hover:text-primary transition-colors" title="Refresh">
           <RefreshCw size={18} />
         </button>
       </div>
@@ -127,14 +130,12 @@ export default function ReportsList() {
             </thead>
             <tbody className="divide-y dark:divide-gray-700">
               {filteredReports.map((report) => {
-                // Permission Logic
                 const isOwner = user?.id === report.userId;
                 const isAdmin = user?.role === 'admin';
                 const canEdit = isAdmin || isOwner;
                 const isDeleting = deletingId === report.id;
                 
-                // Flag logic
-                const flagSrc = report.data.flagUrl || `https://flagcdn.com/w40/${report.data.country === 'Philippines' ? 'ph' : report.data.country === 'India' ? 'in' : 'ae'}.png`;
+                const flagSrc = report.data.flagUrl || `https://flagcdn.com/w40/${report.data.country.toLowerCase().includes('philippines') ? 'ph' : report.data.country.toLowerCase().includes('india') ? 'in' : 'ae'}.png`;
 
                 return (
                   <tr key={report.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -148,9 +149,9 @@ export default function ReportsList() {
                        {report.data.country}
                     </td>
                     <td className="p-4 text-sm font-medium dark:text-gray-200">{report.title}</td>
-                    <td className="p-4 text-sm text-gray-500 dark:text-gray-400">
-                      {report.userId === 'u-1' ? 'Ahmed Al-Mansouri' : 'Sarah Khan'}
-                      {isOwner && <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-1.5 py-0.5 rounded">You</span>}
+                    <td className="p-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      {getUserName(report.userId)}
+                      {isOwner && <span className="ml-2 text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">You</span>}
                     </td>
                     <td className="p-4 text-sm text-gray-500 dark:text-gray-400">
                       {format(new Date(report.updatedAt), 'MMM dd, yyyy')}
