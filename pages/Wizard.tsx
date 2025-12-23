@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { ReportData, EMPTY_REPORT_DATA, Report, Delegate } from '../types';
@@ -7,7 +7,8 @@ import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
 import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { GoogleGenAI, Type } from "@google/genai";
+// Always use GoogleGenAI and Type from @google/genai
+import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 
 // Custom Textarea with Rich Text Toolbar
@@ -58,8 +59,19 @@ const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
 };
 
 export default function Wizard() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  // Fixed: Replaced missing useParams and useNavigate hooks with manual implementations
+  const getParamId = () => {
+    const hash = window.location.hash;
+    const parts = hash.split('/');
+    if (parts.length >= 3 && parts[1] === 'wizard') return parts[2];
+    return undefined;
+  };
+  const id = getParamId();
+  
+  const navigate = (path: string) => {
+    window.location.hash = path.startsWith('/') ? path : `/${path}`;
+  };
+
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
@@ -113,12 +125,11 @@ export default function Wizard() {
     if (!data.country) return;
     setIsFetchingAI(true);
     try {
-      // Initialize GoogleGenAI exclusively with process.env.API_KEY.
-      // Use gemini-3-flash-preview for basic data extraction tasks.
+      // Fixed: Initialized GoogleGenAI with named parameter apiKey from process.env.API_KEY
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `Fetch the latest official labour market and economic data for ${data.country}. Return a JSON object containing information for the country profile, workforce, and economy.`;
       
-      const response = await ai.models.generateContent({
+      const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: [{ parts: [{ text: prompt }] }],
         config: { 
@@ -170,6 +181,7 @@ export default function Wizard() {
         }
       });
       
+      // Fixed: Used response.text property directly
       const aiData = extractAndParseJSON(response.text);
       if (aiData) {
         setData(prev => ({ 
@@ -189,11 +201,11 @@ export default function Wizard() {
      if (!data.country) return;
      setIsFetchingNews(true);
      try {
-       // Using gemini-3-flash-preview with search grounding to fetch recent news.
+       // Fixed: Initialized GoogleGenAI with named parameter apiKey from process.env.API_KEY
        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
        const prompt = `Find 5 recent news articles about workforce cooperation or bilateral agreements between the UAE and ${data.country}. Output a JSON array with: title, source, date, summary.`;
        
-       const response = await ai.models.generateContent({
+       const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: [{ parts: [{ text: prompt }] }],
           config: { 
@@ -201,6 +213,7 @@ export default function Wizard() {
           },
        });
        
+       // Fixed: Used response.text property directly
        const newsItems = extractAndParseJSON(response.text);
        if (Array.isArray(newsItems)) {
           setData(prev => ({ 

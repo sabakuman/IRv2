@@ -1,5 +1,5 @@
-import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -17,7 +17,10 @@ import Settings from './pages/Settings';
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
   if (isLoading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    window.location.hash = '/login';
+    return null;
+  }
   return <>{children}</>;
 };
 
@@ -25,29 +28,50 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
 const AdminRoute = ({ children }: { children?: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
   if (isLoading) return null;
-  if (!user || user.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  if (!user || user.role !== 'admin') {
+    window.location.hash = '/dashboard';
+    return null;
+  }
   return <>{children}</>;
 };
 
-const AppRoutes = () => {
+// Fixed: Replaced missing HashRouter/Routes with manual state-based routing
+const Router = () => {
+  const [currentHash, setCurrentHash] = useState(window.location.hash);
+
+  useEffect(() => {
+    const handleHashChange = () => setCurrentHash(window.location.hash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const hash = currentHash.replace('#', '') || '/';
+
+  // Extract ID if present (e.g., /wizard/r-101 or /print/r-101)
+  const parts = hash.split('/');
+  const routeBase = parts[1] || '';
+  const routeId = parts[2] || '';
+
+  if (hash === '/login') return <Login />;
+  if (routeBase === 'print') return <PrintView />;
+
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/print/:id" element={<PrintView />} />
-      
-      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="reports" element={<ReportsList />} />
-        <Route path="wizard" element={<Wizard />} />
-        <Route path="wizard/:id" element={<Wizard />} />
-        <Route path="account" element={<Settings />} />
-        
-        {/* Admin Routes */}
-        <Route path="admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-        <Route path="admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
-      </Route>
-    </Routes>
+    <ProtectedRoute>
+      <Layout>
+        {(() => {
+          if (hash === '/' || hash === '/dashboard') return <Dashboard />;
+          if (hash === '/reports') return <ReportsList />;
+          if (routeBase === 'wizard') return <Wizard />;
+          if (hash === '/account') return <Settings />;
+          
+          if (hash === '/admin/users') return <AdminRoute><AdminUsers /></AdminRoute>;
+          if (hash === '/admin/logs') return <AdminRoute><AdminLogs /></AdminRoute>;
+
+          // Fallback
+          return <Dashboard />;
+        })()}
+      </Layout>
+    </ProtectedRoute>
   );
 };
 
@@ -56,9 +80,7 @@ export default function App() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <HashRouter>
-            <AppRoutes />
-          </HashRouter>
+          <Router />
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>

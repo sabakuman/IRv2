@@ -3,13 +3,15 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Button, Input, Card } from '../components/ui/LayoutComponents';
-import { useNavigate } from 'react-router-dom';
 import { LogIn, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const { signIn } = useAuth();
   const { t, language, setLanguage } = useLanguage();
-  const navigate = useNavigate();
+  // Fixed: Replaced missing useNavigate hook with manual hash navigation
+  const navigate = (path: string) => {
+    window.location.hash = path.startsWith('/') ? path : `/${path}`;
+  };
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

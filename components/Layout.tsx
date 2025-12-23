@@ -1,14 +1,19 @@
+
 import React from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { LogOut, Home, FileText, Settings, Globe, Menu, Users, ShieldAlert, FileClock } from 'lucide-react';
 
-export default function Layout() {
+// Fixed: Replaced missing Outlet component with children prop, and missing hooks with manual implementations
+export default function Layout({ children }: { children?: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const { language, setLanguage, t, dir } = useLanguage();
-  const navigate = useNavigate();
-  const location = useLocation();
+  
+  const navigate = (path: string) => {
+    window.location.hash = path.startsWith('/') ? path : `/${path}`;
+  };
+  
+  const currentPath = window.location.hash.replace('#', '') || '/';
 
   const handleLogout = () => {
     signOut();
@@ -16,7 +21,7 @@ export default function Layout() {
   };
 
   const NavItem = ({ icon: Icon, label, path }: { icon: any, label: string, path: string }) => {
-    const active = location.pathname.startsWith(path);
+    const active = currentPath.startsWith(path);
     return (
       <button
         onClick={() => navigate(path)}
@@ -100,7 +105,7 @@ export default function Layout() {
 
         {/* Page Content */}
         <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-          <Outlet />
+          {children}
         </div>
       </main>
     </div>

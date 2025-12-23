@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { MockService } from '../services/mockService';
@@ -12,7 +11,10 @@ import { format } from 'date-fns';
 export default function ReportsList() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const navigate = useNavigate();
+  // Fixed: Replaced missing useNavigate hook with manual hash navigation
+  const navigate = (path: string) => {
+    window.location.hash = path.startsWith('/') ? path : `/${path}`;
+  };
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
