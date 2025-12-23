@@ -22,7 +22,15 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: 'dist',
-      sourcemap: false
+      sourcemap: false,
+      rollupOptions: {
+        external: ['html2pdf.js'],
+        output: {
+          globals: {
+            'html2pdf.js': 'html2pdf'
+          }
+        }
+      }
     }
   };
 });

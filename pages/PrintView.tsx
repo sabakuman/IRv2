@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
@@ -13,8 +12,6 @@ import {
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
 
 const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
 
@@ -182,7 +179,7 @@ export default function PrintView() {
     
     const options = {
       margin: 0,
-      filename: `${data.country}_Bilateral_Labour_Report_${new Date().toISOString().split('T')[0]}.pdf`,
+      filename: `${data.country}_Intelligence_Report.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { 
         scale: 2, 
@@ -194,10 +191,16 @@ export default function PrintView() {
     };
 
     try {
-      await html2pdf().set(options).from(element).save();
+      // Robust retrieval for html2pdf (CDN global or module)
+      // @ts-ignore
+      const html2pdfLib = (window as any).html2pdf || (await import('html2pdf.js')).default;
+      
+      if (!html2pdfLib) throw new Error('PDF Generation Library (html2pdf) not loaded.');
+      
+      await html2pdfLib().set(options).from(element).save();
     } catch (err) {
       console.error('PDF Generation Error:', err);
-      alert('Failed to generate PDF. Please use the Print option instead.');
+      alert('Failed to generate PDF directly. Please use the "Print Now" button and "Save as PDF" instead.');
     } finally {
       setIsDownloading(false);
     }
