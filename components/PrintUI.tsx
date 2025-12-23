@@ -4,7 +4,6 @@ import { ShieldAlert } from "lucide-react";
 /* ===============================
    PAGE CONTAINER
 ================================ */
-// Use React.FC to ensure common props like 'key' are correctly handled when mapping components.
 export const PageContainer: React.FC<{
   children?: React.ReactNode;
   footer?: React.ReactNode;
@@ -14,11 +13,13 @@ export const PageContainer: React.FC<{
   footer,
   className = ""
 }) => (
-  <div className={`w-[210mm] min-h-[297mm] bg-white mx-auto flex flex-col page-break ${className}`}>
-    <div className="px-12 pt-8 flex-1">{children}</div>
+  <div className={`w-[210mm] h-[297mm] bg-white mx-auto flex flex-col page-break relative ${className}`}>
+    <div className="px-12 pt-8 flex-1 overflow-hidden">{children}</div>
 
     {footer && (
-      <div className="mt-auto px-12 pb-6">{footer}</div>
+      <div className="absolute bottom-6 left-12 right-12">
+        {footer}
+      </div>
     )}
   </div>
 );
@@ -37,16 +38,13 @@ export const HeaderBand = ({
   title: string;
   flagUrl?: string;
 }) => {
-  // Helper for flag code mapping
   const getFlagCode = (c: string) => {
     const lower = c.toLowerCase();
-    if (lower === 'india') return 'in';
-    if (lower === 'philippines') return 'ph';
-    if (lower === 'pakistan') return 'pk';
-    if (lower === 'bangladesh') return 'bd';
-    if (lower === 'vietnam') return 'vn';
-    if (lower === 'uae' || lower === 'united arab emirates') return 'ae';
-    // Fallback: If map doesn't cover, default to UAE or generic
+    if (lower.includes('india')) return 'in';
+    if (lower.includes('philippines')) return 'ph';
+    if (lower.includes('pakistan')) return 'pk';
+    if (lower.includes('bangladesh')) return 'bd';
+    if (lower.includes('vietnam')) return 'vn';
     return 'ae'; 
   };
   
@@ -56,7 +54,6 @@ export const HeaderBand = ({
   return (
     <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
       <div className="flex items-center gap-3">
-        {/* Dynamic Flag based on Report Country or provided URL */}
         <img src={flagSrc} className="h-6 w-auto shadow-sm" alt={country} />
         <div className="h-8 w-px bg-gray-200" />
         <div>
@@ -134,7 +131,6 @@ export const KPI = ({
   tone?: "ok" | "warn" | "info" | "restrict";
   labelClassName?: string;
 }) => (
-  // Removed 'justify-center' to ensure all icons align to the top consistently
   <div className="kpi-card avoid-break h-full flex flex-col">
     <div className="kpi-row items-start">
       <div className="kpi-icon shrink-0 mt-0.5">
@@ -161,11 +157,6 @@ export const KPI = ({
           )}
         </div>
 
-        {/* 
-           Reduced font size to text-sm (approx 14px) for better aesthetics.
-           Wrapped value in span dir="ltr" to ensure mixed English/Arabic content
-           flows correctly while preserving the parent's text alignment.
-        */}
         <p className="kpi-value break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
            <span dir="ltr">{value || 'N/A'}</span>
         </p>

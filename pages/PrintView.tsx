@@ -9,7 +9,8 @@ import {
   Handshake, Landmark, Plane, Banknote, 
   Printer, X, AlertTriangle, ShieldAlert,
   GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
-  ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer
+  ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer,
+  Download
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
@@ -103,7 +104,7 @@ export default function PrintView() {
   };
 
   const DefaultFooter = () => (
-    <div className="border-t border-gray-100 pt-2 flex justify-between items-center mt-2">
+    <div className="border-t border-gray-100 pt-2 flex justify-between items-center bg-white">
       <p className="text-[8px] text-gray-400 font-sans">
         {t('generatedOn')} <span className="font-sans" dir="ltr">{new Date().toLocaleDateString("en-GB", { day: 'numeric', month: 'long', year: 'numeric' })}</span>
       </p>
@@ -142,15 +143,14 @@ export default function PrintView() {
   const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
 
-  // Pagination Logic for Long Sections
-  // We use chunks of data to manually force Page Containers if the lists are very long.
-  const CHUNK_SIZE_INTERACTIONS = 6;
+  // Pagination logic to handle excessive content
+  const CHUNK_SIZE_INTERACTIONS = 4;
   const interactionChunks = [];
   for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
     interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE_INTERACTIONS));
   }
 
-  const CHUNK_SIZE_POINTS = 8;
+  const CHUNK_SIZE_POINTS = 6;
   const pointsChunks = [];
   for (let i = 0; i < data.pointsOfDiscussion.length; i += CHUNK_SIZE_POINTS) {
     pointsChunks.push(data.pointsOfDiscussion.slice(i, i + CHUNK_SIZE_POINTS));
@@ -162,11 +162,24 @@ export default function PrintView() {
     agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE_AGREEMENTS));
   }
 
+  const handleAction = () => {
+    window.print();
+  };
+
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
-      <div className={`fixed top-4 z-50 flex gap-2 no-print ${isRTL ? 'left-4' : 'right-4'}`}>
-         <button onClick={() => window.print()} className="bg-primary text-white px-4 py-2 rounded-lg shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold"><Printer size={18} /> {t('printNow')}</button>
-         <button onClick={() => window.close()} className="bg-white text-gray-600 p-2.5 rounded-lg shadow-lg hover:bg-gray-100 transition-all border border-gray-200"><X size={20} /></button>
+      {/* Floating Modern Action Bar */}
+      <div className={`fixed top-6 z-50 flex gap-3 no-print p-2 rounded-2xl bg-white/80 backdrop-blur-md shadow-2xl border border-white/20 ${isRTL ? 'left-6' : 'right-6'}`}>
+         <button onClick={handleAction} className="bg-primary text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold active:scale-95">
+            <Printer size={18} /> {t('printNow')}
+         </button>
+         <button onClick={handleAction} className="bg-accent text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-accent-light transition-all flex items-center gap-2 text-sm font-bold active:scale-95">
+            <Download size={18} /> {t('downloadPdf')}
+         </button>
+         <div className="w-px h-8 bg-gray-200 mx-1 self-center" />
+         <button onClick={() => window.close()} className="bg-white text-gray-500 hover:text-red-500 p-2.5 rounded-xl transition-all border border-gray-100 hover:bg-red-50">
+            <X size={20} />
+         </button>
       </div>
 
       {/* --- PAGE 1: COVER --- */}
@@ -189,7 +202,7 @@ export default function PrintView() {
             </div>
             <div className="bg-gray-50 rounded-3xl p-10 border border-gray-100 max-w-xl">
                <div className="flex items-center gap-8 mb-8">
-                  <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${data.country.toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" /></div>
+                  <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${data.country.toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" alt="flag" /></div>
                   <div>
                      <p className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1">{t('subjectMarket')}</p>
                      <h2 className="text-4xl font-serif font-bold text-gray-900">{data.country}</h2>
@@ -240,63 +253,62 @@ export default function PrintView() {
         </div>
       </PageContainer>
 
-      {/* --- PAGE 3: UAE WORKFORCE --- */}
+      {/* --- PAGE 3: UAE WORKFORCE (STRICT COMPRESSION) --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
         <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
         <SectionHeader icon={Building} title={t('sectionUaeWorkforce')} subtitle={t('domesticAnalysis')} />
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-4 mb-3">
            <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre')} labelClassName="text-xs font-bold" />
            <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre')} tone="warn" labelClassName="text-xs font-bold" />
         </div>
         
-        <div className="grid grid-cols-2 gap-4 mb-4">
-           <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center">
+        <div className="grid grid-cols-2 gap-4 mb-3">
+           <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
               <p className="text-center text-[10px] font-bold text-primary mb-2 uppercase tracking-wider">{t('workersByEmirate')}</p>
-              <div className="h-36 w-full" dir="ltr">
+              <div className="h-32 w-full" dir="ltr">
                  <ResponsiveContainer width="100%" height="100%">
                      <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
                         <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                         <YAxis hide />
                         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                           <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '9px', fill: '#333', fontWeight: 'bold' }} />
+                           <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '8px', fill: '#333', fontWeight: 'bold' }} />
                            {data.uaeWorkforceStats.mohre.byEmirate.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />))}
                         </Bar>
                      </BarChart>
                  </ResponsiveContainer>
               </div>
-              <p className="text-[6px] text-gray-400 mt-1">{getSource('mohre')}</p>
            </div>
-           <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center">
+           <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
               <p className="text-center text-[10px] font-bold text-accent mb-2 uppercase tracking-wider">{t('residentsByEmirate')}</p>
-              <div className="h-36 w-full" dir="ltr">
+              <div className="h-32 w-full" dir="ltr">
                  <ResponsiveContainer width="100%" height="100%">
                      <BarChart data={data.uaeWorkforceStats.icp.byEmirate} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
                         <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                         <YAxis hide />
                         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                           <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '9px', fill: '#333', fontWeight: 'bold' }} />
+                           <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '8px', fill: '#333', fontWeight: 'bold' }} />
                            {data.uaeWorkforceStats.icp.byEmirate.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[(index + 3) % BLUE_PALETTE.length]} />))}
                         </Bar>
                      </BarChart>
                  </ResponsiveContainer>
               </div>
-              <p className="text-[6px] text-gray-400 mt-1">{getSource('icp')}</p>
            </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 flex-1">
-           <div className="border border-gray-200 rounded-2xl p-4 flex flex-col">
+        <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
+           <div className="border border-gray-200 rounded-2xl p-4 flex flex-col bg-white">
               <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
-                {t('workersBySector')} (Top 10) <span className="text-[8px] text-gray-400 italic font-normal">{getSource('mohre')}</span>
+                {isRTL ? 'توزيع العمال حسب القطاع (Top 10) ' : t('workersBySector') + ' (Top 10) '}
+                <span className="text-[8px] text-gray-400 italic font-normal ml-2">{getSource('mohre')}</span>
               </p>
-              <div className="space-y-2.5 flex-1 overflow-hidden">
+              <div className="space-y-1.5 flex-1 overflow-hidden">
                  {mohreSectors.slice(0, 10).map((s, i) => (
                     <div key={i}>
-                       <div className="flex justify-between text-[11px] mb-0.5">
+                       <div className="flex justify-between text-[10px] mb-0.5">
                           <span className="font-bold text-gray-700 truncate">{s.name}</span>
                           <span className="font-mono text-gray-900 font-bold" dir="ltr">{formatCompactNumber(s.value)}</span>
                        </div>
-                       <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden" dir="ltr">
+                       <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden" dir="ltr">
                           <div 
                             className="h-full bg-primary transition-all duration-500" 
                             style={{ width: `${(s.value / maxMohreVal) * 100}%` }}
@@ -307,18 +319,18 @@ export default function PrintView() {
               </div>
            </div>
            
-           <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+           <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
               <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">{t('additionalIndicators')}</p>
-              <div className="space-y-3">
+              <div className="space-y-2">
                  {data.uaeWorkforceStats.custom.map((stat) => (
                     <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-2 last:border-0">
                        <div>
-                          <p className="text-[12px] font-bold text-gray-500 uppercase tracking-wide">
+                          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide leading-tight">
                             {stat.label === 'Total Workers in UAE' ? t('totalWorkersUaeLabel') : stat.label}
                           </p>
-                          <p className="text-[9px] text-gray-400 font-sans">{stat.date}</p>
+                          <p className="text-[8px] text-gray-400 font-sans">{stat.date}</p>
                        </div>
-                       <p className="text-xl font-serif font-bold text-gray-900" dir="ltr">{stat.value}</p>
+                       <p className="text-lg font-serif font-bold text-gray-900" dir="ltr">{stat.value}</p>
                     </div>
                  ))}
               </div>
@@ -372,42 +384,49 @@ export default function PrintView() {
         </div>
       </PageContainer>
 
-      {/* --- PAGE 5+: RELATIONSHIP SUMMARY & DISCUSSION POINTS --- */}
-      {interactionChunks.map((chunk, cIdx) => (
+      {/* --- PAGE 5+: RELATIONSHIP SUMMARY (PAGINATED) --- */}
+      {interactionChunks.length > 0 ? interactionChunks.map((chunk, cIdx) => (
         <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader 
             icon={Handshake} 
-            title={`${t('relationshipSummary')} ${cIdx > 0 ? `(${cIdx + 1})` : ''}`} 
+            title={`${t('relationshipSummary')}${interactionChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
             subtitle={t('bilateralEngagement')} 
           />
-          <div className="grid grid-cols-2 gap-6 mt-4">
+          <div className="grid grid-cols-2 gap-6 mt-4 flex-1 overflow-hidden">
             {chunk.map((item, idx) => (
-               <div key={idx} className="border border-gray-100 rounded-xl p-4 bg-gray-50 shadow-sm flex flex-col h-full">
+               <div key={idx} className="border border-gray-100 rounded-xl p-4 bg-gray-50 shadow-sm flex flex-col h-full overflow-hidden">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-[10px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
                     <span className="text-[10px] font-mono text-gray-400" dir="ltr">{item.date}</span>
                   </div>
                   <p className="text-sm font-bold text-gray-900 mb-1.5">{item.title}</p>
-                  <div className="text-[11px] text-gray-600 leading-relaxed flex-1">{renderRichText(item.details)}</div>
+                  <div className="text-[11px] text-gray-600 leading-relaxed flex-1 overflow-y-auto">{renderRichText(item.details)}</div>
                </div>
             ))}
           </div>
         </PageContainer>
-      ))}
+      )) : (
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader icon={Handshake} title={t('relationshipSummary')} subtitle={t('bilateralEngagement')} />
+          <p className="text-center text-gray-400 italic text-sm py-12">No relationship data recorded.</p>
+        </PageContainer>
+      )}
 
+      {/* --- PAGE 6+: POINTS OF DISCUSSION --- */}
       {pointsChunks.map((chunk, cIdx) => (
         <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader 
             icon={MessageSquare} 
-            title={`${t('pointsDiscussion')} ${cIdx > 0 ? `(${cIdx + 1})` : ''}`} 
+            title={`${t('pointsDiscussion')}${pointsChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
           />
-          <div className="space-y-4 mt-6">
+          <div className="space-y-4 mt-6 flex-1 overflow-hidden">
             {chunk.map((point, idx) => (
                <div key={idx} className="flex gap-4 bg-white border border-gray-100 p-4 rounded-xl shadow-sm">
                   <span className="text-accent font-bold mt-0.5 text-lg">•</span>
-                  <div>
+                  <div className="overflow-hidden">
                     <strong className="block text-[13px] text-gray-900 mb-1 uppercase tracking-wide">{point.title}</strong>
                     <div className="text-[11px] text-gray-600 leading-snug">{renderRichText(point.content)}</div>
                   </div>
@@ -417,15 +436,15 @@ export default function PrintView() {
         </PageContainer>
       ))}
 
-      {/* --- PAGE 6+: AGREEMENTS --- */}
-      {agreementChunks.map((chunk, cIdx) => (
+      {/* --- PAGE 7+: AGREEMENTS --- */}
+      {agreementChunks.length > 0 ? agreementChunks.map((chunk, cIdx) => (
         <PageContainer key={`agr-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader 
             icon={FileText} 
-            title={`${t('keyAgreements')} ${cIdx > 0 ? `(${cIdx + 1})` : ''}`} 
+            title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
           />
-          <div className="space-y-4 mt-6">
+          <div className="space-y-4 mt-6 flex-1 overflow-hidden">
             {chunk.map((agreement, idx) => (
                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-4 grid grid-cols-12 gap-6 items-center shadow-sm">
                   <div className="col-span-3">
@@ -444,7 +463,7 @@ export default function PrintView() {
             ))}
           </div>
         </PageContainer>
-      ))}
+      )) : null}
 
       {/* --- DELEGATIONS --- */}
       <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
@@ -461,7 +480,7 @@ export default function PrintView() {
                  {data.delegations.uae.map((d) => (
                     <div key={d.id} className="flex gap-10 items-start p-8 bg-gray-50 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden">
                        <div className="w-40 h-52 rounded-2xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-xl">
-                          {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-[10px] font-bold">No Portrait</div>}
+                          {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-[10px] font-bold">No Portrait</div>}
                        </div>
                        <div className="flex-1 pt-2">
                           <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
@@ -482,7 +501,7 @@ export default function PrintView() {
                  {data.delegations.partner.map((d) => (
                     <div key={d.id} className="flex gap-10 items-start p-8 bg-gray-50 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden">
                        <div className="w-40 h-52 rounded-2xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-xl">
-                          {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-[10px] font-bold">No Portrait</div>}
+                          {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-[10px] font-bold">No Portrait</div>}
                        </div>
                        <div className="flex-1 pt-2">
                           <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>

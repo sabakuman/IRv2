@@ -88,17 +88,19 @@
     display: none !important;
   }
 
+  /* Strict A4 Height to prevent footer displacement */
   .page-break {
     break-after: page;
     page-break-after: always;
     width: 210mm;
-    min-height: 297mm; /* Changed from fixed height */
-    overflow: visible; /* Changed from hidden to show all content */
+    height: 297mm; 
+    max-height: 297mm;
+    overflow: hidden;
     position: relative;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding-bottom: 20mm;
+    padding-bottom: 15mm; /* Buffer for footer */
   }
 
   .avoid-break {
