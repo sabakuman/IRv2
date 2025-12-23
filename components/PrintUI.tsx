@@ -15,8 +15,8 @@ export const PageContainer: React.FC<{
   className = ""
 }) => (
   <div className={`w-[210mm] h-[297mm] bg-white mx-auto flex flex-col page-break relative ${className}`}>
-    {/* Fixed: Removed overflow-hidden which was causing clipping and displacement */}
-    <div className="px-12 pt-8 flex-1 overflow-visible">{children}</div>
+    {/* Added pb-24 to explicitly reserve space for the footer at the bottom of the A4 page */}
+    <div className="px-12 pt-8 pb-24 flex-1 overflow-visible">{children}</div>
 
     {footer && (
       <div className="absolute bottom-6 left-12 right-12">
