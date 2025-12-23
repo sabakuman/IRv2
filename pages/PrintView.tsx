@@ -15,6 +15,16 @@ import { useLanguage } from '../context/LanguageContext';
 
 const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
 
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr; // Fallback if string isn't a valid date
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  return `${d}/${m}/${y}`;
+};
+
 const renderRichText = (text: string, sizeClass: string = "text-[14px]") => {
   if (!text) return null;
   let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -149,7 +159,7 @@ export default function PrintView() {
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
 
   // Pagination Logic for Sections
-  const CHUNK_SIZE_INTERACTIONS = 6; 
+  const CHUNK_SIZE_INTERACTIONS = 5; 
   const interactionChunks = [];
   for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
     interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE_INTERACTIONS));
@@ -387,7 +397,7 @@ export default function PrintView() {
           </div>
         </PageContainer>
 
-        {/* --- PAGE 5+: RELATIONSHIP SUMMARY (PAGINATED - 6 BOXES) --- */}
+        {/* --- PAGE 5+: RELATIONSHIP SUMMARY (VERTICAL STACK) --- */}
         {interactionChunks.length > 0 ? interactionChunks.map((chunk, cIdx) => (
           <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -396,16 +406,17 @@ export default function PrintView() {
               title={`${t('relationshipSummary')}${interactionChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
               subtitle={t('bilateralEngagement')} 
             />
-            <div className="grid grid-cols-2 gap-4 mt-2 flex-1 overflow-hidden">
+            {/* Vertical stack for Relationship Summary */}
+            <div className="flex flex-col gap-4 mt-2 flex-1 overflow-hidden">
               {chunk.map((item, idx) => (
-                <div key={idx} className="border border-gray-100 rounded-xl p-5 bg-gray-50 shadow-sm flex flex-col h-full overflow-hidden avoid-break">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[11px] font-bold uppercase text-primary bg-primary/5 px-2.5 py-1 rounded">{item.type}</span>
-                      <span className="text-[11px] font-mono text-gray-400" dir="ltr">{item.date}</span>
+                <div key={idx} className="border border-gray-100 rounded-xl p-4 bg-gray-50 shadow-sm flex flex-col overflow-hidden avoid-break">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-[10px] font-bold uppercase text-primary bg-primary/5 px-2.5 py-1 rounded">{item.type}</span>
+                      <span className="text-[10px] font-mono text-gray-400" dir="ltr">{formatDate(item.date)}</span>
                     </div>
-                    <p className="text-base font-bold text-gray-900 mb-2 leading-tight">{item.title}</p>
-                    <div className="flex-1 overflow-y-auto">
-                      {renderRichText(item.details, "text-[16px]")}
+                    <p className="text-base font-bold text-gray-900 mb-1.5 leading-tight">{item.title}</p>
+                    <div className="overflow-y-auto max-h-[120px]">
+                      {renderRichText(item.details, "text-[14px]")}
                     </div>
                 </div>
               ))}
@@ -419,7 +430,7 @@ export default function PrintView() {
           </PageContainer>
         )}
 
-        {/* --- PAGE 6+: POINTS OF DISCUSSION (STACKED VERTICALLY) --- */}
+        {/* --- PAGE 6+: POINTS OF DISCUSSION (VERTICAL STACK) --- */}
         {pointsChunks.map((chunk, cIdx) => (
           <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -433,9 +444,9 @@ export default function PrintView() {
                 <div key={idx} className="flex gap-4 bg-white border border-gray-100 p-5 rounded-xl shadow-sm avoid-break">
                     <span className="text-accent font-bold mt-0.5 text-xl">•</span>
                     <div className="flex-1 overflow-hidden">
-                      <strong className="block text-[16px] text-gray-900 mb-2 uppercase tracking-wide leading-tight">{point.title}</strong>
+                      <strong className="block text-[15px] text-gray-900 mb-2 uppercase tracking-wide leading-tight">{point.title}</strong>
                       <div className="overflow-y-auto max-h-[150px]">
-                        {renderRichText(point.content, "text-[16px]")}
+                        {renderRichText(point.content, "text-[15px]")}
                       </div>
                     </div>
                 </div>
@@ -444,7 +455,7 @@ export default function PrintView() {
           </PageContainer>
         ))}
 
-        {/* --- PAGE 7+: AGREEMENTS --- */}
+        {/* --- PAGE 7+: AGREEMENTS (DATE FORMATTED DD/MM/YYYY) --- */}
         {agreementChunks.length > 0 ? agreementChunks.map((chunk, cIdx) => (
           <PageContainer key={`agr-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -457,13 +468,13 @@ export default function PrintView() {
                 <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-5 grid grid-cols-12 gap-5 items-start shadow-sm avoid-break">
                     <div className="col-span-3">
                       <p className="text-base font-bold text-gray-900 leading-tight">{agreement.title}</p>
-                      <p className="text-[12px] font-mono text-gray-400 mt-1" dir="ltr">{agreement.date}</p>
+                      <p className="text-[11px] font-mono font-bold text-gray-500 mt-2" dir="ltr">{formatDate(agreement.date)}</p>
                     </div>
                     <div className="col-span-7">
-                      {renderRichText(agreement.summary, "text-[16px] font-medium")}
+                      {renderRichText(agreement.summary, "text-[14px] font-medium")}
                     </div>
                     <div className="col-span-2 text-end">
-                      <span className={`text-[12px] font-bold px-3 py-1 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
+                      <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
                         {agreement.status === 'Active' ? t('active') : t('pending')}
                       </span>
                     </div>
@@ -494,7 +505,7 @@ export default function PrintView() {
                             <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
                             <p className="text-sm font-bold text-primary uppercase mb-3 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>
                             <div className="overflow-y-auto max-h-[160px]">
-                               {renderRichText(d.bio, "text-[16px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1")}
+                               {renderRichText(d.bio, "text-[14px] text-gray-700 leading-relaxed italic border-l-4 border-primary/20 pl-4 py-1")}
                             </div>
                         </div>
                       </div>
@@ -517,7 +528,7 @@ export default function PrintView() {
                             <p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p>
                             <p className="text-sm font-bold text-accent uppercase mb-3 tracking-[0.15em] border-b border-accent/10 pb-1 inline-block">{d.title}</p>
                             <div className="overflow-y-auto max-h-[160px]">
-                               {renderRichText(d.bio, "text-[16px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1")}
+                               {renderRichText(d.bio, "text-[14px] text-gray-700 leading-relaxed italic border-l-4 border-accent/20 pl-4 py-1")}
                             </div>
                         </div>
                       </div>
