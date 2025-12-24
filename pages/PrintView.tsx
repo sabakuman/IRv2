@@ -25,7 +25,7 @@ const formatDate = (dateStr: string) => {
   return `${d}/${m}/${y}`;
 };
 
-const renderRichText = (text: string, sizeClass: string = "text-[14px]") => {
+const renderRichText = (text: string, sizeClass: string = "text-[18px]") => {
   if (!text) return null;
   let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
@@ -40,14 +40,14 @@ const renderRichText = (text: string, sizeClass: string = "text-[14px]") => {
       listItems.push(trimmed.substring(2));
     } else {
       if (inList) {
-        result.push(<ul key={`list-${i}`} className="list-disc mb-2 ms-8">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
+        result.push(<ul key={`list-${i}`} className="list-disc mb-3 ms-10">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
         inList = false;
       }
-      if (trimmed) { result.push(<p key={i} className="mb-2" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
+      if (trimmed) { result.push(<p key={i} className="mb-3" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
     }
   });
-  if (inList) { result.push(<ul key="list-final" className="list-disc mb-2 ms-8">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
-  return <div className={`rich-text-content ${sizeClass} leading-[1.6] overflow-visible report-font`}>{result.length > 0 ? result : text}</div>;
+  if (inList) { result.push(<ul key="list-final" className="list-disc mb-3 ms-10">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
+  return <div className={`rich-text-content ${sizeClass} leading-[1.8] overflow-visible report-font`}>{result.length > 0 ? result : text}</div>;
 };
 
 export default function PrintView() {
@@ -119,11 +119,11 @@ export default function PrintView() {
   };
 
   const DefaultFooter = () => (
-    <div className="pt-2 flex justify-between items-center bg-white w-full border-t border-gray-100 report-font">
-      <p className="text-[10px] text-gray-400 font-sans">
-        {t('generatedOn')} <span className="font-sans" dir="ltr">2025 December 22</span>
+    <div className="pt-4 flex justify-between items-center bg-white w-full border-t-2 border-gray-100 report-font">
+      <p className="text-[12px] text-gray-400 font-sans">
+        {t('generatedOn')} <span className="font-sans" dir="ltr">2025 December 23</span>
       </p>
-      <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">{t('ministry')}</p>
+      <p className="text-[12px] text-gray-400 uppercase tracking-widest font-bold">{t('ministry')}</p>
     </div>
   );
 
@@ -132,24 +132,22 @@ export default function PrintView() {
       const lower = c.toLowerCase();
       if (lower.includes('india')) return 'in';
       if (lower.includes('philippines')) return 'ph';
-      if (lower.includes('pakistan')) return 'pk';
-      if (lower.includes('bangladesh')) return 'bd';
       return 'ae';
     };
     const flagSrc = flagUrl || `https://flagcdn.com/w320/${getFlagCode(country)}.png`;
     return (
-      <div className="flex items-center justify-between border-b-4 border-primary pb-3 mb-6 report-font">
-        <div className="flex items-center gap-3">
-          <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
-          <div className="h-8 w-px bg-gray-200" />
+      <div className="flex items-center justify-between border-b-8 border-primary pb-6 mb-10 report-font">
+        <div className="flex items-center gap-6">
+          <img src={flagSrc} className="h-10 w-auto shadow-md object-cover" alt={country} />
+          <div className="h-12 w-px bg-gray-200" />
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-widest text-accent">{title}</p>
-            <p className="text-xl font-bold text-primary-dark uppercase">{country} • Internal Intelligence Report</p>
+            <h1 className="text-4xl font-bold text-primary-dark uppercase leading-tight">{country}</h1>
+            <p className="text-[18px] font-bold text-accent uppercase tracking-[0.2em]">{title}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="kpi-chip chip-restrict flex items-center gap-1"><ShieldAlert size={12} /> Restricted</span>
-          <span className="text-[11px] text-gray-400 font-mono">REF: {reportId}</span>
+        <div className="flex items-center gap-4">
+          <span className="kpi-chip chip-restrict flex items-center gap-2 px-4 py-2 font-bold text-sm"><ShieldAlert size={16} /> Restricted</span>
+          <span className="text-sm text-gray-400 font-mono">REF: {reportId}</span>
         </div>
       </div>
     );
@@ -185,57 +183,57 @@ export default function PrintView() {
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
       {/* Floating Action Bar */}
       <div className={`fixed top-6 z-50 flex gap-3 no-print p-2 rounded-2xl bg-white/80 backdrop-blur-md shadow-2xl border border-white/20 ${isRTL ? 'left-6' : 'right-6'}`}>
-         <button onClick={handlePrint} className="bg-primary text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold active:scale-95">
-            <Printer size={18} /> {t('printNow')}
+         <button onClick={handlePrint} className="bg-primary text-white px-8 py-3 rounded-2xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-3 text-lg font-bold active:scale-95">
+            <Printer size={22} /> {t('printNow')}
          </button>
-         <div className="w-px h-8 bg-gray-200 mx-1 self-center" />
-         <button onClick={() => window.close()} className="bg-white text-gray-500 hover:text-red-500 p-2.5 rounded-xl transition-all border border-gray-100 hover:bg-red-50">
-            <X size={20} />
+         <div className="w-px h-10 bg-gray-200 mx-1 self-center" />
+         <button onClick={() => window.close()} className="bg-white text-gray-500 hover:text-red-500 p-3 rounded-2xl transition-all border border-gray-100 hover:bg-red-50 shadow-sm">
+            <X size={24} />
          </button>
       </div>
 
       <div id="report-content" className="overflow-visible report-font">
         {/* --- PAGE 1: COVER --- */}
         <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
-          <div className="absolute inset-0 opacity-[0.03] z-0 flex items-center justify-center overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 opacity-[0.05] z-0 flex items-center justify-center overflow-hidden pointer-events-none">
               <svg viewBox="0 0 1000 500" className="w-[150%] h-auto text-primary fill-current">
                 <path d="M50,250 Q250,50 500,250 T950,250" stroke="currentColor" strokeWidth="2" fill="none" />
                 <circle cx="200" cy="200" r="50" stroke="currentColor" strokeWidth="2" fill="none" />
                 <path d="M0,0 L1000,500 M1000,0 L0,500" stroke="currentColor" strokeWidth="0.5" />
               </svg>
           </div>
-          <div className="flex-1 flex flex-col justify-center px-20 relative z-10">
-              <div className={`mb-12 border-accent py-6 ${isRTL ? 'border-r-[10px] pr-12' : 'border-l-[10px] pl-12'}`}>
-                <div className="flex items-center gap-4 mb-8 opacity-70">
-                  <img src="https://flagcdn.com/w40/ae.png" className="h-8 w-auto" alt="UAE" />
-                  <span className="text-sm font-bold uppercase tracking-[0.3em] text-primary">UAE • MOHRE</span>
+          <div className="flex-1 flex flex-col justify-center px-24 relative z-10">
+              <div className={`mb-16 border-accent py-8 ${isRTL ? 'border-r-[15px] pr-16' : 'border-l-[15px] pl-16'}`}>
+                <div className="flex items-center gap-6 mb-12 opacity-80">
+                  <img src="https://flagcdn.com/w40/ae.png" className="h-10 w-auto shadow-md" alt="UAE" />
+                  <span className="text-lg font-bold uppercase tracking-[0.4em] text-primary">UAE • MOHRE</span>
                 </div>
-                <h1 className="text-7xl font-bold text-gray-900 leading-[1.1] mb-6">{t('loginTitle')}</h1>
-                <p className="text-3xl text-gray-500 font-light uppercase tracking-widest">{t('strategicOverview')}</p>
+                <h1 className="text-8xl font-bold text-gray-900 leading-[1] mb-8">{t('loginTitle')}</h1>
+                <p className="text-4xl text-gray-500 font-light uppercase tracking-[0.3em]">{t('strategicOverview')}</p>
               </div>
-              <div className="bg-gray-50 rounded-3xl p-12 border-2 border-gray-100 max-w-xl shadow-sm">
-                <div className="flex items-center gap-8 mb-10">
-                    <div className="w-24 h-24 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${data.country.toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" alt="flag" /></div>
+              <div className="bg-gray-50 rounded-[3rem] p-16 border-4 border-gray-100 max-w-2xl shadow-xl">
+                <div className="flex items-center gap-10 mb-14">
+                    <div className="w-32 h-32 rounded-3xl border-8 border-white shadow-2xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/in.png`} className="w-full h-full object-cover" alt="flag" /></div>
                     <div>
-                      <p className="text-sm font-bold text-accent uppercase tracking-[0.2em] mb-1">{t('subjectMarket')}</p>
-                      <h2 className="text-5xl font-bold text-gray-900">{data.country}</h2>
+                      <p className="text-lg font-bold text-accent uppercase tracking-[0.3em] mb-2">{t('subjectMarket')}</p>
+                      <h2 className="text-7xl font-bold text-gray-900 leading-none">{data.country}</h2>
                     </div>
                 </div>
-                <div className="grid grid-cols-2 gap-10">
-                    <div><p className="text-[12px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('reference')}</p><p className="font-mono text-lg text-gray-800" dir="ltr">{report.id}</p></div>
-                    <div><p className="text-[12px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('date')}</p><p className="font-mono text-lg text-gray-800" dir="ltr">{data.reportDate}</p></div>
-                    <div className="col-span-2"><p className="text-[12px] text-gray-400 uppercase tracking-widest font-bold mb-2">{t('securityClass')}</p><span className="kpi-chip chip-restrict inline-flex items-center gap-2 px-4 py-1.5 text-sm"><ShieldAlert size={14} /> {t('officialRestricted')}</span></div>
+                <div className="grid grid-cols-2 gap-12">
+                    <div><p className="text-[14px] text-gray-400 uppercase tracking-widest font-bold mb-2">{t('reference')}</p><p className="font-mono text-2xl text-gray-800" dir="ltr">{report.id}</p></div>
+                    <div><p className="text-[14px] text-gray-400 uppercase tracking-widest font-bold mb-2">{t('date')}</p><p className="font-mono text-2xl text-gray-800" dir="ltr">{data.reportDate}</p></div>
+                    <div className="col-span-2"><p className="text-[14px] text-gray-400 uppercase tracking-widest font-bold mb-4">{t('securityClass')}</p><span className="kpi-chip chip-restrict inline-flex items-center gap-3 px-6 py-2.5 text-lg font-bold"><ShieldAlert size={20} /> {t('officialRestricted')}</span></div>
                 </div>
               </div>
           </div>
-          <div className="h-4 bg-primary w-full"></div>
+          <div className="h-6 bg-primary w-full"></div>
         </div>
 
         {/* --- PAGE 2: PROFILE & ECONOMY --- */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact={true} />
-          <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-6 mb-10">
             <KPI icon={Landmark} label={t('capital')} value={data.capital} />
             <KPI icon={Users} label={t('population')} value={data.population} sub={getSource('demo')} />
             <KPI icon={Banknote} label={t('currency')} value={data.currency} />
@@ -247,122 +245,81 @@ export default function PrintView() {
           </div>
           
           <SectionHeader icon={TrendingUp} title={t('economicLandscape')} subtitle={t('tradeEducation')} compact={true} />
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-6 mb-10">
             <KPI icon={Banknote} label={t('gdp')} value={data.gdp} sub={getSource('economy')} />
             <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats.inflation} sub={getSource('economy')} />
-            <KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats.tipRank} tone="warn" sub={getSource('tip')} />
+            <div className="col-span-2"><KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats.tipRank} tone="warn" sub={getSource('tip')} /></div>
           </div>
           
-          <div className="bg-gray-50 rounded-2xl p-5 border-2 border-gray-100 mb-6 shadow-sm">
-            <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 border-b border-gray-200 pb-2 flex items-center gap-2">
-                <ArrowRightLeft size={16} /> {t('bilateralTrade')} <span className="text-[10px] text-gray-400 font-normal italic font-sans">{getSource('trade')}</span>
+          <div className="bg-gray-50 rounded-[2.5rem] p-10 border-4 border-gray-100 mb-10 shadow-md">
+            <h4 className="text-xl font-bold text-gray-700 uppercase tracking-widest mb-6 border-b-2 border-gray-200 pb-4 flex items-center gap-4">
+                <ArrowRightLeft size={24} /> {t('bilateralTrade')} <span className="text-xs text-gray-400 font-normal italic font-sans">{getSource('trade')}</span>
             </h4>
-            <div className="grid grid-cols-2 gap-10">
-                <div className="flex flex-col"><div className="flex items-center gap-2 mb-2 text-primary"><ArrowDownLeft size={18} /><p className="text-[12px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-2xl font-bold text-gray-900 mb-2" dir="ltr">{data.economicStats.totalImportsFromUAE}</p><p className="text-[14px] text-gray-700 leading-snug font-medium break-words italic">{data.economicStats.topImportProducts.join(', ')}</p></div>
-                <div className="flex flex-col border-s-2 border-gray-200 ps-10"><div className="flex items-center gap-2 mb-2 text-accent"><ArrowUpRight size={18} /><p className="text-[12px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-2xl font-bold text-gray-900 mb-2" dir="ltr">{data.economicStats.totalExportsToUAE}</p><p className="text-[14px] text-gray-700 leading-snug font-medium break-words italic">{data.economicStats.topExportProducts.join(', ')}</p></div>
+            <div className="grid grid-cols-2 gap-12">
+                <div className="flex flex-col"><div className="flex items-center gap-3 mb-4 text-primary"><ArrowDownLeft size={24} /><p className="text-sm font-bold uppercase tracking-widest">{t('importsFromUae')}</p></div><p className="text-4xl font-bold text-gray-900 mb-4" dir="ltr">{data.economicStats.totalImportsFromUAE}</p><p className="text-lg text-gray-700 leading-snug font-medium italic border-s-4 border-primary ps-4">{data.economicStats.topImportProducts.join(', ')}</p></div>
+                <div className="flex flex-col border-s-4 border-gray-200 ps-12"><div className="flex items-center gap-3 mb-4 text-accent"><ArrowUpRight size={24} /><p className="text-sm font-bold uppercase tracking-widest">{t('exportsToUae')}</p></div><p className="text-4xl font-bold text-gray-900 mb-4" dir="ltr">{data.economicStats.totalExportsToUAE}</p><p className="text-lg text-gray-700 leading-snug font-medium italic border-s-4 border-accent ps-4">{data.economicStats.topExportProducts.join(', ')}</p></div>
             </div>
           </div>
+        </PageContainer>
 
+        {/* --- PAGE 3: EDUCATION & UAE WORKFORCE --- */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          
           <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact={true} />
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-6 mb-10">
             <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
             <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
-            <div className="bg-gray-50 border-2 border-gray-100 rounded-xl p-4 flex flex-col justify-center shadow-sm">
-              <p className="text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-2">
-                {t('topUniversities')} <span className="text-[9px] text-gray-400 font-normal italic font-sans">{getSource('edu')}</span>
+            <div className="col-span-2 bg-gray-50 border-4 border-gray-100 rounded-3xl p-8 shadow-inner">
+              <p className="text-lg font-bold text-gray-700 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <div className="w-2 h-2 bg-accent rounded-full"></div> {t('topUniversities')} <span className="text-xs text-gray-400 font-normal italic font-sans ms-auto">{getSource('edu')}</span>
               </p>
-              <ul className="text-[13px] text-gray-700 leading-snug space-y-1.5 font-medium">
-                {data.educationStats.topUniversities.slice(0, 5).map((u, i) => (
-                  <li key={i} className="flex gap-2 items-start">
-                    <span className="shrink-0 text-accent font-bold">•</span>
+              <ul className="text-xl text-gray-800 leading-relaxed space-y-4 font-bold grid grid-cols-1 md:grid-cols-2">
+                {data.educationStats.topUniversities.slice(0, 10).map((u, i) => (
+                  <li key={i} className="flex gap-4 items-start border-b border-gray-200 pb-2 last:border-0">
+                    <span className="shrink-0 text-accent">{i+1}.</span>
                     <span className="break-words leading-tight flex-1">{u}</span>
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-        </PageContainer>
 
-        {/* --- PAGE 3: UAE WORKFORCE --- */}
-        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Building} title={t('sectionUaeWorkforce')} subtitle={t('domesticAnalysis')} />
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre')} labelClassName="text-sm font-bold" />
-            <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre')} tone="warn" labelClassName="text-sm font-bold" />
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre')} />
+            <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre')} tone="warn" />
           </div>
           
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="p-5 border-2 border-gray-100 rounded-2xl bg-white flex flex-col items-center shadow-sm">
-                <p className="text-center text-[12px] font-bold text-primary mb-4 uppercase tracking-widest">{t('workersByEmirate')}</p>
-                <div className="h-40 w-full" dir="ltr">
+          <div className="grid grid-cols-2 gap-8">
+            <div className="p-8 border-4 border-gray-100 rounded-[2.5rem] bg-white flex flex-col items-center shadow-lg">
+                <p className="text-center text-sm font-bold text-primary mb-6 uppercase tracking-[0.3em]">{t('workersByEmirate')}</p>
+                <div className="h-48 w-full" dir="ltr">
                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sortedMohreEmirates} margin={{top: 20, right: 5, bottom: 0, left: 5}}>
-                          <XAxis dataKey="name" tick={{fontSize: 9, fontWeight: 'bold'}} interval={0} height={20} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
+                      <BarChart data={sortedMohreEmirates} margin={{top: 30, right: 10, bottom: 0, left: 10}}>
+                          <XAxis dataKey="name" tick={{fontSize: 11, fontWeight: 'bold'}} interval={0} height={20} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                           <YAxis hide />
-                          <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                            <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '10px', fill: '#333', fontWeight: 'bold', fontFamily: 'Inter' }} />
+                          <Bar dataKey="value" radius={[10, 10, 0, 0]}>
+                            <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '12px', fill: '#1e3a8a', fontWeight: 'bold', fontFamily: 'Inter' }} />
                             {sortedMohreEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />))}
                           </Bar>
                       </BarChart>
                   </ResponsiveContainer>
                 </div>
             </div>
-            <div className="p-5 border-2 border-gray-100 rounded-2xl bg-white flex flex-col items-center shadow-sm">
-                <p className="text-center text-[12px] font-bold text-accent mb-4 uppercase tracking-widest">{t('residentsByEmirate')}</p>
-                <div className="h-40 w-full" dir="ltr">
+            <div className="p-8 border-4 border-gray-100 rounded-[2.5rem] bg-white flex flex-col items-center shadow-lg">
+                <p className="text-center text-sm font-bold text-accent mb-6 uppercase tracking-[0.3em]">{t('residentsByEmirate')}</p>
+                <div className="h-48 w-full" dir="ltr">
                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sortedIcpEmirates} margin={{top: 20, right: 5, bottom: 0, left: 5}}>
-                          <XAxis dataKey="name" tick={{fontSize: 9, fontWeight: 'bold'}} interval={0} height={20} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
+                      <BarChart data={sortedIcpEmirates} margin={{top: 30, right: 10, bottom: 0, left: 10}}>
+                          <XAxis dataKey="name" tick={{fontSize: 11, fontWeight: 'bold'}} interval={0} height={20} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                           <YAxis hide />
-                          <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                            <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '10px', fill: '#333', fontWeight: 'bold', fontFamily: 'Inter' }} />
+                          <Bar dataKey="value" radius={[10, 10, 0, 0]}>
+                            <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '12px', fill: '#b45309', fontWeight: 'bold', fontFamily: 'Inter' }} />
                             {sortedIcpEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[(index + 3) % BLUE_PALETTE.length]} />))}
                           </Bar>
                       </BarChart>
                   </ResponsiveContainer>
-                </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-6 flex-1 overflow-hidden">
-            <div className="border-2 border-gray-100 rounded-2xl p-6 flex flex-col bg-white shadow-sm">
-                <p className="text-lg font-bold text-gray-800 mb-5 uppercase tracking-wider border-b border-gray-100 pb-2">
-                  {isRTL ? 'توزيع العمال حسب القطاع' : t('workersBySector')}
-                  <span className="text-[10px] text-gray-400 italic font-normal ms-3 font-sans">{getSource('mohre')}</span>
-                </p>
-                <div className="space-y-3 flex-1 overflow-hidden">
-                  {mohreSectors.slice(0, 10).map((s, i) => (
-                      <div key={i}>
-                        <div className="flex justify-between text-[12px] mb-1.5">
-                            <span className="font-bold text-gray-700 truncate">{s.name}</span>
-                            <span className="font-bold text-primary" dir="ltr">{formatCompactNumber(s.value)}</span>
-                        </div>
-                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden" dir="ltr">
-                            <div 
-                              className="h-full bg-primary transition-all duration-500" 
-                              style={{ width: `${(s.value / maxMohreVal) * 100}%` }}
-                            ></div>
-                        </div>
-                      </div>
-                  ))}
-                </div>
-            </div>
-            
-            <div className="bg-gray-50 border-2 border-gray-100 rounded-2xl p-6 shadow-inner">
-                <p className="text-lg font-bold text-gray-800 mb-5 uppercase tracking-wider border-b border-gray-200 pb-2">{t('additionalIndicators')}</p>
-                <div className="space-y-4">
-                  {data.uaeWorkforceStats.custom.map((stat) => (
-                      <div key={stat.id} className="flex justify-between items-end border-b-2 border-white pb-3 last:border-0">
-                        <div>
-                            <p className="text-[13px] font-bold text-gray-600 uppercase tracking-wide leading-tight">
-                              {stat.label === 'Total Workers in UAE' ? t('totalWorkersUaeLabel') : stat.label}
-                            </p>
-                            <p className="text-[10px] text-gray-400 font-sans mt-1">{stat.date}</p>
-                        </div>
-                        <p className="text-2xl font-bold text-primary-dark" dir="ltr">{stat.value}</p>
-                      </div>
-                  ))}
                 </div>
             </div>
           </div>
@@ -373,14 +330,14 @@ export default function PrintView() {
           <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />}>
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={Handshake} title={t('relationshipSummary')} subtitle={t('bilateralEngagement')} />
-            <div className="space-y-4 mt-6">
+            <div className="space-y-8 mt-10">
               {chunk.map((item, idx) => (
-                <div key={idx} className="border-2 border-gray-100 rounded-2xl p-6 bg-gray-50 shadow-sm avoid-break">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-[11px] font-bold uppercase text-white bg-primary px-3 py-1 rounded-md">{item.type}</span>
-                      <span className="text-[12px] font-bold text-gray-400 font-sans" dir="ltr">{formatDate(item.date)}</span>
+                <div key={idx} className="border-4 border-gray-100 rounded-[2rem] p-10 bg-gray-50 shadow-md avoid-break">
+                    <div className="flex justify-between items-center mb-6">
+                      <span className="text-xs font-bold uppercase text-white bg-primary px-5 py-2 rounded-xl shadow-sm">{item.type}</span>
+                      <span className="text-lg font-bold text-gray-400 font-sans" dir="ltr">{formatDate(item.date)}</span>
                     </div>
-                    <h3 className="report-h3 !border-accent !ps-4 !mb-4">{item.title}</h3>
+                    <h3 className="report-h3 !border-accent !ps-6 !mb-6 !text-3xl">{item.title}</h3>
                     {renderRichText(item.details)}
                 </div>
               ))}
@@ -393,13 +350,15 @@ export default function PrintView() {
           <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />}>
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={MessageSquare} title={t('pointsDiscussion')} />
-            <div className="space-y-5 mt-8">
+            <div className="space-y-10 mt-12">
               {chunk.map((point, idx) => (
-                <div key={idx} className="flex gap-5 bg-white border-2 border-gray-100 p-6 rounded-2xl shadow-sm avoid-break">
-                    <div className="w-4 h-4 bg-accent rounded-full shrink-0 mt-2" />
+                <div key={idx} className="flex gap-8 bg-white border-4 border-gray-100 p-10 rounded-[2.5rem] shadow-lg avoid-break">
+                    <div className="w-6 h-6 bg-accent rounded-full shrink-0 mt-3 shadow-md" />
                     <div className="flex-1">
-                      <h3 className="report-h3 !border-none !ps-0">{point.title}</h3>
-                      {renderRichText(point.content)}
+                      <h3 className="report-h3 !border-none !ps-0 !text-4xl">{point.title}</h3>
+                      <div className="mt-6">
+                        {renderRichText(point.content)}
+                      </div>
                     </div>
                 </div>
               ))}
@@ -412,14 +371,14 @@ export default function PrintView() {
           <PageContainer key={`agr-${cIdx}`} footer={<DefaultFooter />}>
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={FileText} title={t('keyAgreements')} subtitle={t('bilateralTrade')} />
-            <div className="space-y-6 mt-10">
+            <div className="space-y-10 mt-12">
               {chunk.map((agreement, idx) => (
-                <div key={idx} className="bg-gray-50 border-2 border-gray-100 rounded-2xl p-6 grid grid-cols-12 gap-8 items-start shadow-sm avoid-break">
-                    <div className="col-span-4">
-                      <h3 className="report-h3 !border-primary !mb-2">{agreement.title}</h3>
-                      <p className="text-[12px] font-bold text-gray-500 font-sans" dir="ltr">{formatDate(agreement.date)}</p>
-                      <div className="mt-4">
-                        <span className={`text-[11px] font-bold px-3 py-1 rounded-md uppercase border-2 ${agreement.status === 'Active' ? 'bg-green-50 text-green-800 border-green-200' : 'bg-yellow-50 text-yellow-800 border-yellow-200'}`}>
+                <div key={idx} className="bg-gray-50 border-4 border-gray-100 rounded-[2.5rem] p-10 grid grid-cols-12 gap-10 items-start shadow-xl avoid-break">
+                    <div className="col-span-4 border-e-2 border-gray-200 pe-6">
+                      <h3 className="report-h3 !border-primary !mb-4 !text-3xl">{agreement.title}</h3>
+                      <p className="text-lg font-bold text-gray-500 font-sans" dir="ltr">{formatDate(agreement.date)}</p>
+                      <div className="mt-8">
+                        <span className={`text-xs font-bold px-6 py-2.5 rounded-2xl uppercase border-4 ${agreement.status === 'Active' ? 'bg-green-50 text-green-800 border-green-200' : 'bg-yellow-50 text-yellow-800 border-yellow-200'}`}>
                           {agreement.status === 'Active' ? t('active') : t('pending')}
                         </span>
                       </div>
@@ -438,23 +397,23 @@ export default function PrintView() {
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Users} title={t('sectionDelegation')} />
           
-          <div className="space-y-12 mt-8">
+          <div className="space-y-16 mt-12">
             <div className="avoid-break">
-                <div className="flex items-center gap-4 mb-6 border-b-4 border-primary pb-3">
-                  <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto shadow-sm" alt="UAE" />
-                  <p className="text-lg font-bold uppercase text-primary tracking-[0.2em]">{t('uaeDelegation')}</p>
+                <div className="flex items-center gap-6 mb-10 border-b-8 border-primary pb-5">
+                  <img src="https://flagcdn.com/w40/ae.png" className="h-8 w-auto shadow-md" alt="UAE" />
+                  <p className="text-2xl font-bold uppercase text-primary tracking-[0.3em]">{t('uaeDelegation')}</p>
                 </div>
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-10">
                   {data.delegations.uae.map((d) => (
-                      <div key={d.id} className="flex gap-10 items-start p-8 bg-gray-50 rounded-3xl border-2 border-gray-100 shadow-sm relative overflow-visible">
-                        <div className="w-40 h-52 rounded-2xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-xl">
-                            {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-[12px] font-bold">No Portrait</div>}
+                      <div key={d.id} className="flex gap-12 items-start p-10 bg-gray-50 rounded-[3rem] border-4 border-gray-100 shadow-xl relative overflow-visible">
+                        <div className="w-48 h-64 rounded-3xl bg-gray-200 shrink-0 overflow-hidden border-8 border-white shadow-2xl">
+                            {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-xs font-bold">No Portrait</div>}
                         </div>
-                        <div className="flex-1 pt-2">
-                            <h3 className="text-3xl font-bold text-gray-900 mb-1">{d.name}</h3>
-                            <p className="text-lg font-bold text-primary uppercase mb-5 tracking-[0.1em]">{d.title}</p>
-                            <div className="border-l-4 border-accent ps-6">
-                               {renderRichText(d.bio, "text-[15px] italic text-gray-700")}
+                        <div className="flex-1 pt-4">
+                            <h3 className="text-5xl font-bold text-gray-900 mb-2">{d.name}</h3>
+                            <p className="text-2xl font-bold text-primary uppercase mb-8 tracking-[0.15em] border-b-4 border-primary/10 pb-2 inline-block">{d.title}</p>
+                            <div className="border-l-8 border-accent ps-8">
+                               {renderRichText(d.bio, "text-2xl italic text-gray-700")}
                             </div>
                         </div>
                       </div>
@@ -462,22 +421,22 @@ export default function PrintView() {
                 </div>
             </div>
 
-            <div className="avoid-break">
-                <div className="flex items-center gap-4 mb-6 border-b-4 border-accent pb-3">
-                  <img src={data.flagUrl || `https://flagcdn.com/w40/in.png`} className="h-6 w-auto shadow-sm" alt={data.country} />
-                  <p className="text-lg font-bold uppercase text-accent tracking-[0.2em]">{t('partnerDelegation')}</p>
+            <div className="avoid-break pt-10">
+                <div className="flex items-center gap-6 mb-10 border-b-8 border-accent pb-5">
+                  <img src={data.flagUrl || `https://flagcdn.com/w40/ae.png`} className="h-8 w-auto shadow-md" alt={data.country} />
+                  <p className="text-2xl font-bold uppercase text-accent tracking-[0.3em]">{t('partnerDelegation')}</p>
                 </div>
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-10">
                   {data.delegations.partner.map((d) => (
-                      <div key={d.id} className="flex gap-10 items-start p-8 bg-gray-50 rounded-3xl border-2 border-gray-100 shadow-sm relative overflow-visible">
-                        <div className="w-40 h-52 rounded-2xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-xl">
-                            {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-[12px] font-bold">No Portrait</div>}
+                      <div key={d.id} className="flex gap-12 items-start p-10 bg-gray-50 rounded-[3rem] border-4 border-gray-100 shadow-xl relative overflow-visible">
+                        <div className="w-48 h-64 rounded-3xl bg-gray-200 shrink-0 overflow-hidden border-8 border-white shadow-2xl">
+                            {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100 uppercase text-xs font-bold">No Portrait</div>}
                         </div>
-                        <div className="flex-1 pt-2">
-                            <h3 className="text-3xl font-bold text-gray-900 mb-1">{d.name}</h3>
-                            <p className="text-lg font-bold text-accent uppercase mb-5 tracking-[0.1em]">{d.title}</p>
-                            <div className="border-l-4 border-primary ps-6">
-                               {renderRichText(d.bio, "text-[15px] italic text-gray-700")}
+                        <div className="flex-1 pt-4">
+                            <h3 className="text-5xl font-bold text-gray-900 mb-2">{d.name}</h3>
+                            <p className="text-2xl font-bold text-accent uppercase mb-8 tracking-[0.15em] border-b-4 border-accent/10 pb-2 inline-block">{d.title}</p>
+                            <div className="border-l-8 border-primary ps-8">
+                               {renderRichText(d.bio, "text-2xl italic text-gray-700")}
                             </div>
                         </div>
                       </div>

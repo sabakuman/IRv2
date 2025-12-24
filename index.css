@@ -57,12 +57,13 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Sakkal Majalla', 'Inter', 'Noto Naskh Arabic', sans-serif;
+    font-size: 18px; /* Increased base size */
   }
 }
 
 /* Specific Font Rules for Sakkal Majalla Support */
-[lang="ar"], [dir="rtl"] {
+[lang="ar"], [dir="rtl"], .report-font {
   font-family: 'Sakkal Majalla', 'Amiri', 'Noto Naskh Arabic', serif !important;
 }
 
@@ -74,18 +75,37 @@
 }
 
 .report-h1 {
-  @apply text-4xl font-bold tracking-tight text-primary-dark mb-6 border-b-2 border-accent pb-4;
+  @apply text-5xl font-bold tracking-tight text-primary-dark mb-8 border-b-4 border-accent pb-6;
   font-family: 'Sakkal Majalla', 'Amiri', 'Noto Naskh Arabic', serif !important;
 }
 
 .report-h2 {
-  @apply text-2xl font-bold text-primary mb-4 flex items-center gap-3;
+  @apply text-3xl font-bold text-primary mb-6 flex items-center gap-4;
   font-family: 'Sakkal Majalla', 'Amiri', 'Noto Naskh Arabic', serif !important;
 }
 
 .report-h3 {
-  @apply text-xl font-semibold text-gray-800 mb-3 border-s-4 border-accent ps-3;
+  @apply text-2xl font-bold text-gray-800 mb-4 border-s-8 border-accent ps-4;
   font-family: 'Sakkal Majalla', 'Amiri', 'Noto Naskh Arabic', serif !important;
+}
+
+/* KPI / INDICATOR SYSTEM REFINED */
+@layer components {
+  .kpi-card {
+    @apply bg-white border-2 border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4;
+  }
+  .kpi-icon-box {
+    @apply w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center border border-primary/10 shrink-0;
+  }
+  .kpi-content {
+    @apply flex flex-col justify-center;
+  }
+  .kpi-label {
+    @apply text-sm font-bold uppercase tracking-widest text-gray-500 leading-tight mb-1;
+  }
+  .kpi-value {
+    @apply text-2xl font-bold text-gray-900 leading-none;
+  }
 }
 
 /* Custom Scrollbar */
@@ -112,7 +132,6 @@
     overflow: visible;
   }
 
-  /* Force Sakkal Majalla for Print */
   #report-content, .page-break {
     font-family: 'Sakkal Majalla', 'Amiri', 'Noto Naskh Arabic', serif !important;
   }
@@ -132,24 +151,11 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding-bottom: 15mm;
+    padding-bottom: 20mm;
   }
 
   .avoid-break {
     break-inside: avoid;
     page-break-inside: avoid;
-  }
-}
-
-/* KPI / INDICATOR SYSTEM */
-@layer components {
-  .kpi-card {
-    @apply bg-white border border-gray-200 rounded-xl p-3 shadow-sm;
-  }
-  .kpi-label {
-    @apply text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-0.5 block;
-  }
-  .kpi-value {
-    @apply text-lg font-bold text-gray-900 leading-tight;
   }
 }
