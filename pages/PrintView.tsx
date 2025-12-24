@@ -186,6 +186,16 @@ export default function PrintView() {
 
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
+      <style>
+        {`
+          .report-root {
+            font-family: "Sakkal Majalla", serif !important;
+          }
+          .report-root * {
+            font-family: "Sakkal Majalla", serif !important;
+          }
+        `}
+      </style>
       {/* Floating Action Bar */}
       <div className={`fixed top-6 z-50 flex gap-3 no-print p-2 rounded-2xl bg-white/80 backdrop-blur-md shadow-2xl border border-white/20 ${isRTL ? 'left-6' : 'right-6'}`}>
          <button onClick={handlePrint} className="bg-primary text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold active:scale-95">
@@ -197,7 +207,7 @@ export default function PrintView() {
          </button>
       </div>
 
-      <div id="report-content" className="overflow-visible">
+      <div id="report-content" className="overflow-visible report-root">
         {/* --- PAGE 1: COVER --- */}
         <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
           <div className="absolute inset-0 opacity-[0.03] z-0 flex items-center justify-center overflow-hidden pointer-events-none">
