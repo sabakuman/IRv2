@@ -141,6 +141,17 @@
     @apply text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-0.5 block;
   }
 
+  /* Scoped report readability improvements */
+  .report-root .kpi-label {
+    font-weight: 600 !important;
+    display: inline-block !important;
+    transform: scale(1.03);
+    transform-origin: right center;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
   .kpi-value {
     @apply text-lg font-serif font-bold text-gray-900 leading-tight;
   }

@@ -238,7 +238,7 @@ export const TRANSLATIONS = {
     topTradedCommodities: 'Top Traded Commodities',
     educationInsights: 'Education & Skills',
     primaryEnrollment: 'Primary School Enrollment',
-    higherEnrollment: 'Higher Education Enrollment',
+    higherEducationEnrollment: 'Higher Education Enrollment',
     topUniversities: 'Top 5 Universities',
     recentInteractions: 'Relationship Summary',
     recentHighLevelInteractions: 'Relationship Summary',
