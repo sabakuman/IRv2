@@ -1,6 +1,6 @@
-import { Report, AuditLog, UserProfile } from '../types';
 
-// The API runs on the same origin (port 4173) in production
+import { Report, AuditLog, UserProfile, Bulletin } from '../types';
+
 const API_URL = '/api';
 
 export const MockService = {
@@ -18,6 +18,26 @@ export const MockService = {
       console.error("Login Error", e);
       return null;
     }
+  },
+
+  // --- Bulletin ---
+  getBulletin: async (): Promise<Bulletin | null> => {
+    try {
+      const res = await fetch(`${API_URL}/bulletin`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) { return null; }
+  },
+
+  updateBulletin: async (content: string, authorName: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_URL}/bulletin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, authorName })
+      });
+      return res.ok;
+    } catch (e) { return false; }
   },
 
   // --- Reports ---

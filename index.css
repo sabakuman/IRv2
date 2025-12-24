@@ -60,6 +60,11 @@
   }
 }
 
+/* Report Typography: Sakkal Majalla */
+.report-font, [lang="ar"] .report-font {
+  font-family: 'Sakkal Majalla', 'Noto Naskh Arabic', 'Amiri', serif !important;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -88,7 +93,6 @@
     display: none !important;
   }
 
-  /* Strict A4 Height to prevent footer displacement */
   .page-break {
     break-after: page;
     page-break-after: always;
@@ -100,7 +104,7 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding-bottom: 15mm; /* Buffer for footer */
+    padding-bottom: 12mm; 
   }
 
   .avoid-break {
@@ -108,7 +112,6 @@
     page-break-inside: avoid;
   }
 
-  /* Rich Text Rendering Styles for Print */
   .rich-text-content strong { font-weight: 700; color: #111; }
   .rich-text-content em { font-style: italic; }
   .rich-text-content ul { list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
@@ -117,69 +120,42 @@
   [dir="rtl"] .rich-text-content ul { margin-left: 0; margin-right: 1.5rem; }
 }
 
-/* Web-view support for rich text rendering */
 .rich-text-content strong { font-weight: 700; }
 .rich-text-content em { font-style: italic; }
 .rich-text-content ul { list-style-type: disc; margin-left: 1.5rem; }
 [dir="rtl"] .rich-text-content ul { margin-left: 0; margin-right: 1.5rem; }
 
 /* ===============================
-   KPI / INDICATOR SYSTEM
+   KPI / INDICATOR SYSTEM (REPORT SPECIFIC)
 ================================ */
 @layer components {
-  .kpi-card {
-    @apply bg-white border border-gray-200 rounded-xl p-3 shadow-sm;
+  .report-kpi-card {
+    @apply bg-white border border-gray-100 rounded-xl p-3 shadow-sm flex items-center gap-3 avoid-break;
   }
 
-  .kpi-row {
-    @apply flex items-start gap-3;
+  .report-kpi-icon {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center border border-primary/10 bg-primary/5 shrink-0;
   }
 
-  .kpi-icon {
-    @apply w-8 h-8 rounded-lg flex items-center justify-center
-           border border-gray-200 bg-gray-50;
+  .report-kpi-label {
+    @apply text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-0.5 block;
   }
 
-  .kpi-label {
-    @apply text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-0.5 block;
-  }
-
-  .kpi-value {
-    @apply text-lg font-serif font-bold text-gray-900 leading-tight;
-  }
-
-  .kpi-sub {
-    @apply text-[9px] text-gray-500 italic;
+  .report-kpi-value {
+    @apply text-lg font-bold text-gray-900 leading-tight;
   }
 
   .kpi-chip {
-    @apply text-[9px] font-bold uppercase tracking-wider
-           px-2 py-0.5 rounded-full border;
+    @apply text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border;
   }
+  .chip-ok { @apply bg-green-50 text-green-800 border-green-200; }
+  .chip-warn { @apply bg-amber-50 text-amber-800 border-amber-200; }
+  .chip-info { @apply bg-blue-50 text-blue-800 border-blue-200; }
+  .chip-restrict { @apply bg-red-50 text-red-800 border-red-200; }
 
-  .chip-ok {
-    @apply bg-green-50 text-green-800 border-green-200;
-  }
-
-  .chip-warn {
-    @apply bg-amber-50 text-amber-800 border-amber-200;
-  }
-
-  .chip-info {
-    @apply bg-blue-50 text-blue-800 border-blue-200;
-  }
-
-  .chip-restrict {
-    @apply bg-red-50 text-red-800 border-red-200;
-  }
-
-  /* ===============================
-     SECTION RAIL
-  ================================ */
   .section-rail {
     @apply relative ps-4;
   }
-
   .section-rail:before {
     content: "";
     position: absolute;
