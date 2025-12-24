@@ -10,7 +10,7 @@ export const PageContainer: React.FC<{
   <div className={`w-[210mm] h-[297mm] bg-white mx-auto flex flex-col page-break relative overflow-hidden report-font ${className}`}>
     <div className="flex-1 overflow-visible">{children}</div>
     {footer && (
-      <div className="mt-auto pt-4 border-t border-gray-100 pb-2">
+      <div className="mt-auto pt-3 border-t border-gray-100 pb-1">
         {footer}
       </div>
     )}
@@ -27,36 +27,36 @@ export const HeaderBand = ({ country, reportId, flagUrl }: any) => {
   const flagSrc = flagUrl || `https://flagcdn.com/w320/${getFlagCode(country)}.png`;
 
   return (
-    <div className="flex items-center justify-between border-b-4 border-primary pb-4 mb-8">
-      <div className="flex items-center gap-5">
-        <img src={flagSrc} className="h-10 w-auto shadow-md rounded-sm" alt={country} />
-        <div className="h-10 w-px bg-gray-200" />
+    <div className="flex items-center justify-between border-b-2 border-primary pb-3 mb-6">
+      <div className="flex items-center gap-4">
+        <img src={flagSrc} className="h-8 w-auto shadow-sm rounded-sm" alt={country} />
+        <div className="h-8 w-px bg-gray-200" />
         <div>
-          {/* Header Cleaned: Only Country Name */}
-          <h1 className="text-4xl font-bold text-primary-dark uppercase leading-none">{country}</h1>
+          {/* Header Cleaned: Only Country Name as requested */}
+          <h1 className="text-3xl font-bold text-primary-dark uppercase leading-none">{country}</h1>
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <span className="bg-red-50 text-red-700 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-red-100">
-          <ShieldAlert size={14} /> Restricted
+      <div className="flex items-center gap-3">
+        <span className="bg-red-50 text-red-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border border-red-100">
+          <ShieldAlert size={12} /> Restricted
         </span>
-        <span className="text-xs text-gray-400 font-mono">REF: {reportId}</span>
+        <span className="text-[10px] text-gray-400 font-mono">REF: {reportId}</span>
       </div>
     </div>
   );
 };
 
 export const SectionHeader = ({ icon: Icon, title, subtitle, compact = false }: any) => (
-  <div className={`avoid-break ${compact ? 'mb-4' : 'mb-6'}`}>
-    <div className="flex items-center gap-4 border-b-4 border-accent pb-2">
-      <div className={`rounded-xl bg-primary/10 flex items-center justify-center ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}>
-        <Icon size={compact ? 20 : 26} className="text-primary-dark" />
+  <div className={`avoid-break ${compact ? 'mb-3' : 'mb-5'}`}>
+    <div className="flex items-center gap-3 border-b-2 border-accent pb-1.5">
+      <div className={`rounded-lg bg-primary/10 flex items-center justify-center ${compact ? 'w-8 h-8' : 'w-10 h-10'}`}>
+        <Icon size={compact ? 18 : 22} className="text-primary-dark" />
       </div>
       <div className="flex-1">
-        <h2 className={`font-bold text-primary-dark leading-tight ${compact ? 'text-xl' : 'text-2xl'}`}>
+        <h2 className={`font-bold text-primary-dark leading-tight ${compact ? 'text-lg' : 'text-xl'}`}>
           {title}
         </h2>
-        {subtitle && <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mt-0.5">{subtitle}</p>}
+        {subtitle && <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-accent mt-0.5">{subtitle}</p>}
       </div>
     </div>
   </div>
@@ -65,12 +65,12 @@ export const SectionHeader = ({ icon: Icon, title, subtitle, compact = false }: 
 export const KPI = ({ icon: Icon, label, value, sub }: any) => (
   <div className="kpi-card-report">
     <div className="kpi-icon-box">
-      <Icon size={24} className="text-primary" />
+      <Icon size={20} className="text-primary" />
     </div>
     <div className="kpi-text-box">
       <p className="kpi-label-report">{label}</p>
       <p className="kpi-value-report" dir="ltr">{value || 'N/A'}</p>
-      {sub && <p className="text-[9px] text-gray-500 italic mt-0.5 leading-tight font-sans">{sub}</p>}
+      {sub && <p className="text-[8px] text-gray-400 italic mt-0.5 leading-tight font-sans">{sub}</p>}
     </div>
   </div>
 );
