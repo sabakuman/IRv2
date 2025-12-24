@@ -59,6 +59,15 @@ export default function PrintView() {
   const formatCompact = (val: any) => isNaN(Number(val)) ? val : new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(Number(val));
   const getSource = (type: string) => language === 'ar' ? '*(بيانات رسمية، 2025)' : '*(Official Data, 2025)';
 
+  const DefaultFooter = () => (
+    <div className="flex justify-between items-center w-full px-4 report-font">
+      <p className="text-[10px] text-gray-400 font-sans">
+        {t('generatedOn')} <span className="font-sans" dir="ltr">2025 December 23</span>
+      </p>
+      <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">{t('ministry')}</p>
+    </div>
+  );
+
   return (
     <div className="bg-gray-50 min-h-screen" dir={dir}>
       <div className={`fixed top-6 z-50 flex gap-3 no-print p-2 rounded-2xl bg-white/90 shadow-2xl border ${isRTL ? 'left-6' : 'right-6'}`}>
@@ -67,7 +76,7 @@ export default function PrintView() {
       </div>
 
       <div id="report-content" className="report-font">
-        {/* --- COVER PAGE --- */}
+        {/* --- PAGE 1: COVER --- */}
         <PageContainer className="shadow-2xl print:shadow-none mb-10 print:mb-0 justify-center px-24">
           <div className={`border-accent py-12 ${isRTL ? 'border-r-[20px] pr-16 text-right' : 'border-l-[20px] pl-16'}`}>
             <div className="flex items-center gap-6 mb-16 opacity-80">
@@ -75,8 +84,8 @@ export default function PrintView() {
               <span className="text-xl font-bold uppercase tracking-[0.4em] text-primary">UAE • MOHRE</span>
             </div>
             {/* Bold and 2pt bigger titles */}
-            <h1 className="text-8xl font-black text-gray-900 leading-tight mb-4">{t('loginTitle')}</h1>
-            <p className="text-4xl text-gray-500 uppercase tracking-widest">{t('strategicOverview')}</p>
+            <h1 className="text-8xl font-black text-gray-900 leading-[1.1] mb-4">{t('loginTitle')}</h1>
+            <p className="text-4xl text-gray-500 uppercase tracking-[0.3em] font-light">{t('strategicOverview')}</p>
           </div>
           <div className="bg-gray-50 rounded-[3rem] p-16 border-4 border-gray-100 max-w-3xl mt-12 shadow-sm">
             <div className="flex items-center gap-10 mb-12">
@@ -94,10 +103,10 @@ export default function PrintView() {
         </PageContainer>
 
         {/* --- PAGE 2: PROFILE & ECONOMY --- */}
-        <PageContainer className="shadow-2xl print:shadow-none mb-10 print:mb-0 px-16 pt-16">
+        <PageContainer footer={<DefaultFooter />} className="shadow-2xl print:shadow-none mb-10 print:mb-0 px-16 pt-16">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact />
-          <div className="grid grid-cols-2 gap-6 mb-10">
+          <div className="grid grid-cols-2 gap-4 mb-8">
             <KPI icon={Landmark} label={t('capital')} value={data.capital} />
             <KPI icon={Users} label={t('population')} value={data.population} sub={getSource('demo')} />
             <KPI icon={Banknote} label={t('currency')} value={data.currency} />
@@ -106,7 +115,7 @@ export default function PrintView() {
             <KPI icon={BookOpen} label={t('literacyRate')} value={data.literacyRate} />
           </div>
           <SectionHeader icon={TrendingUp} title={t('economicLandscape')} subtitle={t('tradeEducation')} compact />
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4">
             <KPI icon={Banknote} label={t('gdp')} value={data.gdp} />
             <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats.inflation} />
             <div className="col-span-2"><KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats.tipRank} tone="warn" /></div>
@@ -114,7 +123,7 @@ export default function PrintView() {
         </PageContainer>
 
         {/* --- PAGE 3: UAE WORKFORCE --- */}
-        <PageContainer className="shadow-2xl print:shadow-none mb-10 print:mb-0 px-16 pt-16">
+        <PageContainer footer={<DefaultFooter />} className="shadow-2xl print:shadow-none mb-10 print:mb-0 px-16 pt-16">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Building} title={t('sectionUaeWorkforce')} subtitle={t('domesticAnalysis')} />
           <div className="grid grid-cols-2 gap-8 mb-12">
@@ -141,7 +150,7 @@ export default function PrintView() {
         </PageContainer>
 
         {/* --- PAGE 4: RELATIONSHIP & AGREEMENTS --- */}
-        <PageContainer className="shadow-2xl print:shadow-none mb-10 print:mb-0 px-16 pt-16">
+        <PageContainer footer={<DefaultFooter />} className="shadow-2xl print:shadow-none mb-10 print:mb-0 px-16 pt-16">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Handshake} title={t('relationshipSummary')} subtitle={t('bilateralEngagement')} />
           <div className="space-y-8 mt-6">
@@ -159,7 +168,7 @@ export default function PrintView() {
         </PageContainer>
 
         {/* --- PAGE FINAL: DELEGATIONS --- */}
-        <PageContainer className="shadow-2xl print:shadow-none px-16 pt-16">
+        <PageContainer footer={<DefaultFooter />} className="shadow-2xl print:shadow-none px-16 pt-16">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Users} title={t('sectionDelegation')} />
           <div className="space-y-12 mt-10">

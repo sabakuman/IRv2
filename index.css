@@ -23,20 +23,17 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Sakkal Majalla', 'Noto Naskh Arabic', 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px; /* Reverted dashboard/UI base size */
   }
 }
 
-/* Force Sakkal Majalla for report elements */
+/* Sakkal Majalla for Reports only */
 .report-font, [lang="ar"], [dir="rtl"] {
   font-family: 'Sakkal Majalla', 'Noto Naskh Arabic', 'Amiri', serif !important;
 }
 
-/* Ministerial Heading System (+2pt & Bold) */
-.report-title-main {
-  @apply text-6xl font-bold text-gray-900 mb-2; /* +2pt larger than before */
-}
-
+/* Ministerial Report Typography */
 .report-h1 {
   @apply text-5xl font-bold text-primary-dark mb-6 border-b-4 border-accent pb-4;
 }
@@ -49,23 +46,26 @@
   @apply text-2xl font-bold text-gray-800 mb-3 border-s-8 border-accent ps-4;
 }
 
-/* Refined KPI Grid: Horizontal Layout (Icon next to Text) */
+/* Unified KPI Layout: Icon next to Text, Text is bigger */
 @layer components {
-  .kpi-card {
-    @apply bg-white border-2 border-gray-100 rounded-2xl p-5 shadow-sm flex items-center gap-5 transition-all;
+  .kpi-card-report {
+    @apply bg-white border-2 border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-4 avoid-break;
   }
-  .kpi-icon-container {
-    @apply w-14 h-14 bg-primary/5 rounded-2xl flex items-center justify-center border border-primary/10 shrink-0;
+  .kpi-icon-box {
+    @apply w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center border border-primary/10 shrink-0;
   }
-  .kpi-label {
-    @apply text-sm font-bold uppercase tracking-widest text-gray-500 mb-1 block;
+  .kpi-text-box {
+    @apply flex flex-col justify-center min-w-0;
   }
-  .kpi-value {
-    @apply text-2xl font-bold text-gray-900 leading-tight;
+  .kpi-label-report {
+    @apply text-xs font-bold uppercase tracking-widest text-gray-500 mb-0.5;
+  }
+  .kpi-value-report {
+    @apply text-xl font-bold text-gray-900 leading-tight; /* Larger and visible */
   }
 }
 
-/* Print Specifics */
+/* Print Configuration - Stable Spacing */
 @media print {
   @page { size: A4; margin: 0; }
   body { background: white !important; }
@@ -76,7 +76,10 @@
     height: 297mm;
     overflow: hidden;
     position: relative;
-    padding: 15mm 20mm;
+    padding: 15mm 15mm; /* Balanced margins */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
   }
   .avoid-break { break-inside: avoid; }
 }
