@@ -142,7 +142,7 @@ export const KPI = ({
 
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start mb-1.5">
-          <p className={`kpi-label pr-1 leading-tight ${labelClassName || ''}`}>{label}</p>
+          <p className={`kpi-label pr-1 leading-tight font-black ${labelClassName || ''}`}>{label}</p>
           {chip && (
             <span
               className={`kpi-chip shrink-0 ml-1 ${
@@ -160,11 +160,11 @@ export const KPI = ({
           )}
         </div>
 
-        <p className="kpi-value break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
+        <p className="kpi-value break-words leading-tight text-[15px] font-bold font-sans text-gray-900" title={String(value)}>
            <span dir="ltr">{value || 'N/A'}</span>
         </p>
         
-        {sub && <p className="kpi-sub mt-1.5 leading-tight">{sub}</p>}
+        {sub && <p className="kpi-sub mt-1.5 leading-tight font-bold opacity-60">{sub}</p>}
       </div>
     </div>
   </div>

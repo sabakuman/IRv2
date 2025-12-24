@@ -37,7 +37,7 @@ const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      {label && <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300">{label}</label>}
+      {label && <label className="text-[14.5px] font-bold text-foreground/80 dark:text-gray-300">{label}</label>}
       <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden flex flex-col focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
         <div className="flex gap-1 p-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
            <button type="button" onClick={() => insertText('bold')} className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300" title="Bold"><Bold size={16} /></button>
@@ -46,8 +46,8 @@ const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
         </div>
         <textarea 
           id={`rt-${label}`}
-          className="w-full p-3 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none min-h-[120px] resize-y text-sm leading-relaxed" 
-          placeholder={placeholder}
+          className="w-full p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none min-h-[140px] resize-y text-[15px] font-medium leading-relaxed placeholder:text-gray-400" 
+          placeholder={placeholder || "Your text here..."}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -282,7 +282,7 @@ export default function Wizard() {
              </div>
              <div className="flex flex-col md:flex-row gap-4 items-start bg-blue-50/50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800">
                <div className="shrink-0 flex flex-col items-center gap-2">
-                  <label className="text-xs font-semibold uppercase text-primary/80 dark:text-primary-light/80">Flag</label>
+                  <label className="text-[14.5px] font-bold uppercase text-primary/80 dark:text-primary-light/80">Flag</label>
                   <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer overflow-hidden shadow-sm" onClick={() => document.getElementById('flag-upload')?.click()}>
                      {data.flagUrl ? <img src={data.flagUrl} className="w-full h-full object-cover" /> : <UploadCloud className="text-gray-400" size={20} />}
                   </div>
@@ -348,14 +348,14 @@ export default function Wizard() {
                     <Input label={t('femaleParticipation')} type="number" value={data.workforceStats.participationFemale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationFemale: Number(e.target.value)}})} />
                  </div>
                  <div>
-                   <label className="text-sm font-semibold mb-2 block">{t('migrationDestinations')}</label>
+                   <label className="text-[14.5px] font-bold mb-2 block">{t('migrationDestinations')}</label>
                    {data.workforceStats.migrationDestinations.map((dest, i) => (
                      <div key={i} className="flex gap-2 mb-2"><Input value={dest.country} placeholder="Country" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><Input value={dest.count} placeholder="Count" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].count = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /></div>
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: [...data.workforceStats.migrationDestinations, { country: '', count: '' }]}})}>+ Add Destination</Button>
                  </div>
                  <div>
-                   <label className="text-sm font-semibold mb-2 block">{t('sectorDistribution')}</label>
+                   <label className="text-[14.5px] font-bold mb-2 block">{t('sectorDistribution')}</label>
                    {data.workforceStats.topSectors.map((sec, i) => (
                      <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /></div>
                    ))}
