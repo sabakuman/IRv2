@@ -7,79 +7,188 @@
   :root {
     --background: 0 0% 99%;
     --foreground: 217 32% 17%;
+    
     --primary: 217 91% 26%;
     --primary-light: 217 91% 35%;
     --primary-dark: 217 91% 18%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217 19% 95%;
+    --secondary-foreground: 222 47% 11%;
+    
     --accent: 37 92% 50%;
+    --accent-light: 37 92% 65%;
+    --accent-foreground: 210 40% 98%;
+
+    --muted: 217 19% 96%;
+    --muted-foreground: 215 16% 47%;
+    
     --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 26%;
   }
   
   .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
+    
     --primary: 217 91% 36%;
+    --primary-light: 217 91% 45%;
+    --primary-dark: 217 91% 26%;
+    --primary-foreground: 222 47% 11%;
+    
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --accent: 37 92% 50%;
+    --accent-light: 37 92% 60%;
+    --accent-foreground: 222 47% 11%;
+    
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
+    
     --border: 217 32% 20%;
+    --input: 217 32% 20%;
+    --ring: 217 91% 36%;
   }
 
+  * {
+    @apply border-border;
+  }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px; /* Standard compact UI size */
   }
 }
 
-/* Sakkal Majalla for Reports only */
-.report-font, [lang="ar"], [dir="rtl"] {
-  font-family: 'Sakkal Majalla', 'Noto Naskh Arabic', 'Amiri', serif !important;
-}
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
 
-/* Ministerial Report Typography Refinement */
-.report-h1 {
-  @apply text-5xl font-bold text-primary-dark mb-6 border-b-4 border-accent pb-4;
-}
-
-.report-h2 {
-  @apply text-3xl font-bold text-primary-dark mb-4 flex items-center gap-4;
-}
-
-.report-h3 {
-  @apply text-2xl font-bold text-gray-800 mb-3 border-s-8 border-accent ps-4;
-}
-
-/* Unified KPI Layout: Icon next to Text */
-@layer components {
-  .kpi-card-report {
-    @apply bg-white border border-gray-100 rounded-xl p-3 shadow-sm flex items-center gap-3 avoid-break;
-  }
-  .kpi-icon-box {
-    @apply w-10 h-10 bg-primary/5 rounded-lg flex items-center justify-center border border-primary/10 shrink-0;
-  }
-  .kpi-text-box {
-    @apply flex flex-col justify-center min-w-0;
-  }
-  .kpi-label-report {
-    @apply text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5;
-  }
-  .kpi-value-report {
-    @apply text-lg font-bold text-gray-900 leading-none;
-  }
-}
-
-/* Print Configuration - Stable Spacing */
+/* ===============================
+   PRINT CONFIGURATION
+================================ */
 @media print {
-  @page { size: A4; margin: 0; }
-  body { background: white !important; }
-  .no-print { display: none !important; }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    width: 210mm;
+    height: auto;
+    overflow: visible;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Strict A4 Height to prevent footer displacement */
   .page-break {
     break-after: page;
+    page-break-after: always;
     width: 210mm;
-    height: 297mm;
+    height: 297mm; 
+    max-height: 297mm;
     overflow: hidden;
     position: relative;
-    padding: 12mm 15mm; /* Balanced ministerial margins */
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    padding-bottom: 15mm; /* Buffer for footer */
   }
-  .avoid-break { break-inside: avoid; }
+
+  .avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Rich Text Rendering Styles for Print */
+  .rich-text-content strong { font-weight: 700; color: #111; }
+  .rich-text-content em { font-style: italic; }
+  .rich-text-content ul { list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+  .rich-text-content li { margin-bottom: 0.25rem; }
+  
+  [dir="rtl"] .rich-text-content ul { margin-left: 0; margin-right: 1.5rem; }
+}
+
+/* Web-view support for rich text rendering */
+.rich-text-content strong { font-weight: 700; }
+.rich-text-content em { font-style: italic; }
+.rich-text-content ul { list-style-type: disc; margin-left: 1.5rem; }
+[dir="rtl"] .rich-text-content ul { margin-left: 0; margin-right: 1.5rem; }
+
+/* ===============================
+   KPI / INDICATOR SYSTEM
+================================ */
+@layer components {
+  .kpi-card {
+    @apply bg-white border border-gray-200 rounded-xl p-3 shadow-sm;
+  }
+
+  .kpi-row {
+    @apply flex items-start gap-3;
+  }
+
+  .kpi-icon {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center
+           border border-gray-200 bg-gray-50;
+  }
+
+  .kpi-label {
+    @apply text-[9px] font-extrabold uppercase tracking-widest text-gray-500 mb-0.5 block;
+  }
+
+  .kpi-value {
+    @apply text-lg font-serif font-bold text-gray-900 leading-tight;
+  }
+
+  .kpi-sub {
+    @apply text-[9px] text-gray-500 italic;
+  }
+
+  .kpi-chip {
+    @apply text-[9px] font-bold uppercase tracking-wider
+           px-2 py-0.5 rounded-full border;
+  }
+
+  .chip-ok {
+    @apply bg-green-50 text-green-800 border-green-200;
+  }
+
+  .chip-warn {
+    @apply bg-amber-50 text-amber-800 border-amber-200;
+  }
+
+  .chip-info {
+    @apply bg-blue-50 text-blue-800 border-blue-200;
+  }
+
+  .chip-restrict {
+    @apply bg-red-50 text-red-800 border-red-200;
+  }
+
+  /* ===============================
+     SECTION RAIL
+  ================================ */
+  .section-rail {
+    @apply relative ps-4;
+  }
+
+  .section-rail:before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    opacity: 0.18;
+  }
 }

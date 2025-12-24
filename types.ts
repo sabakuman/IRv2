@@ -10,14 +10,7 @@ export interface UserProfile {
   role: UserRole;
   avatarUrl?: string;
   password?: string;
-  apiKey?: string;
-}
-
-export interface Bulletin {
-  id: number;
-  content: string;
-  authorName: string;
-  timestamp: string;
+  apiKey?: string; // Personal Gemini API Key
 }
 
 export interface Delegate {
@@ -30,7 +23,7 @@ export interface Delegate {
 
 export interface DateValue {
   value: string;
-  date: string;
+  date: string; // "As of..."
 }
 
 export interface LabelValue {
@@ -42,8 +35,8 @@ export interface RecentInteraction {
   id: string;
   title: string;
   date: string;
-  type: string;
-  details: string;
+  type: string; // e.g., "Visit", "Phone Call", "Meeting"
+  details: string; // Summary of the interaction
 }
 
 export interface PointOfDiscussion {
@@ -64,7 +57,7 @@ export interface UaeWorkforceData {
   mohre: {
     totalPrivate: DateValue;
     totalDomestic: DateValue;
-    byEmirate: LabelValue[];
+    byEmirate: LabelValue[]; // Abu Dhabi, Dubai, etc.
     bySector: LabelValue[];
   };
   icp: {
@@ -76,28 +69,37 @@ export interface UaeWorkforceData {
     label: string;
     value: string;
     date: string;
-    isTotal: boolean;
+    isTotal: boolean; // For the mandatory "Total Workers in UAE"
   }>;
 }
 
+// Complex Report Structure
 export interface ReportData {
-  reportDate?: string;
-  flagUrl?: string;
+  reportDate?: string; // Date of the report/meeting
+  flagUrl?: string; // Custom uploaded flag
+
+  // Section 1: Country Profile & Diplomacy
   country: string;
   capital: string;
   officialLanguage: string;
   population: string;
   currency: string;
-  gdp: string;
-  hdi: string;
-  directFlight: boolean;
-  uaeEmbassyLocation: string;
-  foreignEmbassyLocation: string;
+  gdp: string; // Generic GDP field
+  hdi: string; // Human Development Index
+  directFlight: boolean; // Yes/No
+  uaeEmbassyLocation: string; // Location in that country
+  foreignEmbassyLocation: string; // City in UAE
+  
+  // New Demographics
   crimeRate?: string;
   literacyRate?: string;
   governmentType?: string;
   workforceMinistry?: string;
+
+  // Section 2: Workforce in UAE (NEW)
   uaeWorkforceStats: UaeWorkforceData;
+
+  // Section 3: Partner Country Workforce & Economic Indicators
   averageWage: string;
   minimumWage: string;
   workforceStats: {
@@ -108,6 +110,8 @@ export interface ReportData {
     topSectors: Array<{ name: string; value: number }>; 
     availableSkills: string[]; 
   };
+
+  // Section 4: Economy & Education
   economicStats: {
     inflation: string;
     gdp: string;
@@ -116,32 +120,42 @@ export interface ReportData {
     topExportProducts: string[];
     topImportProducts: string[];
     mainEconomicPartners: string[];
-    tipRank: string;
-    remittancesFromUAE: string;
-    remittancesGlobal: string;
+    tipRank: string; // Trafficking in Persons Rank
+    remittancesFromUAE: string; // Specific to UAE
+    remittancesGlobal: string; // NEW: Total global remittances
     customStats: Array<{ id: string; label: string; value: string }>;
   };
+  
   educationStats: {
     topUniversities: string[];
     primaryEnrollment: string;
     higherEducationEnrollment: string;
   };
+
+  // Section 5: Interactions & News (NEW)
   recentInteractions: RecentInteraction[];
   pointsOfDiscussion: PointOfDiscussion[];
   relatedNews: NewsItem[];
+
+  // Flexible Content
   customSections: Array<{
     id: string;
     title: string;
     content: string;
   }>;
+
+  // Section 6: Relations
   bilateralAgreements: Array<{
     title: string;
     date: string;
     status: 'Active' | 'Pending' | 'Expired';
     summary: string;
   }>;
+  
   keyIssues: string[];
   recommendations: string[];
+  
+  // Section 7: Delegations
   delegations: {
     uae: Delegate[];
     partner: Delegate[];
