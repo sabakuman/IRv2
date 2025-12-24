@@ -1,3 +1,4 @@
+
 import { Report, AuditLog, UserProfile } from '../types';
 
 // The API runs on the same origin (port 4173) in production
@@ -106,5 +107,21 @@ export const MockService = {
     });
     if (!res.ok) return null;
     return await res.json();
+  },
+
+  // --- Announcements ---
+  getAnnouncement: async (): Promise<any> => {
+    try {
+      const res = await fetch(`${API_URL}/announcement`);
+      return await res.json();
+    } catch (e) { return {}; }
+  },
+
+  updateAnnouncement: async (data: any): Promise<void> => {
+    await fetch(`${API_URL}/announcement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
   }
 };

@@ -288,7 +288,6 @@ export const TRANSLATIONS = {
     icpSubheader: 'ICP DATA',
     workforceStats: 'Workforce Stats',
     saveReport: 'Save Report',
-    // New Fields
     crimeRate: 'Crime Rate',
     literacyRate: 'Literacy Rate',
     governmentType: 'Government Type',
@@ -300,7 +299,6 @@ export const TRANSLATIONS = {
     workerCountEst: 'Worker Count (Est.)',
     sectorDistribution: 'Sector Distribution',
     interactionHelper: 'Record diplomatic visits, key discussion points, and relevant news.',
-    // Table Headers
     reportsDescription: 'Manage and generate bilateral intelligence reports.',
     colReportTitle: 'Report Title',
     colCreatedBy: 'Created By',
@@ -308,12 +306,13 @@ export const TRANSLATIONS = {
     colActions: 'Actions',
     colLastModified: 'Last Modified',
     duplicateReportMsg: 'A report for this country already exists. Please update the existing report. REF:',
-    // Dashboard Specific
     recentReports: 'Recent Reports',
-    startNewAnalysis: 'Start a New Analysis',
-    startAnalysisDesc: 'Generate comprehensive bilateral labour market reports powered by AI insights and official data sources.',
     viewAll: 'View All',
     totalWorkersUaeLabel: 'Total Workers in UAE',
+    welcomeMessage: 'Welcome Message',
+    edit: 'Edit',
+    cancel: 'Cancel',
+    lastUpdated: 'Last Updated',
   },
   ar: {
     dashboard: 'الصفحة الرئيسة',
@@ -453,10 +452,9 @@ export const TRANSLATIONS = {
     icpSubheader: 'بيانات الهيئة الاتحادية للهوية والجنسية',
     workforceStats: 'إحصاءات القوى العاملة',
     saveReport: 'حفظ التقرير',
-    // New Fields
     crimeRate: 'معدل الجريمة',
     literacyRate: 'معدل الإلمام بالقراءة والكتابة',
-    governmentType: 'نظام الحكم',
+    governmentType: 'ن نظام الحكم',
     workforceMinistry: 'الجهة المعنية بسوق العمل',
     workforceOf: 'القوى العاملة لدى',
     relationshipSummary: 'ملخص العلاقة',
@@ -465,7 +463,6 @@ export const TRANSLATIONS = {
     workerCountEst: 'عدد العمال',
     sectorDistribution: 'التوزيع على حسب القطاعات',
     interactionHelper: 'اضف معلومات ذات صلة او ملخص العلاقات او محاور النقاش',
-    // Table Headers
     reportsDescription: 'إدارة وإعداد تقارير ثنائية.',
     colReportTitle: 'عنوان التقرير',
     colCreatedBy: 'معد التقرير',
@@ -473,11 +470,12 @@ export const TRANSLATIONS = {
     colActions: 'التحكم بالتقرير',
     colLastModified: 'اخر تعديل',
     duplicateReportMsg: 'يوجد تقرير مسبق لهذه الدولة، يرجى تحديث التقرير الموجود. مرجع:',
-    // Dashboard Specific
     recentReports: 'التقارير الحديثة',
-    startNewAnalysis: 'بدء تحليل جديد',
-    startAnalysisDesc: 'إنشاء تقارير شاملة عن سوق العمل الثنائي مدعومة برؤى الذكاء الاصطناعي والمصادر الرسمية للبيانات.',
     viewAll: 'عرض الكل',
     totalWorkersUaeLabel: 'إجمالي العمالة في الإمارات',
+    welcomeMessage: 'رسالة الترحيب',
+    edit: 'تعديل',
+    cancel: 'إلغاء',
+    lastUpdated: 'آخر تحديث',
   }
 };

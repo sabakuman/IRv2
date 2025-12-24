@@ -1,3 +1,4 @@
+
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
@@ -144,10 +145,16 @@ function initializeDatabase() {
       details TEXT
     )`);
 
+    // 4. Announcements Table
+    db.run(`CREATE TABLE IF NOT EXISTS app_announcements (
+      id TEXT PRIMARY KEY,
+      message_en TEXT,
+      message_ar TEXT,
+      updatedAt TEXT,
+      updatedBy TEXT
+    )`);
+
     // --- SMART ADMIN SEED ---
-    // Check if admin exists first. 
-    // If YES: Reset password to 'admin' (to fix login) but keep existing API Key.
-    // If NO: Insert default admin.
     db.get("SELECT * FROM users WHERE id = ?", [DEFAULT_ADMIN.id], (err, row) => {
       if (row) {
         console.log("Admin user found. Resetting password to 'admin'...");
@@ -169,10 +176,38 @@ function initializeDatabase() {
         stmt.finalize();
       }
     });
+
+    // Seed default announcement if empty
+    db.get("SELECT count(*) as count FROM app_announcements", (err, row) => {
+      if (row && row.count === 0) {
+        console.log("Seeding default announcement...");
+        const stmt = db.prepare("INSERT INTO app_announcements (id, message_en, message_ar, updatedAt, updatedBy) VALUES (?, ?, ?, ?, ?)");
+        stmt.run('current', 'Welcome to the UAE Labour Market Intelligence portal. This platform provides secure access to ministerial-grade reports.', 'مرحباً بكم في بوابة معلومات سوق العمل في دولة الإمارات العربية المتحدة. توفر هذه المنصة وصولاً آمناً إلى التقارير الوزارية.', new Date().toISOString(), 'System');
+        stmt.finalize();
+      }
+    });
   });
 }
 
 // --- API ENDPOINTS ---
+
+// Announcement Endpoints
+app.get('/api/announcement', (req, res) => {
+  db.get("SELECT * FROM app_announcements WHERE id = 'current'", [], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(row || {});
+  });
+});
+
+app.post('/api/announcement', (req, res) => {
+  const { message_en, message_ar, updatedAt, updatedBy } = req.body;
+  const stmt = db.prepare("INSERT OR REPLACE INTO app_announcements (id, message_en, message_ar, updatedAt, updatedBy) VALUES (?, ?, ?, ?, ?)");
+  stmt.run('current', message_en, message_ar, updatedAt, updatedBy, (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+  stmt.finalize();
+});
 
 // 1. Users
 app.post('/api/login', (req, res) => {
@@ -185,16 +220,12 @@ app.post('/api/login', (req, res) => {
   console.log(`Login attempt for: ${safeEmail}`);
 
   // --- FAILSAFE ADMIN LOGIN ---
-  // Guarantees access even if DB is locked or corrupted
   if (safeEmail === 'admin' && safePassword === 'admin') {
     console.log("Admin failsafe login triggered.");
-    
-    // Try to get the real admin from DB to return accurate API key if possible
     db.get("SELECT * FROM users WHERE id = 'u-admin'", [], (err, row) => {
        if (row) {
          res.json(row);
        } else {
-         // Fallback if DB read fails entirely
          res.json(DEFAULT_ADMIN);
        }
     });
@@ -202,7 +233,6 @@ app.post('/api/login', (req, res) => {
   }
 
   // Normal Database Login
-  // Case-insensitive email check
   db.get("SELECT * FROM users WHERE (lower(email) = lower(?) OR id = ?) AND password = ?", [safeEmail, safeEmail, safePassword], (err, row) => {
     if (err) {
       console.error("DB Login Error:", err);
@@ -275,7 +305,6 @@ app.get('/api/reports', (req, res) => {
   db.all("SELECT * FROM reports ORDER BY updatedAt DESC", [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     
-    // Parse the 'data' JSON string back to an object
     const reports = rows.map(r => {
       try {
         return { ...r, data: JSON.parse(r.data) };
@@ -304,7 +333,6 @@ app.post('/api/reports', (req, res) => {
   const { id, userId, title, status, updatedAt, data } = req.body;
   const dataStr = JSON.stringify(data);
   
-  // INSERT OR REPLACE handles both creation and updates if ID exists
   const stmt = db.prepare("INSERT OR REPLACE INTO reports (id, userId, title, status, updatedAt, data) VALUES (?, ?, ?, ?, ?, ?)");
   stmt.run(id, userId, title, status, updatedAt, dataStr, (err) => {
     if (err) return res.status(500).json({ error: err.message });
