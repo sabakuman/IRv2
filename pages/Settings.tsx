@@ -1,17 +1,71 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Card, Button } from '../components/ui/LayoutComponents';
-import { Moon, Sun, User, Bell, Lock, ShieldCheck, CheckCircle, XCircle } from 'lucide-react';
+import { Card, Button, Input } from '../components/ui/LayoutComponents';
+import { 
+  Moon, Sun, User, Lock, ShieldCheck, CheckCircle, 
+  XCircle, Eye, EyeOff, Play, Loader2, Sparkles, Save 
+} from 'lucide-react';
+import { MockService } from '../services/mockService';
+import { GoogleGenAI } from "@google/genai";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [notifications, setNotifications] = useState(true);
-  const [mfa, setMfa] = useState(false);
 
-  const hasApiKey = !!process.env.API_KEY;
+  // API Key State
+  const [apiKey, setApiKey] = useState(user?.apiKey || '');
+  const [showKey, setShowKey] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Test State
+  const [testStatus, setTestStatus] = useState<'none' | 'loading' | 'success' | 'error'>('none');
+  const [testError, setTestError] = useState('');
+
+  const handleSaveKey = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      const updatedUser = await MockService.updateApiKey(user.id, apiKey);
+      if (updatedUser) {
+        updateUser(updatedUser);
+        alert("API Key updated successfully.");
+      }
+    } catch (err) {
+      alert("Failed to save API Key.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestKey = async () => {
+    if (!apiKey) {
+      setTestStatus('error');
+      setTestError('Please enter an API key first.');
+      return;
+    }
+
+    setTestStatus('loading');
+    setTestError('');
+
+    try {
+      // Use a new instance to ensure we test the exact string in the input
+      const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: 'Respond with the word "OK" only.',
+      });
+
+      if (response.text) {
+        setTestStatus('success');
+      } else {
+        throw new Error("No response received from API.");
+      }
+    } catch (err: any) {
+      setTestStatus('error');
+      setTestError(err.message || "Invalid API Key or connection error.");
+    }
+  };
   
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20">
@@ -47,6 +101,68 @@ export default function Settings() {
             </div>
           </Card>
 
+          {/* AI Configuration Section */}
+          <Card className="dark:bg-secondary dark:border-gray-800">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-white">
+              <Sparkles size={20} className="text-primary dark:text-accent" /> AI API Key
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Configure your personal Google Gemini API key to enable intelligence features.
+            </p>
+            
+            <div className="space-y-4">
+              <div className="relative">
+                <Input 
+                  label="Gemini API Key"
+                  type={showKey ? "text" : "password"}
+                  placeholder="Enter your API Key..."
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="pr-12"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowKey(!showKey)}
+                  className="absolute right-3 bottom-2.5 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Button 
+                  onClick={handleSaveKey} 
+                  disabled={isSaving}
+                  className="min-w-[120px]"
+                >
+                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                  Save Key
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleTestKey}
+                  disabled={testStatus === 'loading'}
+                  className="min-w-[120px]"
+                >
+                  {testStatus === 'loading' ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
+                  Test Key
+                </Button>
+              </div>
+
+              {testStatus === 'success' && (
+                <div className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800 animate-in fade-in slide-in-from-top-1">
+                  <CheckCircle size={16} /> Connection Successful! Your API key is valid.
+                </div>
+              )}
+
+              {testStatus === 'error' && (
+                <div className="flex items-center gap-2 text-sm font-bold text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-800 animate-in fade-in slide-in-from-top-1">
+                  <XCircle size={16} /> {testError}
+                </div>
+              )}
+            </div>
+          </Card>
+
           {/* Appearance Section */}
           <Card className="dark:bg-secondary dark:border-gray-800">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2 dark:text-white">
@@ -77,38 +193,6 @@ export default function Settings() {
               </div>
             </div>
           </Card>
-
-          {/* Preferences */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="dark:bg-secondary dark:border-gray-800">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-white">
-                <Bell size={20} className="text-primary" /> Notifications
-              </h2>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Enable system alerts</p>
-                <button 
-                  onClick={() => setNotifications(!notifications)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${notifications ? 'bg-primary' : 'bg-gray-300'}`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${notifications ? 'translate-x-7' : 'translate-x-1'}`} />
-                </button>
-              </div>
-            </Card>
-            <Card className="dark:bg-secondary dark:border-gray-800">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-white">
-                <Lock size={20} className="text-primary" /> Security
-              </h2>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Two-Factor Auth</p>
-                <button 
-                  onClick={() => setMfa(!mfa)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${mfa ? 'bg-green-500' : 'bg-gray-300'}`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${mfa ? 'translate-x-7' : 'translate-x-1'}`} />
-                </button>
-              </div>
-            </Card>
-          </div>
         </div>
 
         {/* Sidebar Status Info */}
@@ -119,23 +203,20 @@ export default function Settings() {
             </h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Gemini Engine</span>
-                {hasApiKey ? (
+                <span className="text-sm text-gray-600 dark:text-gray-400">User Configuration</span>
+                {user?.apiKey ? (
                   <span className="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-                    <CheckCircle size={12} /> CONNECTED
+                    <CheckCircle size={12} /> PERSONAL KEY
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded">
-                    <XCircle size={12} /> DISCONNECTED
+                  <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                    <ShieldCheck size={12} /> SYSTEM DEFAULT
                   </span>
                 )}
               </div>
               <p className="text-[10px] text-gray-500 leading-relaxed italic">
-                AI capabilities are provided by Google Gemini. The API key is managed securely via environment configuration.
+                The application uses a secure system default key unless you provide your own personal Google Gemini API key above.
               </p>
-              <Button size="sm" variant="outline" className="w-full text-[10px]" onClick={() => alert("Connection test successful.")}>
-                Test Connection
-              </Button>
             </div>
           </Card>
         </div>
