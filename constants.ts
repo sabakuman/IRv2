@@ -1,4 +1,3 @@
-
 import { Report, AuditLog, EMPTY_REPORT_DATA } from './types';
 
 export const FLAGS: Record<string, string> = {
@@ -454,7 +453,7 @@ export const TRANSLATIONS = {
     saveReport: 'حفظ التقرير',
     crimeRate: 'معدل الجريمة',
     literacyRate: 'معدل الإلمام بالقراءة والكتابة',
-    governmentType: 'ن نظام الحكم',
+    governmentType: 'نظام الحكم',
     workforceMinistry: 'الجهة المعنية بسوق العمل',
     workforceOf: 'القوى العاملة لدى',
     relationshipSummary: 'ملخص العلاقة',

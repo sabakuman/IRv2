@@ -428,7 +428,7 @@ export default function PrintView() {
           </div>
         </PageContainer>
 
-        {/* --- PAGE 5+: RELATIONSHIP SUMMARY (HIGH DENSITY) --- */}
+        {/* --- PAGE 5+: RELATIONSHIP SUMMARY --- */}
         {interactionChunks.length > 0 ? interactionChunks.map((chunk, cIdx) => (
           <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -454,7 +454,7 @@ export default function PrintView() {
           </PageContainer>
         )) : null}
 
-        {/* --- PAGE 6+: POINTS OF DISCUSSION (HIGH DENSITY) --- */}
+        {/* --- PAGE 6+: POINTS OF DISCUSSION --- */}
         {pointsChunks.map((chunk, cIdx) => (
           <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
@@ -478,7 +478,7 @@ export default function PrintView() {
           </PageContainer>
         ))}
 
-        {/* --- PAGE 7+: AGREEMENTS (HIGH DENSITY) --- */}
+        {/* --- PAGE 7+: AGREEMENTS --- */}
         {agreementChunks.length > 0 ? agreementChunks.map((chunk, cIdx) => (
           <PageContainer key={`agr-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
