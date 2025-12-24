@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Card, Button, Input } from '../components/ui/LayoutComponents';
 import { 
-  Moon, Sun, User, Lock, ShieldCheck, CheckCircle, 
+  Moon, Sun, User, ShieldCheck, CheckCircle, 
   XCircle, Eye, EyeOff, Play, Loader2, Sparkles, Save 
 } from 'lucide-react';
 import { MockService } from '../services/mockService';
