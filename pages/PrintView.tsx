@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
@@ -98,24 +97,12 @@ export default function PrintView() {
     return !isNaN(dateA) && !isNaN(dateB) ? dateB - dateA : (b.date || '').localeCompare(a.date || '');
   });
 
-  const formatCompactNumber = (value: any) => {
-    const num = Number(value);
-    if (isNaN(num)) return value;
-    return new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(num);
-  };
-
   const getSource = (type: string) => {
     const sources: Record<string, Record<string, string>> = {
       en: { demo: '*(World Bank, 2025)', economy: '*(World Bank, 2025)', trade: '*(UN Comtrade, 2025)', edu: '*(UNESCO, 2025)', gov: '*(Official Portal, 2025)', crime: '*(UNODC, 2025)', literacy: '*(UNESCO, 2025)', tip: '*(US TIP, 2024)', mohre: '*(MOHRE, 2025)', icp: '*(ICP, 2025)' },
       ar: { demo: '*(البنك الدولي، 2025)', economy: '*(البنك الدولي، 2025)', trade: '*(كوم تريد، 2025)', edu: '*(اليونسكو، 2025)', gov: '*(البوابة الرسمية، 2025)', crime: '*(الأمم المتحدة، 2025)', literacy: '*(اليونسكو، 2025)', tip: '*(تقرير الاتجار، 2024)', mohre: '*(بيانات الوزارة، 2025)', icp: '*(بيانات الهيئة، 2025)' }
     };
     return sources[language]?.[type] || '';
-  };
-
-  const translateEmirate = (name: string) => {
-    if (!isRTL) return name;
-    const map: Record<string, string> = { 'Abu Dhabi': 'أبوظبي', 'Dubai': 'دبي', 'Sharjah': 'الشارقة', 'Ajman': 'عجمان', 'Umm Al Quwain': 'أم القيوين', 'Ras Al Khaimah': 'رأس الخيمة', 'Fujairah': 'الفجيرة' };
-    return map[name] || name;
   };
 
   const DefaultFooter = () => (
@@ -155,32 +142,6 @@ export default function PrintView() {
     );
   };
 
-  const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
-  const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
-
-  // High-Density Pagination Chunks (Increased to 5 per page)
-  const CHUNK_SIZE_INTERACTIONS = 5; 
-  const interactionChunks = [];
-  for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
-    interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE_INTERACTIONS));
-  }
-
-  const CHUNK_SIZE_POINTS = 5; 
-  const pointsChunks = [];
-  for (let i = 0; i < data.pointsOfDiscussion.length; i += CHUNK_SIZE_POINTS) {
-    pointsChunks.push(data.pointsOfDiscussion.slice(i, i + CHUNK_SIZE_POINTS));
-  }
-
-  const CHUNK_SIZE_AGREEMENTS = 5;
-  const agreementChunks = [];
-  for (let i = 0; i < sortedAgreements.length; i += CHUNK_SIZE_AGREEMENTS) {
-    agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE_AGREEMENTS));
-  }
-
-  // Sorted Emirate Charts (Descending order: Largest to Smallest)
-  const sortedMohreEmirates = [...data.uaeWorkforceStats.mohre.byEmirate].sort((a, b) => b.value - a.value);
-  const sortedIcpEmirates = [...data.uaeWorkforceStats.icp.byEmirate].sort((a, b) => b.value - a.value);
-
   const handlePrint = () => {
     window.print();
   };
@@ -204,7 +165,6 @@ export default function PrintView() {
           }
         `}
       </style>
-      {/* Floating Action Bar */}
       <div className={`fixed top-6 z-50 flex gap-3 no-print p-2 rounded-2xl bg-white/80 backdrop-blur-md shadow-2xl border border-white/20 ${isRTL ? 'left-6' : 'right-6'}`}>
          <button onClick={handlePrint} className="bg-primary text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold active:scale-95">
             <Printer size={18} /> {t('printNow')}
@@ -216,7 +176,6 @@ export default function PrintView() {
       </div>
 
       <div id="report-content" className="overflow-visible report-root">
-        {/* --- PAGE 1: COVER --- */}
         <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
           <div className="absolute inset-0 opacity-[0.03] z-0 flex items-center justify-center overflow-hidden pointer-events-none">
               <svg viewBox="0 0 1000 500" className="w-[150%] h-auto text-primary fill-current">
@@ -252,7 +211,6 @@ export default function PrintView() {
           <div className="h-3 bg-primary w-full"></div>
         </div>
 
-        {/* --- PAGE 2: PROFILE & ECONOMY --- */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact={true} />
@@ -298,4 +256,7 @@ export default function PrintView() {
             </div>
           </div>
         </PageContainer>
-        ...
+      </div>
+    </div>
+  );
+}

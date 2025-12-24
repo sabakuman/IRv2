@@ -1,4 +1,3 @@
-
 import { Report, AuditLog, EMPTY_REPORT_DATA } from './types';
 
 export const FLAGS: Record<string, string> = {

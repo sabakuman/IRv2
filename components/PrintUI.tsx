@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ShieldAlert } from "lucide-react";
 
@@ -57,7 +56,7 @@ export const HeaderBand = ({
   return (
     <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
       <div className="flex items-center gap-3">
-        <img src={flagSrc} className="h-6 w-auto shadow-sm" alt={country} />
+        <img flag-src={flagSrc} className="h-6 w-auto shadow-sm" alt={country} />
         <div className="h-8 w-px bg-gray-200" />
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">
