@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ShieldAlert } from "lucide-react";
 
@@ -56,7 +57,7 @@ export const HeaderBand = ({
   return (
     <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
       <div className="flex items-center gap-3">
-        <img flag-src={flagSrc} className="h-6 w-auto shadow-sm" alt={country} />
+        <img src={flagSrc} className="h-6 w-auto shadow-sm" alt={country} />
         <div className="h-8 w-px bg-gray-200" />
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">
@@ -141,7 +142,7 @@ export const KPI = ({
 
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start mb-1.5">
-          <p className={`kpi-label pr-1 leading-tight font-black ${labelClassName || ''}`}>{label}</p>
+          <p className={`kpi-label pr-1 leading-tight ${labelClassName || ''}`}>{label}</p>
           {chip && (
             <span
               className={`kpi-chip shrink-0 ml-1 ${
@@ -159,11 +160,11 @@ export const KPI = ({
           )}
         </div>
 
-        <p className="kpi-value break-words leading-tight text-[15px] font-bold font-sans text-gray-900" title={String(value)}>
+        <p className="kpi-value break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
            <span dir="ltr">{value || 'N/A'}</span>
         </p>
         
-        {sub && <p className="kpi-sub mt-1.5 leading-tight font-bold opacity-60">{sub}</p>}
+        {sub && <p className="kpi-sub mt-1.5 leading-tight">{sub}</p>}
       </div>
     </div>
   </div>
