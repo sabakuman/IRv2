@@ -14,16 +14,6 @@ import { useLanguage } from '../context/LanguageContext';
 
 const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  const d = String(date.getDate()).padStart(2, '0');
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const y = date.getFullYear();
-  return `${d}/${m}/${y}`;
-};
-
 const renderRichText = (text: string, sizeClass: string = "text-[13px]") => {
   if (!text) return null;
   let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -91,12 +81,6 @@ export default function PrintView() {
   const { data } = report;
   const isRTL = language === 'ar';
 
-  const sortedAgreements = [...data.bilateralAgreements].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    return !isNaN(dateA) && !isNaN(dateB) ? dateB - dateA : (b.date || '').localeCompare(a.date || '');
-  });
-
   const getSource = (type: string) => {
     const sources: Record<string, Record<string, string>> = {
       en: { demo: '*(World Bank, 2025)', economy: '*(World Bank, 2025)', trade: '*(UN Comtrade, 2025)', edu: '*(UNESCO, 2025)', gov: '*(Official Portal, 2025)', crime: '*(UNODC, 2025)', literacy: '*(UNESCO, 2025)', tip: '*(US TIP, 2024)', mohre: '*(MOHRE, 2025)', icp: '*(ICP, 2025)' },
@@ -115,15 +99,7 @@ export default function PrintView() {
   );
 
   const HeaderBand = ({ country, reportId, title, flagUrl }: any) => {
-    const getFlagCode = (c: string) => {
-      const lower = c.toLowerCase();
-      if (lower.includes('india')) return 'in';
-      if (lower.includes('philippines')) return 'ph';
-      if (lower.includes('pakistan')) return 'pk';
-      if (lower.includes('bangladesh')) return 'bd';
-      return 'ae';
-    };
-    const flagSrc = flagUrl || `https://flagcdn.com/w320/${getFlagCode(country)}.png`;
+    const flagSrc = flagUrl || `https://flagcdn.com/w320/ae.png`;
     return (
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
         <div className="flex items-center gap-3">
@@ -142,9 +118,7 @@ export default function PrintView() {
     );
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const sortedMohreEmirates = [...data.uaeWorkforceStats.mohre.byEmirate].sort((a, b) => b.value - a.value);
 
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
@@ -165,8 +139,9 @@ export default function PrintView() {
           }
         `}
       </style>
+      
       <div className={`fixed top-6 z-50 flex gap-3 no-print p-2 rounded-2xl bg-white/80 backdrop-blur-md shadow-2xl border border-white/20 ${isRTL ? 'left-6' : 'right-6'}`}>
-         <button onClick={handlePrint} className="bg-primary text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold active:scale-95">
+         <button onClick={() => window.print()} className="bg-primary text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold active:scale-95">
             <Printer size={18} /> {t('printNow')}
          </button>
          <div className="w-px h-8 bg-gray-200 mx-1 self-center" />
@@ -176,14 +151,9 @@ export default function PrintView() {
       </div>
 
       <div id="report-content" className="overflow-visible report-root">
+        
+        {/* PAGE 1: COVER */}
         <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
-          <div className="absolute inset-0 opacity-[0.03] z-0 flex items-center justify-center overflow-hidden pointer-events-none">
-              <svg viewBox="0 0 1000 500" className="w-[150%] h-auto text-primary fill-current">
-                <path d="M50,250 Q250,50 500,250 T950,250" stroke="currentColor" strokeWidth="2" fill="none" />
-                <circle cx="200" cy="200" r="50" stroke="currentColor" strokeWidth="2" fill="none" />
-                <path d="M0,0 L1000,500 M1000,0 L0,500" stroke="currentColor" strokeWidth="0.5" />
-              </svg>
-          </div>
           <div className="flex-1 flex flex-col justify-center px-20 relative z-10">
               <div className={`mb-12 border-accent py-6 ${isRTL ? 'border-r-[8px] pr-12' : 'border-l-[8px] pl-12'}`}>
                 <div className="flex items-center gap-4 mb-8 opacity-60">
@@ -195,7 +165,9 @@ export default function PrintView() {
               </div>
               <div className="bg-gray-50 rounded-3xl p-10 border border-gray-100 max-w-xl">
                 <div className="flex items-center gap-8 mb-8">
-                    <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${data.country.toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" alt="flag" /></div>
+                    <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white">
+                      <img src={data.flagUrl || `https://flagcdn.com/w320/ae.png`} className="w-full h-full object-cover" alt="flag" />
+                    </div>
                     <div>
                       <p className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1">{t('subjectMarket')}</p>
                       <h2 className="text-4xl font-serif font-bold text-gray-900">{data.country}</h2>
@@ -211,6 +183,7 @@ export default function PrintView() {
           <div className="h-3 bg-primary w-full"></div>
         </div>
 
+        {/* PAGE 2: PROFILE & ECONOMY */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact={true} />
@@ -231,10 +204,10 @@ export default function PrintView() {
             <KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats.tipRank} tone="warn" sub={getSource('tip')} />
           </div>
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-4 shadow-sm">
-            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('trade')}</span></h4>
+            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')}</h4>
             <div className="grid grid-cols-2 gap-8">
-                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalImportsFromUAE}</p><p className="text-[13px] text-gray-700 leading-snug font-bold break-words">{data.economicStats.topImportProducts.join(', ')}</p></div>
-                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalExportsToUAE}</p><p className="text-[13px] text-gray-700 leading-snug font-bold break-words">{data.economicStats.topExportProducts.join(', ')}</p></div>
+                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalImportsFromUAE}</p><p className="text-[13px] text-gray-700 leading-snug font-bold">{data.economicStats.topImportProducts.join(', ')}</p></div>
+                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalExportsToUAE}</p><p className="text-[13px] text-gray-700 leading-snug font-bold">{data.economicStats.topExportProducts.join(', ')}</p></div>
             </div>
           </div>
           <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact={true} />
@@ -242,18 +215,223 @@ export default function PrintView() {
             <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
             <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center shadow-sm">
-              <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                {t('topUniversities')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('edu')}</span>
-              </p>
+              <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">{t('topUniversities')}</p>
               <ul className="text-[12px] text-gray-700 leading-snug space-y-1">
                 {data.educationStats.topUniversities.slice(0, 5).map((u, i) => (
-                  <li key={i} className="flex gap-1.5 items-start">
-                    <span className="shrink-0 font-bold text-primary opacity-60">•</span>
-                    <span className="break-words leading-tight flex-1 font-bold">{u}</span>
+                  <li key={i} className="flex gap-1.5 items-start font-bold">
+                    <span className="shrink-0 text-primary">•</span>
+                    <span className="break-words leading-tight flex-1">{u}</span>
                   </li>
                 ))}
               </ul>
             </div>
+          </div>
+        </PageContainer>
+
+        {/* PAGE 3: UAE WORKFORCE ANALYSIS */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader icon={Building} title={t('domesticAnalysis')} subtitle={t('mohreData')} compact={true} />
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <KPI icon={Briefcase} label={t('totalPrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={`${t('dataAsOf')} ${data.uaeWorkforceStats.mohre.totalPrivate.date}`} tone="ok" />
+            <KPI icon={Users} label={t('totalDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={`${t('dataAsOf')} ${data.uaeWorkforceStats.mohre.totalDomestic.date}`} tone="ok" />
+            <KPI icon={Activity} label={t('totalWorkersUaeLabel')} value={data.uaeWorkforceStats.custom.find(c => c.isTotal)?.value || 'N/A'} sub={getSource('mohre')} tone="info" />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 shadow-sm">
+              <h4 className="text-xs font-bold text-primary uppercase tracking-widest mb-4 border-b pb-2">{t('workersByEmirate')}</h4>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                   <BarChart data={sortedMohreEmirates} layout="vertical" margin={{ left: isRTL ? 40 : 0, right: isRTL ? 0 : 40 }}>
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10, fontWeight: 700 }} orientation={isRTL ? 'right' : 'left'} />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                        {sortedMohreEmirates.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />
+                        ))}
+                        <LabelList dataKey="value" position={isRTL ? 'left' : 'right'} style={{ fontSize: 10, fontWeight: 800, fill: '#1e3a8a' }} />
+                      </Bar>
+                   </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 shadow-sm">
+              <h4 className="text-xs font-bold text-primary uppercase tracking-widest mb-4 border-b pb-2">{t('workersBySector')}</h4>
+              <div className="space-y-3">
+                 {data.uaeWorkforceStats.mohre.bySector.slice(0, 8).map((sec, i) => (
+                   <div key={i} className="flex justify-between items-center text-sm border-b border-gray-200/50 pb-1">
+                      <span className="font-bold text-gray-700">{sec.name}</span>
+                      <span className="font-mono font-bold text-primary">{sec.value.toLocaleString()}</span>
+                   </div>
+                 ))}
+              </div>
+            </div>
+          </div>
+          
+          <SectionHeader icon={Shield} title={t('icpHeader')} subtitle={t('icpSubheader')} compact={true} />
+          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 shadow-sm">
+             <div className="grid grid-cols-4 gap-4">
+                {data.uaeWorkforceStats.icp.byEmirate.map((em, idx) => (
+                   <div key={idx} className="bg-white p-3 rounded-xl border border-gray-100 flex flex-col items-center">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase">{em.name}</p>
+                      <p className="text-lg font-bold text-primary-dark">{em.value.toLocaleString()}</p>
+                   </div>
+                ))}
+             </div>
+             <p className="text-[10px] text-gray-400 mt-4 italic">{t('icpDisclaimer')}</p>
+          </div>
+        </PageContainer>
+
+        {/* PAGE 4: SOURCE MARKET ANALYSIS */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader icon={Hammer} title={t('sourceMarketAnalysis')} subtitle={t('workforceStats')} compact={true} />
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
+            <KPI icon={ArrowDownLeft} label={t('remittances')} value={data.economicStats.remittancesFromUAE} tone="info" />
+            <KPI icon={Banknote} label={t('globalRemittances')} value={data.economicStats.remittancesGlobal} />
+            <KPI icon={Building} label={t('avgWage')} value={data.averageWage} tone="info" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-6 mb-6">
+             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4 border-b pb-2">{t('migrationDestinations')}</h4>
+                <div className="space-y-4">
+                   {data.workforceStats.migrationDestinations.map((dest, i) => (
+                     <div key={i} className="flex flex-col gap-1">
+                        <div className="flex justify-between text-sm font-bold">
+                           <span>{dest.country}</span>
+                           <span>{dest.count}</span>
+                        </div>
+                        <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                           <div className="h-full bg-primary" style={{ width: `${Math.min(100, (i === 0 ? 100 : 100 - (i * 15)))}%` }}></div>
+                        </div>
+                     </div>
+                   ))}
+                </div>
+             </div>
+
+             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col h-full">
+                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4 border-b pb-2">{t('availableSkills')}</h4>
+                <div className="flex flex-wrap gap-2">
+                   {data.workforceStats.availableSkills.map((skill, i) => (
+                      <span key={i} className="bg-white px-3 py-1 rounded-lg border border-gray-200 text-xs font-bold text-primary shadow-sm">{skill}</span>
+                   ))}
+                </div>
+                <p className="mt-auto pt-4 text-[10px] text-gray-400 italic leading-relaxed">{t('skillsDisclaimer')}</p>
+             </div>
+          </div>
+
+          <div className="bg-gray-50 rounded-2xl p-5 border border-gray-200 shadow-sm">
+             <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4 border-b pb-2">{t('sectorDistribution')}</h4>
+             <div className="grid grid-cols-3 gap-6">
+                {data.workforceStats.topSectors.map((sec, i) => (
+                   <div key={i} className="flex flex-col items-center text-center p-3 bg-white rounded-xl border border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{sec.name}</p>
+                      <p className="text-xl font-bold text-primary-dark">{sec.value}%</p>
+                   </div>
+                ))}
+             </div>
+          </div>
+        </PageContainer>
+
+        {/* PAGE 5: INTERACTIONS & NEWS */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader icon={Calendar} title={t('recentInteractions')} subtitle={t('relationshipSummary')} compact={true} />
+          <div className="space-y-4 mb-8">
+             {data.recentInteractions.length === 0 ? (
+                <div className="p-10 border border-dashed rounded-2xl text-center text-gray-400 italic">No recent interactions recorded.</div>
+             ) : (
+                data.recentInteractions.slice(0, 4).map(item => (
+                   <div key={item.id} className="bg-gray-50 rounded-2xl p-5 border border-gray-200 shadow-sm relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-1.5 h-full bg-primary/20"></div>
+                      <div className="flex justify-between items-start mb-2">
+                         <h4 className="text-[15px] font-bold text-primary-dark leading-snug">{item.title}</h4>
+                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.date}</span>
+                      </div>
+                      {renderRichText(item.details)}
+                   </div>
+                ))
+             )}
+          </div>
+
+          <SectionHeader icon={MessageSquare} title={t('pointsDiscussion')} compact={true} />
+          <div className="space-y-4">
+             {data.pointsOfDiscussion.slice(0, 3).map(point => (
+                <div key={point.id} className="bg-blue-50/50 rounded-2xl p-5 border border-blue-100 shadow-sm">
+                   <h4 className="text-[14px] font-bold text-primary mb-2 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                      {point.title}
+                   </h4>
+                   {renderRichText(point.content)}
+                </div>
+             ))}
+          </div>
+        </PageContainer>
+
+        {/* PAGE 6: AGREEMENTS */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader icon={Handshake} title={t('bilateralEngagement')} subtitle={t('keyAgreements')} compact={true} />
+          <div className="space-y-5">
+             {data.bilateralAgreements.length === 0 ? (
+                <div className="p-10 border border-dashed rounded-2xl text-center text-gray-400 italic">{t('noAgreements')}</div>
+             ) : (
+                data.bilateralAgreements.map((agreement, i) => (
+                   <div key={i} className="bg-gray-50 rounded-2xl p-6 border border-gray-200 shadow-sm">
+                      <div className="flex justify-between items-start mb-4 border-b pb-3 border-gray-200">
+                         <div>
+                            <h4 className="text-lg font-serif font-bold text-gray-900 mb-1">{agreement.title}</h4>
+                            <div className="flex gap-4">
+                               <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"><Calendar size={12} /> {agreement.date}</span>
+                               <span className={`text-[10px] font-bold uppercase flex items-center gap-1 ${agreement.status === 'Active' ? 'text-green-600' : 'text-amber-600'}`}>
+                                  <Activity size={12} /> {t(agreement.status.toLowerCase() as any)}
+                               </span>
+                            </div>
+                         </div>
+                      </div>
+                      <div className="text-[13px] leading-relaxed text-gray-700">
+                         <p className="font-bold mb-1 opacity-60 uppercase text-[9px] tracking-widest">{t('keyProvisions')}</p>
+                         {renderRichText(agreement.summary)}
+                      </div>
+                   </div>
+                ))
+             )}
+          </div>
+        </PageContainer>
+
+        {/* PAGE 7: DELEGATIONS */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader icon={Users} title={t('relationsDelegations')} subtitle={t('ministryOfficials')} compact={true} />
+          <div className="space-y-8">
+             {['uae', 'partner'].map((type) => (
+                <div key={type} className="bg-gray-50 rounded-3xl p-8 border border-gray-200 shadow-sm">
+                   <h4 className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-8 border-b pb-3">{type === 'uae' ? t('uaeDelegation') : t('partnerDelegation')}</h4>
+                   <div className="space-y-10">
+                      {data.delegations[type as 'uae'|'partner'].map(member => (
+                         <div key={member.id} className="flex gap-8 items-start avoid-break">
+                            <div className="w-24 h-32 bg-white rounded-xl shadow-lg border-2 border-white overflow-hidden shrink-0">
+                               {member.imageUrl ? (
+                                  <img src={member.imageUrl} className="w-full h-full object-cover" />
+                               ) : (
+                                  <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300"><Users size={32} /></div>
+                               )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                               <h5 className="text-xl font-serif font-bold text-gray-900 mb-1">{member.name}</h5>
+                               <p className="text-[11px] font-bold text-accent uppercase tracking-widest mb-3">{member.title}</p>
+                               {renderRichText(member.bio, "text-[12px]")}
+                            </div>
+                         </div>
+                      ))}
+                      {data.delegations[type as 'uae'|'partner'].length === 0 && <div className="text-center text-gray-400 italic text-sm">No members recorded for this delegation.</div>}
+                   </div>
+                </div>
+             ))}
           </div>
         </PageContainer>
       </div>

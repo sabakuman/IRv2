@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -93,9 +92,7 @@
     break-after: page;
     page-break-after: always;
     width: 210mm;
-    height: 297mm; 
-    max-height: 297mm;
-    overflow: hidden;
+    min-height: 297mm; 
     position: relative;
     box-sizing: border-box;
     display: flex;
