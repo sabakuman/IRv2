@@ -14,9 +14,7 @@ export const PageContainer: React.FC<{
   footer,
   className = ""
 }) => (
-  <div className={`w-[210mm] h-[297mm] bg-white mx-auto flex flex-col page-break relative overflow-hidden ${className}`}>
-    {/* Optimized safe-zone: pb-28 (7rem / 112px) is used to balance 
-        content density and footer safety. */}
+  <div className={`w-[210mm] h-[297mm] bg-white mx-auto flex flex-col page-break relative overflow-hidden report-font ${className}`}>
     <div className="px-12 pt-8 pb-28 flex-1 overflow-visible">{children}</div>
 
     {footer && (
@@ -52,18 +50,18 @@ export const HeaderBand = ({
   };
   
   const flagCode = getFlagCode(country);
-  const flagSrc = flagUrl || `https://flagcdn.com/w40/${flagCode}.png`;
+  const flagSrc = flagUrl || `https://flagcdn.com/w320/${flagCode}.png`;
 
   return (
-    <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
+    <div className="flex items-center justify-between border-b-2 border-primary pb-3 mb-6">
       <div className="flex items-center gap-3">
         <img src={flagSrc} className="h-6 w-auto shadow-sm" alt={country} />
         <div className="h-8 w-px bg-gray-200" />
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-accent">
             {title}
           </p>
-          <p className="text-sm font-bold text-primary-dark uppercase">
+          <p className="text-lg font-bold text-primary-dark uppercase">
             {country} • Internal Report
           </p>
         </div>
@@ -73,7 +71,7 @@ export const HeaderBand = ({
         <span className="kpi-chip chip-restrict flex items-center gap-1">
           <ShieldAlert size={12} /> Restricted
         </span>
-        <span className="text-[9px] text-gray-400 font-mono">
+        <span className="text-[10px] text-gray-400 font-mono">
           REF: {reportId}
         </span>
       </div>
@@ -95,17 +93,17 @@ export const SectionHeader = ({
   subtitle?: string;
   compact?: boolean;
 }) => (
-  <div className={`section-rail avoid-break ${compact ? 'mb-4 mt-2' : 'mb-6 mt-4'}`}>
-    <div className="flex items-end gap-3 border-b border-gray-200 pb-2">
-      <div className={`rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center ${compact ? 'w-8 h-8' : 'w-10 h-10'}`}>
+  <div className={`avoid-break ${compact ? 'mb-4 mt-2' : 'mb-6 mt-4'}`}>
+    <div className="flex items-end gap-3 border-b-2 border-accent pb-2">
+      <div className={`rounded-lg bg-primary/10 flex items-center justify-center ${compact ? 'w-8 h-8' : 'w-10 h-10'}`}>
         <Icon size={compact ? 16 : 20} className="text-primary-dark" />
       </div>
       <div>
-        <h2 className={`font-serif font-bold text-primary-dark leading-none ${compact ? 'text-xl' : 'text-2xl'}`}>
+        <h2 className={`font-bold text-primary-dark leading-none ${compact ? 'text-xl' : 'text-2xl'}`}>
           {title}
         </h2>
         {subtitle && (
-          <p className="text-[10px] font-extrabold uppercase tracking-widest text-accent mt-1">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent mt-1">
             {subtitle}
           </p>
         )}
@@ -134,14 +132,14 @@ export const KPI = ({
   tone?: "ok" | "warn" | "info" | "restrict";
   labelClassName?: string;
 }) => (
-  <div className="kpi-card avoid-break h-full flex flex-col">
+  <div className="kpi-card avoid-break h-full flex flex-col border-2 border-gray-100">
     <div className="kpi-row items-start">
-      <div className="kpi-icon shrink-0 mt-0.5">
+      <div className="w-8 h-8 rounded bg-gray-50 flex items-center justify-center border border-gray-200 shrink-0">
         <Icon size={16} className="text-primary" />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start mb-1.5">
+      <div className="flex-1 min-w-0 ms-2">
+        <div className="flex justify-between items-start mb-0.5">
           <p className={`kpi-label pr-1 leading-tight ${labelClassName || ''}`}>{label}</p>
           {chip && (
             <span
@@ -160,11 +158,11 @@ export const KPI = ({
           )}
         </div>
 
-        <p className="kpi-value break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
+        <p className="text-lg font-bold text-gray-900 leading-tight break-words" title={String(value)}>
            <span dir="ltr">{value || 'N/A'}</span>
         </p>
         
-        {sub && <p className="kpi-sub mt-1.5 leading-tight">{sub}</p>}
+        {sub && <p className="text-[9px] text-gray-500 italic mt-1 leading-tight">{sub}</p>}
       </div>
     </div>
   </div>

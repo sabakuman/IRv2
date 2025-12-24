@@ -7,9 +7,7 @@ import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
 import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-// Always use GoogleGenAI and Type from @google/genai
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 
 // Custom Textarea with Rich Text Toolbar
 const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
@@ -59,7 +57,6 @@ const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
 };
 
 export default function Wizard() {
-  // Fixed: Replaced missing useParams and useNavigate hooks with manual implementations
   const getParamId = () => {
     const hash = window.location.hash;
     const parts = hash.split('/');
@@ -72,13 +69,11 @@ export default function Wizard() {
     window.location.hash = path.startsWith('/') ? path : `/${path}`;
   };
 
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(!!id);
   const [isFetchingAI, setIsFetchingAI] = useState(false);
-  const [isFetchingAgreements, setIsFetchingAgreements] = useState(false);
-  const [isFetchingEconomy, setIsFetchingEconomy] = useState(false);
   const [isFetchingNews, setIsFetchingNews] = useState(false);
   const [data, setData] = useState<ReportData>(EMPTY_REPORT_DATA);
   const [reportTitle, setReportTitle] = useState('');
@@ -106,28 +101,15 @@ export default function Wizard() {
     }
   }, [id]);
 
-  const extractAndParseJSON = (text: string | undefined) => {
-    if (!text) return null;
-    try {
-      let cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const firstOpen = cleanText.search(/[{\[]/);
-      const lastCurly = cleanText.lastIndexOf('}');
-      const lastSquare = cleanText.lastIndexOf(']');
-      const end = Math.max(lastCurly, lastSquare);
-      if (firstOpen !== -1 && end !== -1) {
-         return JSON.parse(cleanText.substring(firstOpen, end + 1));
-      }
-      return JSON.parse(cleanText);
-    } catch (e) { return null; }
-  };
-
   const handleFetchData = async () => {
-    if (!data.country) return;
+    if (!data.country) {
+      alert("Please enter a country name first.");
+      return;
+    }
     setIsFetchingAI(true);
     try {
-      // Fixed: Initialized GoogleGenAI with named parameter apiKey from process.env.API_KEY
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. Return a JSON object containing information for the country profile, workforce, and economy.`;
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. Ensure numeric values are returned as strings if they contain currency or units.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -181,9 +163,8 @@ export default function Wizard() {
         }
       });
       
-      // Fixed: Used response.text property directly
-      const aiData = extractAndParseJSON(response.text);
-      if (aiData) {
+      if (response.text) {
+        const aiData = JSON.parse(response.text);
         setData(prev => ({ 
           ...prev, 
           ...aiData, 
@@ -191,7 +172,8 @@ export default function Wizard() {
         }));
       }
     } catch (error) { 
-      console.error(error); 
+      console.error("AI Fetch Error:", error);
+      alert("Failed to fetch data via AI. Please ensure your API key is valid and check the console.");
     } finally { 
       setIsFetchingAI(false); 
     }
@@ -201,33 +183,41 @@ export default function Wizard() {
      if (!data.country) return;
      setIsFetchingNews(true);
      try {
-       // Fixed: Initialized GoogleGenAI with named parameter apiKey from process.env.API_KEY
        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-       const prompt = `Find 5 recent news articles about workforce cooperation or bilateral agreements between the UAE and ${data.country}. Output a JSON array with: title, source, date, summary.`;
+       const prompt = `Find 5 recent news articles (2024-2025) about workforce cooperation or bilateral agreements between the UAE and ${data.country}. Output as JSON array.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: [{ parts: [{ text: prompt }] }],
           config: { 
-            tools: [{ googleSearch: {} }] 
+            tools: [{ googleSearch: {} }],
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  source: { type: Type.STRING },
+                  date: { type: Type.STRING },
+                  summary: { type: Type.STRING }
+                }
+              }
+            }
           },
        });
        
-       // Fixed: Used response.text property directly
-       const newsItems = extractAndParseJSON(response.text);
-       if (Array.isArray(newsItems)) {
-          setData(prev => ({ 
-            ...prev, 
-            relatedNews: [...(prev.relatedNews || []), ...newsItems.map(n => ({ ...n, id: uuidv4() }))] 
-          }));
-       }
-       
-       // Handle grounding metadata if URLs are required in the UI.
-       if (response.candidates?.[0]?.groundingMetadata?.groundingChunks) {
-         console.debug('Search Grounding Chunks:', response.candidates[0].groundingMetadata.groundingChunks);
+       if (response.text) {
+         const newsItems = JSON.parse(response.text);
+         if (Array.isArray(newsItems)) {
+            setData(prev => ({ 
+              ...prev, 
+              relatedNews: [...(prev.relatedNews || []), ...newsItems.map(n => ({ ...n, id: uuidv4() }))] 
+            }));
+         }
        }
      } catch (error) { 
-       console.error(error); 
+       console.error("AI News Fetch Error:", error); 
      } finally { 
        setIsFetchingNews(false); 
      }
@@ -240,10 +230,28 @@ export default function Wizard() {
 
   const handleSave = async (status: 'draft' | 'completed' = 'draft') => {
     const reportId = id || `r-${uuidv4().slice(0, 8)}`;
-    const newReport: Report = { id: reportId, userId: user?.id || 'u-1', title: reportTitle || `Report for ${data.country || 'Unknown'}`, status, updatedAt: new Date().toISOString(), data };
+    
+    // Transfer ownership to current editor
+    const newReport: Report = { 
+      id: reportId, 
+      userId: user?.id || 'u-admin', 
+      title: reportTitle || `Report for ${data.country || 'Unknown'}`, 
+      status, 
+      updatedAt: new Date().toISOString(), 
+      data 
+    };
+    
     await MockService.saveReport(newReport);
-    if (status === 'completed') navigate('/dashboard');
+    
+    if (status === 'completed') {
+      navigate('/dashboard');
+    } else if (!id) {
+      // If it was a new report, navigate to its URL to allow further editing
+      navigate(`/wizard/${reportId}`);
+    }
   };
+
+  if (loading) return <div className="h-96 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
 
   const renderStep = () => {
     switch (currentStep) {
@@ -253,7 +261,7 @@ export default function Wizard() {
              <div className="border-b dark:border-gray-700 pb-4 mb-4">
                <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2 mb-2"><FileText size={20} /> {t('reportDetails')}</h3>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <Input label={t('reportTitle')} value={reportTitle} onChange={e => setReportTitle(e.target.value)} />
+                 <Input label={t('reportTitle')} value={reportTitle} onChange={e => setReportTitle(e.target.value)} placeholder="e.g. India Bilateral Meeting Oct 2025" />
                  <Input label={t('reportDate')} type="date" value={data.reportDate} onChange={e => setData({...data, reportDate: e.target.value})} />
                </div>
              </div>
@@ -265,8 +273,11 @@ export default function Wizard() {
                   </div>
                   <input type="file" id="flag-upload" className="hidden" accept="image/png, image/jpeg" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setData(prev => ({ ...prev, flagUrl: reader.result as string })); reader.readAsDataURL(file); } }} />
                </div>
-               <div className="flex-1 w-full"><Input label={t('country')} value={data.country} onChange={e => setData({...data, country: e.target.value})} /></div>
-               <Button onClick={handleFetchData} disabled={isFetchingAI} className="mt-1"><Sparkles size={18} /> {t('fetchData')}</Button>
+               <div className="flex-1 w-full"><Input label={t('country')} value={data.country} onChange={e => setData({...data, country: e.target.value})} placeholder="e.g. Philippines" /></div>
+               <Button onClick={handleFetchData} disabled={isFetchingAI} className="mt-1">
+                 {isFetchingAI ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />} 
+                 {t('fetchData')}
+               </Button>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input label={t('capital')} value={data.capital} onChange={e => setData({...data, capital: e.target.value})} />
