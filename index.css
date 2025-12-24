@@ -7,164 +7,66 @@
   :root {
     --background: 0 0% 99%;
     --foreground: 217 32% 17%;
-    
     --primary: 217 91% 26%;
     --primary-light: 217 91% 35%;
     --primary-dark: 217 91% 18%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 217 19% 95%;
-    --secondary-foreground: 222 47% 11%;
-    
     --accent: 37 92% 50%;
-    --accent-light: 37 92% 65%;
-    --accent-foreground: 210 40% 98%;
-
-    --muted: 217 19% 96%;
-    --muted-foreground: 215 16% 47%;
-    
     --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 26%;
   }
   
   .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
-    
     --primary: 217 91% 36%;
-    --primary-light: 217 91% 45%;
-    --primary-dark: 217 91% 26%;
-    --primary-foreground: 222 47% 11%;
-    
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 210 40% 98%;
-    
-    --accent: 37 92% 50%;
-    --accent-light: 37 92% 60%;
-    --accent-foreground: 222 47% 11%;
-    
-    --muted: 217 32% 17%;
-    --muted-foreground: 215 20% 65%;
-    
     --border: 217 32% 20%;
-    --input: 217 32% 20%;
-    --ring: 217 91% 36%;
   }
 
-  * {
-    @apply border-border;
-  }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; /* Dashboard standard scale */
   }
 }
 
-/* Report Typography: Sakkal Majalla */
-.report-font, [lang="ar"] .report-font {
+/* Sakkal Majalla for Reports only - No side effects on Dashboard */
+.report-font, [lang="ar"] .report-font, .report-view {
   font-family: 'Sakkal Majalla', 'Noto Naskh Arabic', 'Amiri', serif !important;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #555; }
+/* Report Specific KPI layout: Horizontal, Compact */
+@layer components {
+  .report-kpi-card {
+    @apply bg-white border border-gray-100 rounded-lg p-2.5 shadow-sm flex items-center gap-3 avoid-break;
+  }
+  .report-kpi-icon {
+    @apply w-9 h-9 bg-primary/5 rounded flex items-center justify-center border border-primary/10 shrink-0;
+  }
+  .report-kpi-text {
+    @apply flex flex-col justify-center min-w-0;
+  }
+  .report-kpi-label {
+    @apply text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5; /* 10px -> 11px (+10%) */
+  }
+  .report-kpi-value {
+    @apply text-base font-bold text-gray-900 leading-tight;
+  }
+}
 
-/* ===============================
-   PRINT CONFIGURATION
-================================ */
+/* Print Configuration - Locked Margins */
 @media print {
-  @page {
-    size: A4;
-    margin: 0;
-  }
-
-  html, body {
-    background: #ffffff !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    width: 210mm;
-    height: auto;
-    overflow: visible;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
+  @page { size: A4; margin: 0; }
+  body { background: white !important; }
+  .no-print { display: none !important; }
   .page-break {
     break-after: page;
-    page-break-after: always;
     width: 210mm;
-    height: 297mm; 
-    max-height: 297mm;
+    height: 297mm;
     overflow: hidden;
     position: relative;
+    padding: 10mm 15mm; /* Original ministerial margins */
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding-bottom: 12mm; 
   }
-
-  .avoid-break {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .rich-text-content strong { font-weight: 700; color: #111; }
-  .rich-text-content em { font-style: italic; }
-  .rich-text-content ul { list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
-  .rich-text-content li { margin-bottom: 0.25rem; }
-  
-  [dir="rtl"] .rich-text-content ul { margin-left: 0; margin-right: 1.5rem; }
-}
-
-.rich-text-content strong { font-weight: 700; }
-.rich-text-content em { font-style: italic; }
-.rich-text-content ul { list-style-type: disc; margin-left: 1.5rem; }
-[dir="rtl"] .rich-text-content ul { margin-left: 0; margin-right: 1.5rem; }
-
-/* ===============================
-   KPI / INDICATOR SYSTEM (REPORT SPECIFIC)
-================================ */
-@layer components {
-  .report-kpi-card {
-    @apply bg-white border border-gray-100 rounded-xl p-3 shadow-sm flex items-center gap-3 avoid-break;
-  }
-
-  .report-kpi-icon {
-    @apply w-10 h-10 rounded-lg flex items-center justify-center border border-primary/10 bg-primary/5 shrink-0;
-  }
-
-  .report-kpi-label {
-    @apply text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-0.5 block;
-  }
-
-  .report-kpi-value {
-    @apply text-lg font-bold text-gray-900 leading-tight;
-  }
-
-  .kpi-chip {
-    @apply text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border;
-  }
-  .chip-ok { @apply bg-green-50 text-green-800 border-green-200; }
-  .chip-warn { @apply bg-amber-50 text-amber-800 border-amber-200; }
-  .chip-info { @apply bg-blue-50 text-blue-800 border-blue-200; }
-  .chip-restrict { @apply bg-red-50 text-red-800 border-red-200; }
-
-  .section-rail {
-    @apply relative ps-4;
-  }
-  .section-rail:before {
-    content: "";
-    position: absolute;
-    inset-inline-start: 0;
-    top: 4px;
-    bottom: 4px;
-    width: 3px;
-    border-radius: 999px;
-    background: hsl(var(--primary));
-    opacity: 0.18;
-  }
+  .avoid-break { break-inside: avoid; }
 }
