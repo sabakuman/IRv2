@@ -142,7 +142,7 @@ export default function PrintView() {
           <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
           <div className="h-8 w-px bg-gray-200" />
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
+            <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
             <p className="text-sm font-bold text-primary-dark uppercase">{country}</p>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default function PrintView() {
                   <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto" alt="UAE" />
                   <span className="text-sm font-bold uppercase tracking-[0.2em] text-primary">UAE • MOHRE</span>
                 </div>
-                <h1 className="text-6xl font-serif font-bold text-gray-900 leading-[1.1] mb-4">{t('loginTitle')}</h1>
+                <h1 className="text-[64px] font-serif font-extrabold text-gray-900 leading-[1.1] mb-4">{t('loginTitle')}</h1>
                 <p className="text-2xl text-gray-500 font-light uppercase tracking-wider">{t('strategicOverview')}</p>
               </div>
               <div className="bg-gray-50 rounded-3xl p-10 border border-gray-100 max-w-xl">
