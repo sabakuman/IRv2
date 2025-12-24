@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
@@ -144,7 +143,7 @@ export default function PrintView() {
           <div className="h-8 w-px bg-gray-200" />
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
-            <p className="text-sm font-bold text-primary-dark uppercase">{country} • Internal Report</p>
+            <p className="text-sm font-bold text-primary-dark uppercase">{country}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
