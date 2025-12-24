@@ -13,13 +13,6 @@ export interface UserProfile {
   apiKey?: string; // Personal Gemini API Key
 }
 
-export interface Bulletin {
-  id: number;
-  content: string;
-  authorName: string;
-  timestamp: string;
-}
-
 export interface Delegate {
   id: string;
   name: string;
