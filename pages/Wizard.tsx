@@ -106,9 +106,18 @@ export default function Wizard() {
       alert("Please enter a country name first.");
       return;
     }
+    
+    // Priority: User's personal API key, then system default
+    const aiKey = user?.apiKey || process.env.API_KEY;
+    
+    if (!aiKey) {
+      alert("No API key configured. Please set one in Settings.");
+      return;
+    }
+
     setIsFetchingAI(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: aiKey });
       const prompt = `Fetch the latest official labour market and economic data for ${data.country}. Ensure numeric values are returned as strings if they contain currency or units.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
@@ -173,7 +182,7 @@ export default function Wizard() {
       }
     } catch (error) { 
       console.error("AI Fetch Error:", error);
-      alert("Failed to fetch data via AI. Please ensure your API key is valid and check the console.");
+      alert("Failed to fetch data via AI. Please ensure your API key is valid and has sufficient quota.");
     } finally { 
       setIsFetchingAI(false); 
     }
@@ -181,9 +190,13 @@ export default function Wizard() {
 
   const handleFetchNews = async () => {
      if (!data.country) return;
+     
+     const aiKey = user?.apiKey || process.env.API_KEY;
+     if (!aiKey) return;
+
      setIsFetchingNews(true);
      try {
-       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+       const ai = new GoogleGenAI({ apiKey: aiKey });
        const prompt = `Find 5 recent news articles (2024-2025) about workforce cooperation or bilateral agreements between the UAE and ${data.country}. Output as JSON array.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
