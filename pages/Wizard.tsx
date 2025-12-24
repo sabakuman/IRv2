@@ -69,7 +69,7 @@ export default function Wizard() {
     window.location.hash = path.startsWith('/') ? path : `/${path}`;
   };
 
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(!!id);
@@ -116,9 +116,10 @@ export default function Wizard() {
     }
 
     setIsFetchingAI(true);
+    const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
     try {
       const ai = new GoogleGenAI({ apiKey: aiKey });
-      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. Ensure numeric values are returned as strings if they contain currency or units.`;
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values (capital, names, categories, etc.) MUST be returned in ${targetLanguage}. Ensure numeric values are returned as strings if they contain currency or units.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -195,9 +196,10 @@ export default function Wizard() {
      if (!aiKey) return;
 
      setIsFetchingNews(true);
+     const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
      try {
        const ai = new GoogleGenAI({ apiKey: aiKey });
-       const prompt = `Find 5 recent news articles (2024-2025) about workforce cooperation or bilateral agreements between the UAE and ${data.country}. Output as JSON array.`;
+       const prompt = `Find 5 recent news articles (2024-2025) about workforce cooperation or bilateral agreements between the UAE and ${data.country}. IMPORTANT: The news titles and summaries MUST be returned in ${targetLanguage}. Output as JSON array.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
