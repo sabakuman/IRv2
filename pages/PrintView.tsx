@@ -194,6 +194,12 @@ export default function PrintView() {
           .report-root * {
             font-family: "Sakkal Majalla", serif !important;
           }
+          .report-root .kpi-label {
+            font-size: 10px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
         `}
       </style>
       {/* Floating Action Bar */}
