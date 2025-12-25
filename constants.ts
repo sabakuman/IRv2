@@ -1,3 +1,4 @@
+
 import { Report, AuditLog, EMPTY_REPORT_DATA } from './types';
 
 export const FLAGS: Record<string, string> = {
@@ -312,6 +313,25 @@ export const TRANSLATIONS = {
     edit: 'Edit',
     cancel: 'Cancel',
     lastUpdated: 'Last Updated',
+    // Letter Log
+    letterLog: 'Letter Log',
+    addLetter: 'Add New Letter',
+    viewLetterLog: 'View Letter Log',
+    totalLetters: 'Total Letters Logged',
+    closedLetters: 'Closed Letters',
+    openLettersCount: 'Open letters',
+    internalRef: 'Internal Ref',
+    externalRef: 'External Ref',
+    topic: 'Subject / Topic',
+    open: 'Open',
+    closed: 'Closed',
+    attachment: 'Attachment',
+    notes: 'Notes',
+    notices: 'Follow-up Notices',
+    addNote: 'Add Note',
+    deleteLetter: 'Delete Letter',
+    priority: 'Priority Label',
+    color: 'Label Color',
   },
   ar: {
     dashboard: 'الصفحة الرئيسة',
@@ -476,5 +496,24 @@ export const TRANSLATIONS = {
     edit: 'تعديل',
     cancel: 'إلغاء',
     lastUpdated: 'آخر تحديث',
+    // Letter Log
+    letterLog: 'سجل المراسلات',
+    addLetter: 'إضافة مراسلة جديدة',
+    viewLetterLog: 'عرض سجل المراسلات',
+    totalLetters: 'إجمالي المراسلات المسجلة',
+    closedLetters: 'المراسلات المغلقة',
+    openLettersCount: 'المراسلات المفتوحة',
+    internalRef: 'الرقم المرجعي الداخلي',
+    externalRef: 'الرقم المرجعي الخارجي',
+    topic: 'الموضوع',
+    open: 'مفتوح',
+    closed: 'مغلق',
+    attachment: 'المرفق',
+    notes: 'الملاحظات',
+    notices: 'ملاحظات المتابعة',
+    addNote: 'إضافة ملاحظة',
+    deleteLetter: 'حذف المراسلة',
+    priority: 'تصنيف الأولوية',
+    color: 'لون التصنيف',
   }
 };

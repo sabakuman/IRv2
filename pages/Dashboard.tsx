@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { MockService } from '../services/mockService';
-import { Report } from '../types';
+import { Report, LetterLog } from '../types';
 import { Card, Button } from '../components/ui/LayoutComponents';
-import { FileText, Plus, Activity, Edit3, ArrowRight, Save, X, Calendar } from 'lucide-react';
+import { FileText, Plus, Activity, Edit3, ArrowRight, Save, X, Calendar, Mail, FileCheck } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function Dashboard() {
@@ -15,6 +15,7 @@ export default function Dashboard() {
     window.location.hash = path.startsWith('/') ? path : `/${path}`;
   };
   const [reports, setReports] = useState<Report[]>([]);
+  const [letters, setLetters] = useState<LetterLog[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Announcement state
@@ -25,11 +26,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [fetchedReports, fetchedAnnouncement] = await Promise.all([
+      const [fetchedReports, fetchedAnnouncement, fetchedLetters] = await Promise.all([
         MockService.getReports(),
-        MockService.getAnnouncement()
+        MockService.getAnnouncement(),
+        MockService.getLetters()
       ]);
       setReports(fetchedReports);
+      setLetters(fetchedLetters);
       setAnnouncement(fetchedAnnouncement);
       if (fetchedAnnouncement) {
         setEditMsgEn(fetchedAnnouncement.message_en || '');
@@ -55,6 +58,10 @@ export default function Dashboard() {
   const draftCount = reports.filter(r => r.status === 'draft').length;
   const completedCount = reports.filter(r => r.status === 'completed').length;
 
+  const totalLetters = letters.length;
+  const closedLetters = letters.filter(l => l.status === 'closed').length;
+  const openLetters = totalLetters - closedLetters;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header Section */}
@@ -67,13 +74,18 @@ export default function Dashboard() {
             {t('welcome')}, {user?.fullName}
           </p>
         </div>
-        <Button onClick={() => navigate('/wizard')}>
-          <Plus size={20} />
-          {t('launchWizard')}
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => navigate('/letters')}>
+            <Mail size={18} /> {t('letterLog')}
+          </Button>
+          <Button onClick={() => navigate('/wizard')}>
+            <Plus size={20} />
+            {t('launchWizard')}
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards Row 1 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-l-4 border-l-primary hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/reports')}>
           <div className="flex justify-between items-center">
@@ -86,17 +98,35 @@ export default function Dashboard() {
             </div>
           </div>
         </Card>
-        <Card className="border-l-4 border-l-accent">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{t('draft')}</p>
-              <p className="text-3xl font-bold mt-2 dark:text-white">{draftCount}</p>
-            </div>
-            <div className="p-3 bg-accent/10 rounded-full text-accent">
-              <Edit3 size={24} />
-            </div>
-          </div>
+
+        {/* Letter Log Summary Card */}
+        <Card className="border-l-4 border-l-blue-400 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/letters')}>
+           <div className="flex justify-between items-start">
+             <div>
+               <p className="text-sm font-medium text-muted-foreground">{t('letterLog')}</p>
+               <p className="text-3xl font-bold mt-2 dark:text-white">{totalLetters}</p>
+               <div className="mt-2 space-y-1">
+                 <p className="text-[10px] text-gray-500 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    {t('closedLetters')}: <span className="font-bold text-gray-700 dark:text-gray-200">{closedLetters}</span>
+                 </p>
+                 <p className="text-[10px] text-gray-500 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    {t('openLettersCount')}: <span className="font-bold text-gray-700 dark:text-gray-200">{openLetters}</span>
+                 </p>
+               </div>
+             </div>
+             <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600">
+               <Mail size={24} />
+             </div>
+           </div>
+           <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+              <span className="text-xs text-primary font-bold flex items-center gap-1">
+                 {t('viewLetterLog')} <ArrowRight size={14} className={language === 'ar' ? 'rotate-180' : ''} />
+              </span>
+           </div>
         </Card>
+
         <Card className="border-l-4 border-l-green-600">
           <div className="flex justify-between items-center">
             <div>

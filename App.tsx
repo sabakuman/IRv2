@@ -12,6 +12,7 @@ import ReportsList from './pages/ReportsList';
 import AdminUsers from './pages/AdminUsers';
 import AdminLogs from './pages/AdminLogs';
 import Settings from './pages/Settings';
+import LetterLogList from './pages/LetterLogList';
 
 // Route Guard Component
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
@@ -61,6 +62,7 @@ const Router = () => {
         {(() => {
           if (hash === '/' || hash === '/dashboard') return <Dashboard />;
           if (hash === '/reports') return <ReportsList />;
+          if (hash === '/letters') return <LetterLogList />;
           if (routeBase === 'wizard') return <Wizard />;
           if (hash === '/account') return <Settings />;
           

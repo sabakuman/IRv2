@@ -107,23 +107,17 @@ export default function Wizard() {
       return;
     }
     
-    // Priority: User's personal API key, then system default
-    const aiKey = user?.apiKey || process.env.API_KEY;
-    
-    if (!aiKey) {
-      alert("No API key configured. Please set one in Settings.");
-      return;
-    }
-
     setIsFetchingAI(true);
     const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
     try {
-      const ai = new GoogleGenAI({ apiKey: aiKey });
+      // Initialize GenAI client strictly with process.env.API_KEY as per guidelines
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values (capital, names, categories, etc.) MUST be returned in ${targetLanguage}. Ensure numeric values are returned as strings if they contain currency or units.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: [{ parts: [{ text: prompt }] }],
+        // contents property set as a string for basic text query
+        contents: prompt,
         config: { 
           responseMimeType: 'application/json',
           responseSchema: {
@@ -183,7 +177,7 @@ export default function Wizard() {
       }
     } catch (error) { 
       console.error("AI Fetch Error:", error);
-      alert("Failed to fetch data via AI. Please ensure your API key is valid and has sufficient quota.");
+      alert("Failed to fetch data via AI. Please ensure connection is stable.");
     } finally { 
       setIsFetchingAI(false); 
     }
@@ -192,18 +186,17 @@ export default function Wizard() {
   const handleFetchNews = async () => {
      if (!data.country) return;
      
-     const aiKey = user?.apiKey || process.env.API_KEY;
-     if (!aiKey) return;
-
      setIsFetchingNews(true);
      const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
      try {
-       const ai = new GoogleGenAI({ apiKey: aiKey });
+       // Initialize GenAI client strictly with process.env.API_KEY as per guidelines
+       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
        const prompt = `Find 5 recent news articles (2024-2025) about workforce cooperation or bilateral agreements between the UAE and ${data.country}. IMPORTANT: The news titles and summaries MUST be returned in ${targetLanguage}. Output as JSON array.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
-          contents: [{ parts: [{ text: prompt }] }],
+          // contents property set as a string for basic text query
+          contents: prompt,
           config: { 
             tools: [{ googleSearch: {} }],
             responseMimeType: 'application/json',

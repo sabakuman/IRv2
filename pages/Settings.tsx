@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -13,44 +14,17 @@ export default function Settings() {
   const { user, updateUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  // API Key State
-  const [apiKey, setApiKey] = useState(user?.apiKey || '');
-  const [showKey, setShowKey] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
   // Test State
   const [testStatus, setTestStatus] = useState<'none' | 'loading' | 'success' | 'error'>('none');
   const [testError, setTestError] = useState('');
 
-  const handleSaveKey = async () => {
-    if (!user) return;
-    setIsSaving(true);
-    try {
-      const updatedUser = await MockService.updateApiKey(user.id, apiKey);
-      if (updatedUser) {
-        updateUser(updatedUser);
-        alert("API Key updated successfully.");
-      }
-    } catch (err) {
-      alert("Failed to save API Key.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleTestKey = async () => {
-    if (!apiKey) {
-      setTestStatus('error');
-      setTestError('Please enter an API key first.');
-      return;
-    }
-
     setTestStatus('loading');
     setTestError('');
 
     try {
-      // Use a new instance to ensure we test the exact string in the input
-      const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
+      // Strictly use process.env.API_KEY for initializing GenAI client as per guidelines
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: 'Respond with the word "OK" only.',
@@ -101,43 +75,17 @@ export default function Settings() {
             </div>
           </Card>
 
-          {/* AI Configuration Section */}
+          {/* AI Configuration Section - Removed personal API key entry as per guidelines */}
           <Card className="dark:bg-secondary dark:border-gray-800">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-white">
-              <Sparkles size={20} className="text-primary dark:text-accent" /> AI API Key
+              <Sparkles size={20} className="text-primary dark:text-accent" /> AI System Connection
             </h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Configure your personal Google Gemini API key to enable intelligence features.
+              The application utilizes the pre-configured system API key for intelligence features.
             </p>
             
             <div className="space-y-4">
-              <div className="relative">
-                <Input 
-                  label="Gemini API Key"
-                  type={showKey ? "text" : "password"}
-                  placeholder="Enter your API Key..."
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="pr-12"
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowKey(!showKey)}
-                  className="absolute right-3 bottom-2.5 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-
               <div className="flex flex-wrap gap-3 pt-2">
-                <Button 
-                  onClick={handleSaveKey} 
-                  disabled={isSaving}
-                  className="min-w-[120px]"
-                >
-                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                  Save Key
-                </Button>
                 <Button 
                   variant="outline" 
                   onClick={handleTestKey}
@@ -145,13 +93,13 @@ export default function Settings() {
                   className="min-w-[120px]"
                 >
                   {testStatus === 'loading' ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
-                  Test Key
+                  Test System Connection
                 </Button>
               </div>
 
               {testStatus === 'success' && (
                 <div className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800 animate-in fade-in slide-in-from-top-1">
-                  <CheckCircle size={16} /> Connection Successful! Your API key is valid.
+                  <CheckCircle size={16} /> Connection Successful! System API key is valid.
                 </div>
               )}
 
@@ -203,19 +151,13 @@ export default function Settings() {
             </h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">User Configuration</span>
-                {user?.apiKey ? (
-                  <span className="flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-                    <CheckCircle size={12} /> PERSONAL KEY
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                    <ShieldCheck size={12} /> SYSTEM DEFAULT
-                  </span>
-                )}
+                <span className="text-sm text-gray-600 dark:text-gray-400">System Integration</span>
+                <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                   <ShieldCheck size={12} /> CONFIGURED
+                </span>
               </div>
               <p className="text-[10px] text-gray-500 leading-relaxed italic">
-                The application uses a secure system default key unless you provide your own personal Google Gemini API key above.
+                The application uses a secure pre-configured system API key for all AI services.
               </p>
             </div>
           </Card>

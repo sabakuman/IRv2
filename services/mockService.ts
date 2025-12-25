@@ -1,7 +1,6 @@
 
-import { Report, AuditLog, UserProfile } from '../types';
+import { Report, AuditLog, UserProfile, LetterLog, LetterLogNote } from '../types';
 
-// The API runs on the same origin (port 4173) in production
 const API_URL = '/api';
 
 export const MockService = {
@@ -15,32 +14,18 @@ export const MockService = {
       });
       if (!res.ok) return null;
       return await res.json();
-    } catch (e) {
-      console.error("Login Error", e);
-      return null;
-    }
+    } catch (e) { return null; }
   },
 
   // --- Reports ---
   getReports: async (): Promise<Report[]> => {
-    try {
-      const res = await fetch(`${API_URL}/reports`);
-      if (!res.ok) return [];
-      return await res.json();
-    } catch (e) {
-      console.error(e);
-      return [];
-    }
+    const res = await fetch(`${API_URL}/reports`);
+    return res.ok ? await res.json() : [];
   },
 
   getReportById: async (id: string): Promise<Report | undefined> => {
-    try {
-      const res = await fetch(`${API_URL}/reports/${id}`);
-      if (!res.ok) return undefined;
-      return await res.json();
-    } catch (e) {
-      return undefined;
-    }
+    const res = await fetch(`${API_URL}/reports/${id}`);
+    return res.ok ? await res.json() : undefined;
   },
 
   saveReport: async (report: Report): Promise<void> => {
@@ -55,12 +40,46 @@ export const MockService = {
     await fetch(`${API_URL}/reports/${id}`, { method: 'DELETE' });
   },
 
+  // --- Letter Logs ---
+  getLetters: async (): Promise<LetterLog[]> => {
+    const res = await fetch(`${API_URL}/letters`);
+    return res.ok ? await res.json() : [];
+  },
+
+  getLetterById: async (id: string): Promise<LetterLog | undefined> => {
+    const res = await fetch(`${API_URL}/letters/${id}`);
+    return res.ok ? await res.json() : undefined;
+  },
+
+  saveLetter: async (letter: LetterLog): Promise<void> => {
+    await fetch(`${API_URL}/letters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(letter)
+    });
+  },
+
+  deleteLetter: async (id: string): Promise<void> => {
+    await fetch(`${API_URL}/letters/${id}`, { method: 'DELETE' });
+  },
+
+  getLetterNotes: async (letterId: string): Promise<LetterLogNote[]> => {
+    const res = await fetch(`${API_URL}/letters/${letterId}/notes`);
+    return res.ok ? await res.json() : [];
+  },
+
+  addLetterNote: async (note: LetterLogNote): Promise<void> => {
+    await fetch(`${API_URL}/letters/${note.letter_id}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(note)
+    });
+  },
+
   // --- Audit Logs ---
   getAuditLogs: async (): Promise<AuditLog[]> => {
-    try {
-      const res = await fetch(`${API_URL}/logs`);
-      return await res.json();
-    } catch (e) { return []; }
+    const res = await fetch(`${API_URL}/logs`);
+    return res.ok ? await res.json() : [];
   },
 
   addAuditLog: async (log: AuditLog): Promise<void> => {
@@ -73,10 +92,8 @@ export const MockService = {
 
   // --- Users ---
   getUsers: async (): Promise<UserProfile[]> => {
-    try {
-      const res = await fetch(`${API_URL}/users`);
-      return await res.json();
-    } catch (e) { return []; }
+    const res = await fetch(`${API_URL}/users`);
+    return res.ok ? await res.json() : [];
   },
 
   addUser: async (user: UserProfile): Promise<void> => {
@@ -105,16 +122,13 @@ export const MockService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey })
     });
-    if (!res.ok) return null;
-    return await res.json();
+    return res.ok ? await res.json() : null;
   },
 
   // --- Announcements ---
   getAnnouncement: async (): Promise<any> => {
-    try {
-      const res = await fetch(`${API_URL}/announcement`);
-      return await res.json();
-    } catch (e) { return {}; }
+    const res = await fetch(`${API_URL}/announcement`);
+    return res.ok ? await res.json() : {};
   },
 
   updateAnnouncement: async (data: any): Promise<void> => {

@@ -31,78 +31,6 @@ const db = new sqlite3.Database(DB_FILE, (err) => {
   }
 });
 
-// Default Data (Same as constants.ts)
-const DEFAULT_REPORT = {
-    id: 'r-101',
-    userId: 'u-1',
-    title: 'Bilateral Meeting Prep: India',
-    status: 'completed',
-    updatedAt: '2023-10-24T10:00:00Z',
-    data: {
-      reportDate: '2023-11-15',
-      country: 'India',
-      capital: 'New Delhi',
-      officialLanguage: 'Hindi, English',
-      population: '1.4B',
-      currency: 'Indian Rupee (INR)',
-      gdp: '3.5 Trillion USD',
-      hdi: '0.633',
-      directFlight: true,
-      uaeEmbassyLocation: 'New Delhi',
-      foreignEmbassyLocation: 'Abu Dhabi',
-      workforceMinistry: 'Ministry of Skill Development',
-      uaeWorkforceStats: {
-        mohre: {
-          totalPrivate: { value: '3,200,000', date: 'Sept 2023' },
-          totalDomestic: { value: '800,000', date: 'Sept 2023' },
-          byEmirate: [
-             { name: 'Abu Dhabi', value: 1200000 },
-             { name: 'Dubai', value: 1800000 },
-             { name: 'Sharjah', value: 500000 },
-             { name: 'Ajman', value: 200000 },
-             { name: 'Umm Al Quwain', value: 50000 },
-             { name: 'Ras Al Khaimah', value: 150000 },
-             { name: 'Fujairah', value: 100000 },
-          ],
-          bySector: []
-        },
-        icp: {
-          byEmirate: [],
-          bySector: []
-        },
-        custom: []
-      },
-      workforceStats: {
-        totalWorkforce: '580 Million',
-        participationMale: 76,
-        participationFemale: 24,
-        migrationDestinations: [],
-        topSectors: [],
-        availableSkills: []
-      },
-      economicStats: {
-        inflation: '5.5%',
-        totalExportsToUAE: '30 Billion USD',
-        totalImportsFromUAE: '50 Billion USD',
-        topExportProducts: [],
-        topImportProducts: [],
-        mainEconomicPartners: [],
-        customStats: []
-      },
-      educationStats: {
-        topUniversities: [],
-        primaryEnrollment: '99%',
-        higherEducationEnrollment: '27%'
-      },
-      recentInteractions: [],
-      pointsOfDiscussion: [],
-      relatedNews: [],
-      customSections: [],
-      bilateralAgreements: [],
-      delegations: { uae: [], partner: [] }
-    }
-};
-
 const DEFAULT_ADMIN = {
   id: 'u-admin',
   fullName: 'System Administrator',
@@ -154,36 +82,41 @@ function initializeDatabase() {
       updatedBy TEXT
     )`);
 
-    // --- SMART ADMIN SEED ---
+    // 5. Letter Logs Table
+    db.run(`CREATE TABLE IF NOT EXISTS letter_logs (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      internal_ref TEXT,
+      topic TEXT,
+      external_ref TEXT,
+      status TEXT DEFAULT 'open',
+      label TEXT,
+      label_color TEXT,
+      notes TEXT,
+      attachment_url TEXT,
+      created_by TEXT,
+      created_by_id TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )`);
+
+    // 6. Letter Log Notes Table
+    db.run(`CREATE TABLE IF NOT EXISTS letter_log_notes (
+      id TEXT PRIMARY KEY,
+      letter_id TEXT,
+      note TEXT,
+      created_by TEXT,
+      created_by_id TEXT,
+      created_at TEXT,
+      FOREIGN KEY(letter_id) REFERENCES letter_logs(id)
+    )`);
+
+    // --- SEEDING ---
     db.get("SELECT * FROM users WHERE id = ?", [DEFAULT_ADMIN.id], (err, row) => {
-      if (row) {
-        console.log("Admin user found. Resetting password to 'admin'...");
-        db.run("UPDATE users SET password = ?, role = 'admin' WHERE id = ?", [DEFAULT_ADMIN.password, DEFAULT_ADMIN.id]);
-      } else {
-        console.log("Admin user missing. Creating default admin...");
+      if (!row) {
         const adminStmt = db.prepare("INSERT INTO users (id, email, fullName, role, password, avatarUrl, apiKey) VALUES (?, ?, ?, ?, ?, ?, ?)");
         adminStmt.run(DEFAULT_ADMIN.id, DEFAULT_ADMIN.email, DEFAULT_ADMIN.fullName, DEFAULT_ADMIN.role, DEFAULT_ADMIN.password, DEFAULT_ADMIN.avatarUrl, DEFAULT_ADMIN.apiKey);
         adminStmt.finalize();
-      }
-    });
-
-    // Seed default report if empty
-    db.get("SELECT count(*) as count FROM reports", (err, row) => {
-      if (row && row.count === 0) {
-        console.log("Seeding default report...");
-        const stmt = db.prepare("INSERT INTO reports VALUES (?, ?, ?, ?, ?, ?)");
-        stmt.run(DEFAULT_REPORT.id, DEFAULT_REPORT.userId, DEFAULT_REPORT.title, DEFAULT_REPORT.status, DEFAULT_REPORT.updatedAt, JSON.stringify(DEFAULT_REPORT.data));
-        stmt.finalize();
-      }
-    });
-
-    // Seed default announcement if empty
-    db.get("SELECT count(*) as count FROM app_announcements", (err, row) => {
-      if (row && row.count === 0) {
-        console.log("Seeding default announcement...");
-        const stmt = db.prepare("INSERT INTO app_announcements (id, message_en, message_ar, updatedAt, updatedBy) VALUES (?, ?, ?, ?, ?)");
-        stmt.run('current', 'Welcome to the UAE Labour Market Intelligence portal. This platform provides secure access to ministerial-grade reports.', 'مرحباً بكم في بوابة معلومات سوق العمل في دولة الإمارات العربية المتحدة. توفر هذه المنصة وصولاً آمناً إلى التقارير الوزارية.', new Date().toISOString(), 'System');
-        stmt.finalize();
       }
     });
   });
@@ -191,7 +124,7 @@ function initializeDatabase() {
 
 // --- API ENDPOINTS ---
 
-// Announcement Endpoints
+// Announcement
 app.get('/api/announcement', (req, res) => {
   db.get("SELECT * FROM app_announcements WHERE id = 'current'", [], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -201,117 +134,52 @@ app.get('/api/announcement', (req, res) => {
 
 app.post('/api/announcement', (req, res) => {
   const { message_en, message_ar, updatedAt, updatedBy } = req.body;
-  const stmt = db.prepare("INSERT OR REPLACE INTO app_announcements (id, message_en, message_ar, updatedAt, updatedBy) VALUES (?, ?, ?, ?, ?)");
-  stmt.run('current', message_en, message_ar, updatedAt, updatedBy, (err) => {
+  db.run("INSERT OR REPLACE INTO app_announcements (id, message_en, message_ar, updatedAt, updatedBy) VALUES (?, ?, ?, ?, ?)", 
+    ['current', message_en, message_ar, updatedAt, updatedBy], (err) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });
-  stmt.finalize();
 });
 
-// 1. Users
+// Login
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
-  
-  // Clean inputs
-  const safeEmail = (email || '').trim();
-  const safePassword = (password || '').trim();
-
-  console.log(`Login attempt for: ${safeEmail}`);
-
-  // --- FAILSAFE ADMIN LOGIN ---
-  if (safeEmail === 'admin' && safePassword === 'admin') {
-    console.log("Admin failsafe login triggered.");
-    db.get("SELECT * FROM users WHERE id = 'u-admin'", [], (err, row) => {
-       if (row) {
-         res.json(row);
-       } else {
-         res.json(DEFAULT_ADMIN);
-       }
-    });
-    return;
-  }
-
-  // Normal Database Login
-  db.get("SELECT * FROM users WHERE (lower(email) = lower(?) OR id = ?) AND password = ?", [safeEmail, safeEmail, safePassword], (err, row) => {
-    if (err) {
-      console.error("DB Login Error:", err);
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    if (row) {
-      res.json(row);
-    } else {
-      console.log("Invalid credentials");
-      res.status(401).json({ error: 'Invalid credentials' });
-    }
+  db.get("SELECT * FROM users WHERE (lower(email) = lower(?) OR id = ?) AND password = ?", [email, email, password], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (row) res.json(row);
+    else res.status(401).json({ error: 'Invalid credentials' });
   });
 });
 
 app.get('/api/users', (req, res) => {
   db.all("SELECT * FROM users", [], (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 
 app.post('/api/users', (req, res) => {
-  const { id, email, fullName, role, password, avatarUrl, apiKey } = req.body;
-  
-  db.get("SELECT id FROM users WHERE email = ?", [email], (err, row) => {
-     if (row) return res.status(400).json({ error: "User already exists" });
-
-     const stmt = db.prepare("INSERT INTO users (id, email, fullName, role, password, avatarUrl, apiKey) VALUES (?, ?, ?, ?, ?, ?, ?)");
-     stmt.run(id, email, fullName, role, password, avatarUrl, apiKey || '', (err) => {
-       if (err) return res.status(500).json({ error: err.message });
-       res.json({ success: true });
-     });
-     stmt.finalize();
+  const { id, email, fullName, role, password, avatarUrl } = req.body;
+  db.run("INSERT INTO users (id, email, fullName, role, password, avatarUrl) VALUES (?, ?, ?, ?, ?, ?)", 
+    [id, email, fullName, role, password, avatarUrl], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
   });
 });
 
 app.delete('/api/users/:id', (req, res) => {
-  if (req.params.id === 'u-admin') return res.status(403).send("Cannot delete admin");
+  if (req.params.id === 'u-admin') return res.status(403).send("Cannot delete root admin");
   db.run("DELETE FROM users WHERE id = ?", [req.params.id], (err) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });
 });
 
-app.post('/api/users/:id/password', (req, res) => {
-  db.run("UPDATE users SET password = ? WHERE id = ?", [req.body.password, req.params.id], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    if (this.changes === 0) return res.status(404).send("User not found");
-    res.json({ success: true });
-  });
-});
-
-app.post('/api/users/:id/apikey', (req, res) => {
-  db.run("UPDATE users SET apiKey = ? WHERE id = ?", [req.body.apiKey, req.params.id], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    
-    // Return updated user object
-    db.get("SELECT * FROM users WHERE id = ?", [req.params.id], (err, row) => {
-       res.json(row);
-    });
-  });
-});
-
-// 2. Reports
+// Reports
 app.get('/api/reports', (req, res) => {
   db.all("SELECT * FROM reports ORDER BY updatedAt DESC", [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    
-    const reports = rows.map(r => {
-      try {
-        return { ...r, data: JSON.parse(r.data) };
-      } catch (e) {
-        return { ...r, data: {} };
-      }
-    });
+    const reports = rows.map(r => ({ ...r, data: JSON.parse(r.data) }));
     res.json(reports);
   });
 });
@@ -319,26 +187,19 @@ app.get('/api/reports', (req, res) => {
 app.get('/api/reports/:id', (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
-    if (!row) return res.status(404).send("Report not found");
-    
-    try {
-      row.data = JSON.parse(row.data);
-    } catch (e) { row.data = {}; }
-    
+    if (!row) return res.status(404).send("Not found");
+    row.data = JSON.parse(row.data);
     res.json(row);
   });
 });
 
 app.post('/api/reports', (req, res) => {
   const { id, userId, title, status, updatedAt, data } = req.body;
-  const dataStr = JSON.stringify(data);
-  
-  const stmt = db.prepare("INSERT OR REPLACE INTO reports (id, userId, title, status, updatedAt, data) VALUES (?, ?, ?, ?, ?, ?)");
-  stmt.run(id, userId, title, status, updatedAt, dataStr, (err) => {
+  db.run("INSERT OR REPLACE INTO reports (id, userId, title, status, updatedAt, data) VALUES (?, ?, ?, ?, ?, ?)", 
+    [id, userId, title, status, updatedAt, JSON.stringify(data)], (err) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });
-  stmt.finalize();
 });
 
 app.delete('/api/reports/:id', (req, res) => {
@@ -348,7 +209,57 @@ app.delete('/api/reports/:id', (req, res) => {
   });
 });
 
-// 3. Logs
+// --- LETTER LOG API ---
+app.get('/api/letters', (req, res) => {
+  db.all("SELECT * FROM letter_logs ORDER BY created_at DESC", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.get('/api/letters/:id', (req, res) => {
+  db.get("SELECT * FROM letter_logs WHERE id = ?", [req.params.id], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(row);
+  });
+});
+
+app.post('/api/letters', (req, res) => {
+  const { id, title, internal_ref, topic, external_ref, status, label, label_color, notes, attachment_url, created_by, created_by_id, created_at, updated_at } = req.body;
+  db.run(`INSERT OR REPLACE INTO letter_logs 
+    (id, title, internal_ref, topic, external_ref, status, label, label_color, notes, attachment_url, created_by, created_by_id, created_at, updated_at) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+    [id, title, internal_ref, topic, external_ref, status, label, label_color, notes, attachment_url, created_by, created_by_id, created_at, updated_at], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
+app.delete('/api/letters/:id', (req, res) => {
+  db.run("DELETE FROM letter_logs WHERE id = ?", [req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
+// --- LETTER LOG NOTES API ---
+app.get('/api/letters/:id/notes', (req, res) => {
+  db.all("SELECT * FROM letter_log_notes WHERE letter_id = ? ORDER BY created_at ASC", [req.params.id], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.post('/api/letters/:id/notes', (req, res) => {
+  const { id, letter_id, note, created_by, created_by_id, created_at } = req.body;
+  db.run("INSERT INTO letter_log_notes (id, letter_id, note, created_by, created_by_id, created_at) VALUES (?, ?, ?, ?, ?, ?)", 
+    [id, letter_id, note, created_by, created_by_id, created_at], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
+// Logs
 app.get('/api/logs', (req, res) => {
   db.all("SELECT * FROM logs ORDER BY timestamp DESC LIMIT 500", [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -358,24 +269,30 @@ app.get('/api/logs', (req, res) => {
 
 app.post('/api/logs', (req, res) => {
   const { id, action, user, timestamp, details } = req.body;
-  const stmt = db.prepare("INSERT INTO logs (id, action, user, timestamp, details) VALUES (?, ?, ?, ?, ?)");
-  stmt.run(id, action, user, timestamp, details, (err) => {
+  db.run("INSERT INTO logs (id, action, user, timestamp, details) VALUES (?, ?, ?, ?, ?)", 
+    [id, action, user, timestamp, details], (err) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });
-  stmt.finalize();
 });
 
+// User API Updates
+app.post('/api/users/:id/password', (req, res) => {
+  db.run("UPDATE users SET password = ? WHERE id = ?", [req.body.password, req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
 
-// --- SERVE FRONTEND ---
+app.post('/api/users/:id/apikey', (req, res) => {
+  db.run("UPDATE users SET apiKey = ? WHERE id = ?", [req.body.apiKey, req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    db.get("SELECT * FROM users WHERE id = ?", [req.params.id], (e, row) => res.json(row));
+  });
+});
+
+// Frontend
 app.use(express.static(path.join(__dirname, 'dist')));
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'dist', 'index.html')));
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-// Start Server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
-  console.log(`Database: ${DB_FILE}`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));

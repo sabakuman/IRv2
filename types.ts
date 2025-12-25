@@ -13,6 +13,33 @@ export interface UserProfile {
   apiKey?: string; // Personal Gemini API Key
 }
 
+// Letter Log Module Types
+export interface LetterLog {
+  id: string;
+  title: string;
+  internal_ref: string;
+  topic: string;
+  external_ref: string;
+  status: 'open' | 'closed';
+  label: string;
+  label_color: string;
+  notes: string;
+  attachment_url?: string;
+  created_by: string; // User Name
+  created_by_id: string; // User UUID
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LetterLogNote {
+  id: string;
+  letter_id: string;
+  note: string;
+  created_by: string;
+  created_by_id: string;
+  created_at: string;
+}
+
 export interface Delegate {
   id: string;
   name: string;
