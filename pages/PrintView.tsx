@@ -120,7 +120,7 @@ export default function PrintView() {
   const DefaultFooter = () => (
     <div className="pt-2 flex justify-between items-center bg-white w-full border-t border-gray-100">
       <p className="text-[8px] text-gray-400 font-sans">
-        {t('generatedOn')} <span className="font-sans" dir="ltr">2025 December 22</span>
+        {t('generatedOn')} <span className="font-sans">2025 December 22</span>
       </p>
       <p className="text-[8px] text-gray-400 uppercase tracking-widest">{t('ministry')}</p>
     </div>
@@ -199,6 +199,16 @@ export default function PrintView() {
             overflow: hidden !important;
             text-overflow: ellipsis !important;
           }
+          /* Make labels bigger ONLY for the Profile KPI grid (HDI page). Numbers stay unchanged. */
+          .report-root .profile-kpi-grid .kpi-label {
+            display: inline-block !important;
+            transform: scale(1.08); /* tiny but noticeable */
+          }
+
+          /* RTL-friendly origin */
+          [dir="rtl"] .report-root .profile-kpi-grid .kpi-label {
+            transform-origin: right center;
+          }
         `}
       </style>
       {/* Floating Action Bar */}
@@ -240,8 +250,8 @@ export default function PrintView() {
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-8">
-                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('reference')}</p><p className="font-mono text-base text-gray-800" dir="ltr">{report.id}</p></div>
-                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('date')}</p><p className="font-mono text-base text-gray-800" dir="ltr">{data.reportDate}</p></div>
+                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('reference')}</p><p className="font-mono text-base text-gray-800">{report.id}</p></div>
+                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('date')}</p><p className="font-mono text-base text-gray-800">{data.reportDate}</p></div>
                     <div className="col-span-2"><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('securityClass')}</p><span className="kpi-chip chip-restrict inline-flex items-center gap-2 px-3 py-1"><ShieldAlert size={12} /> {t('officialRestricted')}</span></div>
                 </div>
               </div>
@@ -253,7 +263,7 @@ export default function PrintView() {
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact={true} />
-          <div className="grid grid-cols-4 gap-3 mb-4">
+          <div className="grid grid-cols-4 gap-3 mb-4 profile-kpi-grid">
             <KPI icon={Landmark} label={t('capital')} value={data.capital} />
             <KPI icon={Users} label={t('population')} value={data.population} sub={getSource('demo')} />
             <KPI icon={Banknote} label={t('currency')} value={data.currency} />
@@ -272,8 +282,8 @@ export default function PrintView() {
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-4 shadow-sm">
             <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('trade')}</span></h4>
             <div className="grid grid-cols-2 gap-8">
-                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalImportsFromUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topImportProducts.join(', ')}</p></div>
-                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1" dir="ltr">{data.economicStats.totalExportsToUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topExportProducts.join(', ')}</p></div>
+                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalImportsFromUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topImportProducts.join(', ')}</p></div>
+                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalExportsToUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topExportProducts.join(', ')}</p></div>
             </div>
           </div>
           <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact={true} />
@@ -308,7 +318,7 @@ export default function PrintView() {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
                 <p className="text-center text-[10px] font-bold text-primary mb-2 uppercase tracking-wider">{t('workersByEmirate')}</p>
-                <div className="h-32 w-full" dir="ltr">
+                <div className="h-32 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sortedMohreEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
                           <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
@@ -323,7 +333,7 @@ export default function PrintView() {
             </div>
             <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
                 <p className="text-center text-[10px] font-bold text-accent mb-2 uppercase tracking-wider">{t('residentsByEmirate')}</p>
-                <div className="h-32 w-full" dir="ltr">
+                <div className="h-32 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sortedIcpEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
                           <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
@@ -349,9 +359,9 @@ export default function PrintView() {
                       <div key={i}>
                         <div className="flex justify-between text-[10px] mb-0.5">
                             <span className="font-bold text-gray-700 truncate">{s.name}</span>
-                            <span className="font-mono text-gray-900 font-bold" dir="ltr">{formatCompactNumber(s.value)}</span>
+                            <span className="font-mono text-gray-900 font-bold">{formatCompactNumber(s.value)}</span>
                         </div>
-                        <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden" dir="ltr">
+                        <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-primary transition-all duration-500" 
                               style={{ width: `${(s.value / maxMohreVal) * 100}%` }}
@@ -373,7 +383,7 @@ export default function PrintView() {
                             </p>
                             <p className="text-[8px] text-gray-400 font-sans">{stat.date}</p>
                         </div>
-                        <p className="text-lg font-serif font-bold text-gray-900" dir="ltr">{stat.value}</p>
+                        <p className="text-lg font-serif font-bold text-gray-900">{stat.value}</p>
                       </div>
                   ))}
                 </div>
@@ -401,7 +411,7 @@ export default function PrintView() {
                   {data.workforceStats.migrationDestinations.slice(0, 5).map((dest, i) => (
                       <div key={i} className="flex justify-between items-center pb-2 border-b border-gray-50 last:border-0">
                         <span className="font-bold text-gray-700">{dest.country}</span>
-                        <span className="font-mono text-gray-500" dir="ltr">{dest.count}</span>
+                        <span className="font-mono text-gray-500">{dest.count}</span>
                       </div>
                   ))}
                 </div>
@@ -412,7 +422,7 @@ export default function PrintView() {
                   {data.workforceStats.topSectors.slice(0, 5).map((sec, i) => (
                       <div key={i} className="flex justify-between items-center pb-2 border-b border-gray-50 last:border-0">
                         <span className="font-bold text-gray-700">{sec.name}</span>
-                        <span className="font-mono text-gray-500" dir="ltr">{sec.value}</span>
+                        <span className="font-mono text-gray-500">{sec.value}</span>
                       </div>
                   ))}
                 </div>
@@ -441,7 +451,7 @@ export default function PrintView() {
                 <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50 shadow-sm flex flex-col overflow-visible avoid-break">
                     <div className="flex justify-between items-center mb-0.5">
                       <span className="text-[8px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
-                      <span className="text-[8px] font-mono text-gray-400" dir="ltr">{formatDate(item.date)}</span>
+                      <span className="text-[8px] font-mono text-gray-400">{formatDate(item.date)}</span>
                     </div>
                     <p className="text-[12.5px] font-bold text-gray-900 mb-0.5 leading-tight">{item.title}</p>
                     <div className="overflow-visible">
@@ -490,7 +500,7 @@ export default function PrintView() {
                 <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 grid grid-cols-12 gap-3 items-start shadow-sm avoid-break overflow-visible">
                     <div className="col-span-3">
                       <p className="text-[12.5px] font-bold text-gray-900 leading-tight">{agreement.title}</p>
-                      <p className="text-[8px] font-mono font-bold text-gray-500 mt-1" dir="ltr">{formatDate(agreement.date)}</p>
+                      <p className="text-[8px] font-mono font-bold text-gray-500 mt-1">{formatDate(agreement.date)}</p>
                     </div>
                     <div className="col-span-7 overflow-visible">
                       {renderRichText(agreement.summary, "text-[12px] font-medium")}

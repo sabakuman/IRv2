@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ShieldAlert } from "lucide-react";
 
@@ -161,7 +160,7 @@ export const KPI = ({
         </div>
 
         <p className="kpi-value break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
-           <span dir="ltr">{value || 'N/A'}</span>
+           <span>{value || 'N/A'}</span>
         </p>
         
         {sub && <p className="kpi-sub mt-1.5 leading-tight">{sub}</p>}
