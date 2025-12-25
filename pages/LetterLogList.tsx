@@ -219,7 +219,7 @@ export default function LetterLogList() {
                  <button onClick={() => setIsEditorOpen(false)} className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-xl transition-all"><X /></button>
               </div>
               <form onSubmit={handleSaveLetter} className="p-8 max-h-[80vh] overflow-y-auto space-y-6">
-                 <Input label={t('reportTitle')} required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+                 <Input label={t('letterTitle')} required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Input label={t('internalRef')} value={formData.internal_ref} onChange={e => setFormData({...formData, internal_ref: e.target.value})} />
                     <Input label={t('externalRef')} value={formData.external_ref} onChange={e => setFormData({...formData, external_ref: e.target.value})} />

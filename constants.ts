@@ -335,6 +335,7 @@ export const TRANSLATIONS = {
     priority: 'Priority Label',
     color: 'Label Color',
     personalApiKey: 'Personal API Key',
+    letterTitle: 'Letter Title',
   },
   ar: {
     dashboard: 'الصفحة الرئيسة',
@@ -521,5 +522,6 @@ export const TRANSLATIONS = {
     priority: 'تصنيف الأولوية',
     color: 'لون التصنيف',
     personalApiKey: 'مفتاح الـ API الشخصي',
+    letterTitle: 'عنوان المراسلة',
   }
 };
