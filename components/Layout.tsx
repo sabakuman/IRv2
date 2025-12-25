@@ -2,7 +2,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { LogOut, Home, FileText, Settings, Globe, Menu, Users, ShieldAlert, FileClock } from 'lucide-react';
+import { LogOut, Home, FileText, Settings, Globe, Menu, Users, ShieldAlert, FileClock, Mail } from 'lucide-react';
 
 // Fixed: Replaced missing Outlet component with children prop, and missing hooks with manual implementations
 export default function Layout({ children }: { children?: React.ReactNode }) {
@@ -49,6 +49,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           <div className="mb-2 px-4 text-xs font-semibold text-blue-300 uppercase tracking-wider">General</div>
           <NavItem icon={Home} label={t('dashboard')} path="/dashboard" />
           <NavItem icon={FileText} label={t('reports')} path="/reports" />
+          <NavItem icon={Mail} label={t('letterLog')} path="/letters" />
           <NavItem icon={Settings} label={t('settings')} path="/account" />
 
           {/* Admin Navigation */}

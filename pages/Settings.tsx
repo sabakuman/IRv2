@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Card, Button, Input } from '../components/ui/LayoutComponents';
 import { 
   Moon, Sun, User, ShieldCheck, CheckCircle, 
@@ -13,18 +14,48 @@ import { GoogleGenAI } from "@google/genai";
 export default function Settings() {
   const { user, updateUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
+
+  const [personalKey, setPersonalKey] = useState(user?.apiKey || '');
+  const [showKey, setShowKey] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Test State
   const [testStatus, setTestStatus] = useState<'none' | 'loading' | 'success' | 'error'>('none');
   const [testError, setTestError] = useState('');
+
+  useEffect(() => {
+    if (user?.apiKey) setPersonalKey(user.apiKey);
+  }, [user]);
+
+  const handleSaveKey = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      const updatedUser = await MockService.updateApiKey(user.id, personalKey);
+      if (updatedUser) {
+        updateUser(updatedUser);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleTestKey = async () => {
     setTestStatus('loading');
     setTestError('');
 
     try {
-      // Strictly use process.env.API_KEY for initializing GenAI client as per guidelines
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // Use personal key if provided, else fallback to system key
+      const apiKeyToTest = personalKey || process.env.API_KEY;
+      
+      if (!apiKeyToTest) {
+        throw new Error("No API key available to test.");
+      }
+
+      const ai = new GoogleGenAI({ apiKey: apiKeyToTest });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: 'Respond with the word "OK" only.',
@@ -45,7 +76,7 @@ export default function Settings() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20">
       <div>
         <h1 className="text-3xl font-serif font-bold text-primary-dark dark:text-primary-foreground">
-          Settings
+          {t('settings')}
         </h1>
         <p className="text-muted-foreground mt-1">
           Manage your account preferences and application appearance.
@@ -75,16 +106,40 @@ export default function Settings() {
             </div>
           </Card>
 
-          {/* AI Configuration Section - Removed personal API key entry as per guidelines */}
+          {/* AI Configuration Section */}
           <Card className="dark:bg-secondary dark:border-gray-800">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-white">
               <Sparkles size={20} className="text-primary dark:text-accent" /> AI System Connection
             </h2>
             <p className="text-sm text-muted-foreground mb-6">
-              The application utilizes the pre-configured system API key for intelligence features.
+              The application utilizes a pre-configured system key, but you can provide a Personal API Key for higher limits.
             </p>
             
             <div className="space-y-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold dark:text-gray-300">{t('personalApiKey')}</label>
+                <div className="flex gap-2">
+                   <div className="relative flex-1">
+                      <input 
+                        type={showKey ? 'text' : 'password'}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20"
+                        value={personalKey}
+                        onChange={e => setPersonalKey(e.target.value)}
+                        placeholder="AI29..."
+                      />
+                      <button 
+                        onClick={() => setShowKey(!showKey)}
+                        className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                      >
+                        {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                   </div>
+                   <Button onClick={handleSaveKey} disabled={isSaving}>
+                      {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                   </Button>
+                </div>
+              </div>
+
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button 
                   variant="outline" 
@@ -99,7 +154,7 @@ export default function Settings() {
 
               {testStatus === 'success' && (
                 <div className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800 animate-in fade-in slide-in-from-top-1">
-                  <CheckCircle size={16} /> Connection Successful! System API key is valid.
+                  <CheckCircle size={16} /> Connection Successful! {personalKey ? 'Personal' : 'System'} API key is valid.
                 </div>
               )}
 
@@ -153,11 +208,13 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">System Integration</span>
                 <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                   <ShieldCheck size={12} /> CONFIGURED
+                   <ShieldCheck size={12} /> {personalKey ? 'PERSONAL' : 'SYSTEM'}
                 </span>
               </div>
               <p className="text-[10px] text-gray-500 leading-relaxed italic">
-                The application uses a secure pre-configured system API key for all AI services.
+                {personalKey 
+                  ? 'Your personal API key is currently active and will be used for all intelligent features.' 
+                  : 'The application is using the secure pre-configured system API key.'}
               </p>
             </div>
           </Card>

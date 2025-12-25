@@ -325,6 +325,7 @@ export const TRANSLATIONS = {
     topic: 'Subject / Topic',
     open: 'Open',
     closed: 'Closed',
+    all: 'All',
     attachment: 'Attachment',
     notes: 'Notes',
     notices: 'Follow-up Notices',
@@ -332,6 +333,7 @@ export const TRANSLATIONS = {
     deleteLetter: 'Delete Letter',
     priority: 'Priority Label',
     color: 'Label Color',
+    personalApiKey: 'Personal API Key',
   },
   ar: {
     dashboard: 'الصفحة الرئيسة',
@@ -508,6 +510,7 @@ export const TRANSLATIONS = {
     topic: 'الموضوع',
     open: 'مفتوح',
     closed: 'مغلق',
+    all: 'الكل',
     attachment: 'المرفق',
     notes: 'الملاحظات',
     notices: 'ملاحظات المتابعة',
@@ -515,5 +518,6 @@ export const TRANSLATIONS = {
     deleteLetter: 'حذف المراسلة',
     priority: 'تصنيف الأولوية',
     color: 'لون التصنيف',
+    personalApiKey: 'مفتاح الـ API الشخصي',
   }
 };

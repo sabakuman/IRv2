@@ -151,7 +151,7 @@ export default function LetterLogList() {
                   onClick={() => setStatusFilter(s)}
                   className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all uppercase ${statusFilter === s ? 'bg-white dark:bg-gray-600 shadow-sm text-primary dark:text-white' : 'text-gray-500'}`}
                  >
-                    {s === 'all' ? 'All' : t(s as any)}
+                    {t(s as any)}
                  </button>
                ))}
             </div>
