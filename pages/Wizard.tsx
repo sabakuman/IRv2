@@ -119,7 +119,7 @@ export default function Wizard() {
 
     try {
       const ai = new GoogleGenAI({ apiKey });
-      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values (capital, names, categories, etc.) MUST be returned in ${targetLanguage}. Ensure numeric values are returned as strings if they contain currency or units.`;
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -183,12 +183,52 @@ export default function Wizard() {
       }
     } catch (error: any) { 
       console.error("AI Fetch Error:", error);
-      const errorMsg = error?.message?.includes("API_KEY_INVALID") 
-        ? "Invalid API Key. Please check your key in Settings." 
-        : "Failed to fetch data via AI. Please ensure your connection is stable and the API Key is correct.";
-      alert(errorMsg);
+      alert("Failed to fetch data via AI. Please ensure your connection is stable.");
     } finally { 
       setIsFetchingAI(false); 
+    }
+  };
+
+  const handleFetchAgreements = async () => {
+    if (!data.country) return;
+    setIsFetchingAI(true);
+    const apiKey = user?.apiKey || process.env.API_KEY;
+    if (!apiKey) return setIsFetchingAI(false);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey });
+      const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
+      const prompt = `Identify and list 5-10 formal bilateral labour agreements, MoUs, or protocols between the UAE (MOHRE/MOFA) and ${data.country}. Return as JSON array with title, date, status (Active/Pending), and summary. Language: ${targetLanguage}.`;
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                date: { type: Type.STRING },
+                status: { type: Type.STRING },
+                summary: { type: Type.STRING }
+              }
+            }
+          }
+        }
+      });
+
+      if (response.text) {
+        const agrs = JSON.parse(response.text);
+        setData(prev => ({ ...prev, bilateralAgreements: agrs }));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to fetch agreements.");
+    } finally {
+      setIsFetchingAI(false);
     }
   };
 
@@ -196,18 +236,13 @@ export default function Wizard() {
      if (!data.country) return;
      
      setIsFetchingNews(true);
-     const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
      const apiKey = user?.apiKey || process.env.API_KEY;
-
-     if (!apiKey) {
-       alert("No API Key found. Please add a Personal API Key in Settings.");
-       setIsFetchingNews(false);
-       return;
-     }
+     if (!apiKey) { setIsFetchingNews(false); return; }
 
      try {
        const ai = new GoogleGenAI({ apiKey });
-       const prompt = `Find 5 recent news articles (2024-2025) about workforce cooperation or bilateral agreements between the UAE and ${data.country}. IMPORTANT: The news titles and summaries MUST be returned in ${targetLanguage}. Output as JSON array.`;
+       const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
+       const prompt = `Find 5 recent news articles about workforce cooperation or bilateral agreements between UAE and ${data.country}. Language: ${targetLanguage}. Output as JSON.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
@@ -232,18 +267,13 @@ export default function Wizard() {
        
        if (response.text) {
          const newsItems = JSON.parse(response.text);
-         if (Array.isArray(newsItems)) {
-            setData(prev => ({ 
-              ...prev, 
-              relatedNews: [...(prev.relatedNews || []), ...newsItems.map(n => ({ ...n, id: uuidv4() }))] 
-            }));
-         }
+         setData(prev => ({ 
+           ...prev, 
+           relatedNews: [...prev.relatedNews, ...newsItems.map((n: any) => ({ ...n, id: uuidv4() }))] 
+         }));
        }
      } catch (error: any) { 
        console.error("AI News Fetch Error:", error);
-       if (error?.message?.includes("API_KEY_INVALID")) {
-         alert("Invalid API Key. Please update your key in Settings.");
-       }
      } finally { 
        setIsFetchingNews(false); 
      }
@@ -256,8 +286,6 @@ export default function Wizard() {
 
   const handleSave = async (status: 'draft' | 'completed' = 'draft') => {
     const reportId = id || `r-${uuidv4().slice(0, 8)}`;
-    
-    // Transfer ownership to current editor
     const newReport: Report = { 
       id: reportId, 
       userId: user?.id || 'u-admin', 
@@ -266,15 +294,9 @@ export default function Wizard() {
       updatedAt: new Date().toISOString(), 
       data 
     };
-    
     await MockService.saveReport(newReport);
-    
-    if (status === 'completed') {
-      navigate('/dashboard');
-    } else if (!id) {
-      // If it was a new report, navigate to its URL to allow further editing
-      navigate(`/wizard/${reportId}`);
-    }
+    if (status === 'completed') navigate('/dashboard');
+    else if (!id) navigate(`/wizard/${reportId}`);
   };
 
   if (loading) return <div className="h-96 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
@@ -285,21 +307,14 @@ export default function Wizard() {
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
              <div className="border-b dark:border-gray-700 pb-4 mb-4">
-               <h3 className="text-lg font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2 mb-2"><FileText size={20} /> {t('reportDetails')}</h3>
+               <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2 mb-2"><FileText size={20} /> {t('reportDetails')}</h3>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <Input label={t('reportTitle')} value={reportTitle} onChange={e => setReportTitle(e.target.value)} placeholder="e.g. India Bilateral Meeting Oct 2025" />
+                 <Input label={t('reportTitle')} value={reportTitle} onChange={e => setReportTitle(e.target.value)} />
                  <Input label={t('reportDate')} type="date" value={data.reportDate} onChange={e => setData({...data, reportDate: e.target.value})} />
                </div>
              </div>
-             <div className="flex flex-col md:flex-row gap-4 items-start bg-blue-50/50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800">
-               <div className="shrink-0 flex flex-col items-center gap-2">
-                  <label className="text-xs font-semibold uppercase text-primary/80 dark:text-primary-light/80">Flag</label>
-                  <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer overflow-hidden shadow-sm" onClick={() => document.getElementById('flag-upload')?.click()}>
-                     {data.flagUrl ? <img src={data.flagUrl} className="w-full h-full object-cover" /> : <UploadCloud className="text-gray-400" size={20} />}
-                  </div>
-                  <input type="file" id="flag-upload" className="hidden" accept="image/png, image/jpeg" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setData(prev => ({ ...prev, flagUrl: reader.result as string })); reader.readAsDataURL(file); } }} />
-               </div>
-               <div className="flex-1 w-full"><Input label={t('country')} value={data.country} onChange={e => setData({...data, country: e.target.value})} placeholder="e.g. Philippines" /></div>
+             <div className="flex flex-col md:flex-row gap-4 items-start bg-blue-50/50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100">
+               <div className="flex-1 w-full"><Input label={t('country')} value={data.country} onChange={e => setData({...data, country: e.target.value})} /></div>
                <Button onClick={handleFetchData} disabled={isFetchingAI} className="mt-1">
                  {isFetchingAI ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />} 
                  {t('fetchData')}
@@ -323,15 +338,15 @@ export default function Wizard() {
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="p-4"><h5 className="font-bold text-sm mb-2">{t('totalPrivate')}</h5><div className="flex gap-2"><Input value={data.uaeWorkforceStats.mohre.totalPrivate.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, value: e.target.value}}}})} /><Input value={data.uaeWorkforceStats.mohre.totalPrivate.date} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, date: e.target.value}}}})} /></div></Card>
-                <Card className="p-4"><h5 className="font-bold text-sm mb-2">{t('totalDomestic')}</h5><div className="flex gap-2"><Input value={data.uaeWorkforceStats.mohre.totalDomestic.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, value: e.target.value}}}})} /><Input value={data.uaeWorkforceStats.mohre.totalDomestic.date} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, date: e.target.value}}}})} /></div></Card>
+                <Card className="p-4 border-l-4 border-l-primary"><h5 className="font-bold text-sm mb-2">{t('mohreData')}</h5><div className="flex gap-2 mb-2"><Input label="Private Sector" value={data.uaeWorkforceStats.mohre.totalPrivate.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, value: e.target.value}}}})} /><Input label="As of" value={data.uaeWorkforceStats.mohre.totalPrivate.date} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, date: e.target.value}}}})} /></div><div className="flex gap-2"><Input label="Domestic Workers" value={data.uaeWorkforceStats.mohre.totalDomestic.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, value: e.target.value}}}})} /><Input label="As of" value={data.uaeWorkforceStats.mohre.totalDomestic.date} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, date: e.target.value}}}})} /></div></Card>
+                <Card className="p-4 border-l-4 border-l-accent"><h5 className="font-bold text-sm mb-2">{t('icpData')}</h5><p className="text-[10px] text-gray-500 mb-2 uppercase">{t('icpDisclaimer')}</p><div className="space-y-2">{data.uaeWorkforceStats.icp.byEmirate.map((em, i) => (<div key={i} className="flex items-center gap-2 text-xs font-bold"><span className="w-20">{em.name}</span><Input value={em.value} type="number" className="h-8 py-0" onChange={e => { const list = [...data.uaeWorkforceStats.icp.byEmirate]; list[i].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, icp: {...data.uaeWorkforceStats.icp, byEmirate: list}}}); }} /></div>))}</div></Card>
              </div>
              <div>
-                <h5 className="font-bold text-sm mb-3">{t('workersByEmirate')}</h5>
+                <h5 className="font-bold text-sm mb-3">{t('workersByEmirate')} (MOHRE)</h5>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {data.uaeWorkforceStats.mohre.byEmirate.map((em, idx) => (
                     <div key={idx} className="bg-white dark:bg-gray-800 border p-3 rounded-lg">
-                      <label className="text-[10px] font-bold text-gray-400 block mb-1 uppercase tracking-wider">{em.name}</label>
+                      <label className="text-[10px] font-bold text-gray-400 block mb-1 uppercase">{em.name}</label>
                       <input type="number" className="w-full text-sm font-mono border-none outline-none bg-transparent" value={em.value} onChange={e => { const list = [...data.uaeWorkforceStats.mohre.byEmirate]; list[idx].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, byEmirate: list}}}); }} />
                     </div>
                   ))}
@@ -340,9 +355,21 @@ export default function Wizard() {
              <div>
                 <h5 className="font-bold text-sm mb-3">{t('workersBySector')}</h5>
                 {data.uaeWorkforceStats.mohre.bySector.map((sec, idx) => (
-                  <div key={idx} className="flex gap-4 mb-2"><Input value={sec.name} className="flex-1" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].name = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><Input value={sec.value} type="number" className="w-32" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><button onClick={() => { const list = data.uaeWorkforceStats.mohre.bySector.filter((_, i) => i !== idx); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} className="text-red-400">X</button></div>
+                  <div key={idx} className="flex gap-4 mb-2"><Input value={sec.name} className="flex-1" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].name = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><Input value={sec.value} type="number" className="w-32" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><button onClick={() => { const list = data.uaeWorkforceStats.mohre.bySector.filter((_, i) => i !== idx); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} className="text-red-400"><X size={16} /></button></div>
                 ))}
                 <Button size="sm" variant="outline" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: [...data.uaeWorkforceStats.mohre.bySector, { name: '', value: 0 }]}}})}>+ Add Sector</Button>
+             </div>
+             <div className="pt-6 border-t">
+                <h5 className="font-bold text-sm mb-3">{t('additionalIndicators')}</h5>
+                {data.uaeWorkforceStats.custom.map((stat, i) => (
+                   <div key={stat.id} className="flex gap-4 mb-3 items-end">
+                      <Input label="Label" value={stat.label} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].label = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
+                      <Input label="Value" value={stat.value} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].value = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
+                      <Input label="Date/As of" value={stat.date} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].date = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
+                      {!stat.isTotal && <button onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: data.uaeWorkforceStats.custom.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button>}
+                   </div>
+                ))}
+                <Button size="sm" variant="outline" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: [...data.uaeWorkforceStats.custom, { id: uuidv4(), label: '', value: '', date: '', isTotal: false }]}})}>+ Add Indicator</Button>
              </div>
           </div>
         );
@@ -361,14 +388,14 @@ export default function Wizard() {
                  <div>
                    <label className="text-sm font-semibold mb-2 block">{t('migrationDestinations')}</label>
                    {data.workforceStats.migrationDestinations.map((dest, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={dest.country} placeholder="Country" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><Input value={dest.count} placeholder="Count" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].count = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /></div>
+                     <div key={i} className="flex gap-2 mb-2"><Input value={dest.country} placeholder="Country" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><Input value={dest.count} placeholder="Count" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].count = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: data.workforceStats.migrationDestinations.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: [...data.workforceStats.migrationDestinations, { country: '', count: '' }]}})}>+ Add Destination</Button>
                  </div>
                  <div>
                    <label className="text-sm font-semibold mb-2 block">{t('sectorDistribution')}</label>
                    {data.workforceStats.topSectors.map((sec, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /></div>
+                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
                  </div>
@@ -377,6 +404,11 @@ export default function Wizard() {
                <>
                  <div className="grid grid-cols-2 gap-6"><Input label={t('inflation')} value={data.economicStats.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} /><Input label={t('gdp')} value={data.economicStats.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} /><Input label={t('exportsToUae')} value={data.economicStats.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} /><Input label={t('importsFromUae')} value={data.economicStats.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} /></div>
                  <div className="grid grid-cols-2 gap-6"><Input label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} /></div>
+                 <div className="pt-4">
+                    <h5 className="font-bold text-sm mb-3">Custom Trade/Economic Indicators</h5>
+                    {data.economicStats.customStats.map((stat, i) => (<div key={stat.id} className="flex gap-4 mb-2 items-end"><Input label="Indicator" value={stat.label} onChange={e => { const list = [...data.economicStats.customStats]; list[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><Input label="Value" value={stat.value} onChange={e => { const list = [...data.economicStats.customStats]; list[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><button onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: data.economicStats.customStats.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button></div>))}
+                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: [...data.economicStats.customStats, { id: uuidv4(), label: '', value: '' }]}})}>+ Add Indicator</Button>
+                 </div>
                </>
              )}
           </div>
@@ -387,19 +419,26 @@ export default function Wizard() {
              <div className="space-y-4">
                 <h4 className="font-bold flex items-center gap-2"><Calendar size={18} /> {t('recentInteractions')}</h4>
                 {data.recentInteractions.map((item, idx) => (
-                   <Card key={item.id} className="p-4"><div className="grid grid-cols-2 gap-4 mb-4"><Input value={item.title} label="Title" onChange={e => { const list = [...data.recentInteractions]; list[idx].title = e.target.value; setData({...data, recentInteractions: list}); }} /><Input value={item.date} type="date" label="Date" onChange={e => { const list = [...data.recentInteractions]; list[idx].date = e.target.value; setData({...data, recentInteractions: list}); }} /></div><RichTextarea label="Details" value={item.details} onChange={(val: string) => { const list = [...data.recentInteractions]; list[idx].details = val; setData({...data, recentInteractions: list}); }} /></Card>
+                   <Card key={item.id} className="p-4 relative">
+                      <button onClick={() => setData({...data, recentInteractions: data.recentInteractions.filter(ri => ri.id !== item.id)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                      <div className="grid grid-cols-2 gap-4 mb-4"><Input value={item.title} label="Title" onChange={e => { const list = [...data.recentInteractions]; list[idx].title = e.target.value; setData({...data, recentInteractions: list}); }} /><Input value={item.date} type="date" label="Date" onChange={e => { const list = [...data.recentInteractions]; list[idx].date = e.target.value; setData({...data, recentInteractions: list}); }} /></div>
+                      <RichTextarea label="Details" value={item.details} onChange={(val: string) => { const list = [...data.recentInteractions]; list[idx].details = val; setData({...data, recentInteractions: list}); }} />
+                   </Card>
                 ))}
                 <Button variant="outline" onClick={() => setData({...data, recentInteractions: [...data.recentInteractions, { id: uuidv4(), title: '', date: '', type: 'Meeting', details: '' }]})}>+ Add Interaction</Button>
              </div>
              <div className="space-y-4 pt-6 border-t">
                 <h4 className="font-bold flex items-center gap-2"><MessageSquare size={18} /> {t('pointsDiscussion')}</h4>
                 {data.pointsOfDiscussion.map((item, idx) => (
-                   <Card key={item.id} className="p-4"><Input value={item.title} className="font-bold mb-4" placeholder="Topic Title" onChange={e => { const list = [...data.pointsOfDiscussion]; list[idx].title = e.target.value; setData({...data, pointsOfDiscussion: list}); }} /><RichTextarea label="Content" value={item.content} onChange={(val: string) => { const list = [...data.pointsOfDiscussion]; list[idx].content = val; setData({...data, pointsOfDiscussion: list}); }} /></Card>
+                   <Card key={item.id} className="p-4 relative">
+                      <button onClick={() => setData({...data, pointsOfDiscussion: data.pointsOfDiscussion.filter(pd => pd.id !== item.id)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                      <Input value={item.title} className="font-bold mb-4" placeholder="Topic Title" onChange={e => { const list = [...data.pointsOfDiscussion]; list[idx].title = e.target.value; setData({...data, pointsOfDiscussion: list}); }} /><RichTextarea label="Content" value={item.content} onChange={(val: string) => { const list = [...data.pointsOfDiscussion]; list[idx].content = val; setData({...data, pointsOfDiscussion: list}); }} />
+                   </Card>
                 ))}
                 <Button variant="outline" onClick={() => setData({...data, pointsOfDiscussion: [...data.pointsOfDiscussion, { id: uuidv4(), title: '', content: '' }]})}>+ Add Point</Button>
              </div>
              <div className="pt-6 border-t">
-               <Button onClick={handleFetchNews} disabled={isFetchingNews} className="w-full flex items-center justify-center gap-2">
+               <Button onClick={handleFetchNews} disabled={isFetchingNews} className="w-full">
                  {isFetchingNews ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
                  {t('fetchNews')}
                </Button>
@@ -409,8 +448,16 @@ export default function Wizard() {
       case 5:
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+             <div className="flex justify-between items-center mb-4">
+                <h4 className="font-bold">{t('keyAgreements')}</h4>
+                <Button size="sm" onClick={handleFetchAgreements} disabled={isFetchingAI}>
+                   {isFetchingAI ? <Loader2 className="animate-spin" size={14} /> : <RefreshCw size={14} />} {t('fetchMofa')}
+                </Button>
+             </div>
              {data.bilateralAgreements.map((agreement, idx) => (
-                <Card key={idx} className="p-4"><Input value={agreement.title} className="font-bold mb-2" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].title = e.target.value; setData({...data, bilateralAgreements: list}); }} /><Input value={agreement.date} label="Date" className="mb-2" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].date = e.target.value; setData({...data, bilateralAgreements: list}); }} /><RichTextarea label="Summary" value={agreement.summary} onChange={(val: string) => { const list = [...data.bilateralAgreements]; list[idx].summary = val; setData({...data, bilateralAgreements: list}); }} /></Card>
+                <Card key={idx} className="p-4 relative">
+                   <button onClick={() => setData({...data, bilateralAgreements: data.bilateralAgreements.filter((_, i) => i !== idx)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                   <Input value={agreement.title} className="font-bold mb-2" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].title = e.target.value; setData({...data, bilateralAgreements: list}); }} /><Input value={agreement.date} label="Date" className="mb-2" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].date = e.target.value; setData({...data, bilateralAgreements: list}); }} /><RichTextarea label="Summary" value={agreement.summary} onChange={(val: string) => { const list = [...data.bilateralAgreements]; list[idx].summary = val; setData({...data, bilateralAgreements: list}); }} /></Card>
              ))}
              <Button variant="outline" onClick={() => setData({...data, bilateralAgreements: [...data.bilateralAgreements, { title: '', date: '', status: 'Active', summary: '' }]})}>+ Add Agreement</Button>
           </div>
