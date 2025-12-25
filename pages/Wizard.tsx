@@ -109,14 +109,20 @@ export default function Wizard() {
     
     setIsFetchingAI(true);
     const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
+    const apiKey = user?.apiKey || process.env.API_KEY;
+
+    if (!apiKey) {
+      alert("No API Key found. Please add a Personal API Key in Settings.");
+      setIsFetchingAI(false);
+      return;
+    }
+
     try {
-      // Initialize GenAI client strictly with process.env.API_KEY as per guidelines
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values (capital, names, categories, etc.) MUST be returned in ${targetLanguage}. Ensure numeric values are returned as strings if they contain currency or units.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        // contents property set as a string for basic text query
         contents: prompt,
         config: { 
           responseMimeType: 'application/json',
@@ -175,9 +181,12 @@ export default function Wizard() {
           workforceStats: { ...prev.workforceStats, ...aiData } 
         }));
       }
-    } catch (error) { 
+    } catch (error: any) { 
       console.error("AI Fetch Error:", error);
-      alert("Failed to fetch data via AI. Please ensure connection is stable.");
+      const errorMsg = error?.message?.includes("API_KEY_INVALID") 
+        ? "Invalid API Key. Please check your key in Settings." 
+        : "Failed to fetch data via AI. Please ensure your connection is stable and the API Key is correct.";
+      alert(errorMsg);
     } finally { 
       setIsFetchingAI(false); 
     }
@@ -188,14 +197,20 @@ export default function Wizard() {
      
      setIsFetchingNews(true);
      const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
+     const apiKey = user?.apiKey || process.env.API_KEY;
+
+     if (!apiKey) {
+       alert("No API Key found. Please add a Personal API Key in Settings.");
+       setIsFetchingNews(false);
+       return;
+     }
+
      try {
-       // Initialize GenAI client strictly with process.env.API_KEY as per guidelines
-       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+       const ai = new GoogleGenAI({ apiKey });
        const prompt = `Find 5 recent news articles (2024-2025) about workforce cooperation or bilateral agreements between the UAE and ${data.country}. IMPORTANT: The news titles and summaries MUST be returned in ${targetLanguage}. Output as JSON array.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
-          // contents property set as a string for basic text query
           contents: prompt,
           config: { 
             tools: [{ googleSearch: {} }],
@@ -224,8 +239,11 @@ export default function Wizard() {
             }));
          }
        }
-     } catch (error) { 
-       console.error("AI News Fetch Error:", error); 
+     } catch (error: any) { 
+       console.error("AI News Fetch Error:", error);
+       if (error?.message?.includes("API_KEY_INVALID")) {
+         alert("Invalid API Key. Please update your key in Settings.");
+       }
      } finally { 
        setIsFetchingNews(false); 
      }
