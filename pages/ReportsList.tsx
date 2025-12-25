@@ -42,6 +42,7 @@ export default function ReportsList() {
   }, []);
 
   const handleDelete = async (id: string) => {
+    if (user?.role !== 'admin') return;
     if (window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
       setDeletingId(id);
       try {
@@ -133,6 +134,7 @@ export default function ReportsList() {
                 const isOwner = user?.id === report.userId;
                 const isAdmin = user?.role === 'admin';
                 const canEdit = isAdmin || isOwner;
+                const canDelete = isAdmin;
                 const isDeleting = deletingId === report.id;
                 
                 const flagSrc = report.data.flagUrl || `https://flagcdn.com/w40/${report.data.country.toLowerCase().includes('philippines') ? 'ph' : report.data.country.toLowerCase().includes('india') ? 'in' : 'ae'}.png`;
@@ -164,7 +166,6 @@ export default function ReportsList() {
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                          {canEdit ? (
-                           <>
                             <button 
                               onClick={() => navigate(`/wizard/${report.id}`)}
                               className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors"
@@ -172,6 +173,13 @@ export default function ReportsList() {
                             >
                               <Edit3 size={16} />
                             </button>
+                         ) : (
+                           <span className="text-gray-300 dark:text-gray-600 p-2 cursor-not-allowed" title="View Only">
+                             <Lock size={16} />
+                           </span>
+                         )}
+
+                         {canDelete && (
                             <button 
                               onClick={() => handleDelete(report.id)}
                               className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-500 transition-colors"
@@ -179,11 +187,6 @@ export default function ReportsList() {
                             >
                               {isDeleting ? <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> : <Trash2 size={16} />}
                             </button>
-                           </>
-                         ) : (
-                           <span className="text-gray-300 dark:text-gray-600 p-2 cursor-not-allowed" title="View Only">
-                             <Lock size={16} />
-                           </span>
                          )}
                         
                         {(canEdit || isAdmin) && (

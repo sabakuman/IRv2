@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
@@ -188,6 +189,14 @@ export default function PrintView() {
   const maxMigrationDest = Math.max(...data.workforceStats.migrationDestinations.map(d => parseFloat(d.count) || 0), 1);
   const maxPartnerSector = Math.max(...data.workforceStats.topSectors.map(s => s.value), 1);
 
+  // Dynamic Trade Labels
+  const importsLabel = isRTL 
+    ? `الواردات إلى ${data.country} من الإمارات` 
+    : `Imports to ${data.country} from the UAE`;
+  const exportsLabel = isRTL 
+    ? `الصادرات من ${data.country} إلى الإمارات` 
+    : `Exports from ${data.country} to the UAE`;
+
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
       <style>
@@ -279,16 +288,17 @@ export default function PrintView() {
             <KPI icon={Briefcase} label={t('workforceMinistry')} value={data.workforceMinistry || 'N/A'} sub={getSource('gov')} />
           </div>
           <SectionHeader icon={TrendingUp} title={t('economicLandscape')} subtitle={t('tradeEducation')} compact={true} />
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <KPI icon={Banknote} label={t('gdp')} value={data.gdp} sub={getSource('economy')} />
-            <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats.inflation} sub={getSource('economy')} />
+          <div className="grid grid-cols-4 gap-3 mb-4">
             <KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats.tipRank} tone="warn" sub={getSource('tip')} />
+            <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats.inflation} sub={getSource('economy')} />
+            <KPI icon={Banknote} label={t('gdp')} value={data.gdp} sub={getSource('economy')} />
+            <KPI icon={ArrowRightLeft} label={isRTL ? "إجمالي الحوالات السنوية من الإمارات" : "Annual Remittances from UAE"} value={data.economicStats.remittancesFromUAE || 'N/A'} sub={getSource('economy')} />
           </div>
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-4 shadow-sm">
             <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('trade')}</span></h4>
             <div className="grid grid-cols-2 gap-8">
-                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{t('importsFromUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalImportsFromUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topImportProducts.join(', ')}</p></div>
-                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{t('exportsToUae')}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalExportsToUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topExportProducts.join(', ')}</p></div>
+                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{importsLabel}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalImportsFromUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topImportProducts.join(', ')}</p></div>
+                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{exportsLabel}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalExportsToUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium break-words">{data.economicStats.topExportProducts.join(', ')}</p></div>
             </div>
           </div>
           <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact={true} />
@@ -459,11 +469,7 @@ export default function PrintView() {
         {interactionChunks.length > 0 ? interactionChunks.map((chunk, cIdx) => (
           <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-            <SectionHeader 
-              icon={Handshake} 
-              title={`${t('relationshipSummary')}${interactionChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
-              subtitle={t('bilateralEngagement')} 
-            />
+            <SectionHeader icon={Handshake} title={`${t('relationshipSummary')}${interactionChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} subtitle={t('bilateralEngagement')} />
             <div className="flex flex-col gap-2 mt-2 flex-1 pb-4 overflow-visible">
               {chunk.map((item, idx) => (
                 <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50 shadow-sm flex flex-col overflow-visible avoid-break">
@@ -485,10 +491,7 @@ export default function PrintView() {
         {pointsChunks.map((chunk, cIdx) => (
           <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-            <SectionHeader 
-              icon={MessageSquare} 
-              title={`${t('pointsDiscussion')}${pointsChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
-            />
+            <SectionHeader icon={MessageSquare} title={`${t('pointsDiscussion')}${pointsChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} />
             <div className="flex flex-col gap-2 mt-2 flex-1 pb-4 overflow-visible">
               {chunk.map((point, idx) => (
                 <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break overflow-visible">
@@ -506,33 +509,38 @@ export default function PrintView() {
         ))}
 
         {/* --- PAGE 7+: AGREEMENTS --- */}
-        {agreementChunks.length > 0 ? agreementChunks.map((chunk, cIdx) => (
-          <PageContainer key={`agr-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+        {agreementChunks.length > 0 ? (
+          agreementChunks.map((chunk, pIdx) => (
+            <PageContainer key={`agr-${pIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+              <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+              <SectionHeader icon={FileText} title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${pIdx + 1})` : ''}`} subtitle={t('keyAgreements')} />
+              <div className="space-y-3 mt-4 flex-1 overflow-visible pb-4">
+                {chunk.map((agreement, idx) => (
+                  <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 grid grid-cols-12 gap-3 items-start shadow-sm avoid-break overflow-visible">
+                      <div className="col-span-3">
+                        <p className="text-[12.5px] font-bold text-gray-900 leading-tight">{agreement.title}</p>
+                        <p className="text-[8px] font-mono font-bold text-gray-500 mt-1">{formatDate(agreement.date)}</p>
+                      </div>
+                      <div className="col-span-7 overflow-visible">
+                        {renderRichText(agreement.summary, "text-[12px] font-medium")}
+                      </div>
+                      <div className="col-span-2 text-end">
+                        <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
+                          {agreement.status === 'Active' ? t('active') : t('pending')}
+                        </span>
+                      </div>
+                  </div>
+                ))}
+              </div>
+            </PageContainer>
+          ))
+        ) : (
+          <PageContainer footer={<DefaultFooter />}>
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-            <SectionHeader 
-              icon={FileText} 
-              title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
-            />
-            <div className="space-y-3 mt-4 flex-1 overflow-visible pb-4">
-              {chunk.map((agreement, idx) => (
-                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 grid grid-cols-12 gap-3 items-start shadow-sm avoid-break overflow-visible">
-                    <div className="col-span-3">
-                      <p className="text-[12.5px] font-bold text-gray-900 leading-tight">{agreement.title}</p>
-                      <p className="text-[8px] font-mono font-bold text-gray-500 mt-1">{formatDate(agreement.date)}</p>
-                    </div>
-                    <div className="col-span-7 overflow-visible">
-                      {renderRichText(agreement.summary, "text-[12px] font-medium")}
-                    </div>
-                    <div className="col-span-2 text-end">
-                      <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200'}`}>
-                        {agreement.status === 'Active' ? t('active') : t('pending')}
-                      </span>
-                    </div>
-                </div>
-              ))}
-            </div>
+            <SectionHeader icon={FileText} title={t('sectionAgreements')} />
+            <div className="text-center py-40 text-gray-300 border-2 border-dashed rounded-3xl opacity-50"><p className="font-bold uppercase tracking-widest">{t('noAgreements')}</p></div>
           </PageContainer>
-        )) : null}
+        )}
 
         {/* --- DELEGATIONS --- */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { ReportData, EMPTY_REPORT_DATA, Report, Delegate } from '../types';
+import { ReportData, EMPTY_REPORT_DATA, Report, Delegate, NewsItem } from '../types';
 import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
 import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List } from 'lucide-react';
@@ -119,7 +119,7 @@ export default function Wizard() {
 
     try {
       const ai = new GoogleGenAI({ apiKey });
-      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Include Top 5 export products and Top 5 import products as individual string arrays.`;
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Include Top 5 export products and Top 5 import products as individual string arrays. Also include 'tipRank' (Trafficking in Persons Rank, e.g. Tier 2) and 'remittancesFromUAE' (annual amount).`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -168,18 +168,14 @@ export default function Wizard() {
                 type: Type.ARRAY,
                 items: { type: Type.STRING }
               },
-              topExportProducts: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-              },
-              topImportProducts: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-              },
+              topExportProducts: { type: Type.ARRAY, items: { type: Type.STRING } },
+              topImportProducts: { type: Type.ARRAY, items: { type: Type.STRING } },
               economicStats_inflation: { type: Type.STRING },
               economicStats_gdp: { type: Type.STRING },
               economicStats_totalExportsToUAE: { type: Type.STRING },
-              economicStats_totalImportsFromUAE: { type: Type.STRING }
+              economicStats_totalImportsFromUAE: { type: Type.STRING },
+              tipRank: { type: Type.STRING },
+              remittancesFromUAE: { type: Type.STRING }
             }
           }
         }
@@ -198,6 +194,8 @@ export default function Wizard() {
             totalImportsFromUAE: aiData.economicStats_totalImportsFromUAE || prev.economicStats.totalImportsFromUAE,
             topExportProducts: aiData.topExportProducts || prev.economicStats.topExportProducts,
             topImportProducts: aiData.topImportProducts || prev.economicStats.topImportProducts,
+            tipRank: aiData.tipRank || prev.economicStats.tipRank,
+            remittancesFromUAE: aiData.remittancesFromUAE || prev.economicStats.remittancesFromUAE,
           },
           workforceStats: { ...prev.workforceStats, ...aiData } 
         }));
@@ -263,7 +261,7 @@ export default function Wizard() {
      try {
        const ai = new GoogleGenAI({ apiKey });
        const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
-       const prompt = `Find 5 recent news articles about workforce cooperation or bilateral agreements between UAE and ${data.country}. Language: ${targetLanguage}. Output as JSON.`;
+       const prompt = `Find 3 recent official news items or press releases (from 2023-2025) concerning bilateral workforce cooperation, diplomatic visits, or labour market agreements between the UAE and ${data.country}. Return as a JSON array. Each object must have: title, source, date, and summary. All text must be in ${targetLanguage}.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
@@ -288,13 +286,21 @@ export default function Wizard() {
        
        if (response.text) {
          const newsItems = JSON.parse(response.text);
+         const formattedNews: NewsItem[] = newsItems.map((n: any) => ({
+            id: uuidv4(),
+            title: n.title || '',
+            source: n.source || '',
+            date: n.date || '',
+            summary: n.summary || ''
+         }));
          setData(prev => ({ 
            ...prev, 
-           relatedNews: [...prev.relatedNews, ...newsItems.map((n: any) => ({ ...n, id: uuidv4() }))] 
+           relatedNews: [...prev.relatedNews, ...formattedNews] 
          }));
        }
      } catch (error: any) { 
        console.error("AI News Fetch Error:", error);
+       alert("Failed to fetch news. Please check your API key.");
      } finally { 
        setIsFetchingNews(false); 
      }
@@ -486,6 +492,11 @@ export default function Wizard() {
                <>
                  <div className="grid grid-cols-2 gap-6"><Input label={t('inflation')} value={data.economicStats.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} /><Input label={t('gdp')} value={data.economicStats.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} /><Input label={t('exportsToUae')} value={data.economicStats.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} /><Input label={t('importsFromUae')} value={data.economicStats.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} /></div>
                  
+                 <div className="grid grid-cols-2 gap-6 pt-4 border-t">
+                    <Input label={t('tipRank')} value={data.economicStats.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} />
+                    <Input label={t('remittances')} value={data.economicStats.remittancesFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesFromUAE: e.target.value}})} />
+                 </div>
+
                  <div className="pt-4 border-t">
                     <h5 className="font-bold text-sm mb-3">{t('topExports')}</h5>
                     {data.economicStats.topExportProducts.map((p, i) => (
@@ -544,10 +555,42 @@ export default function Wizard() {
                 <Button variant="outline" onClick={() => setData({...data, pointsOfDiscussion: [...data.pointsOfDiscussion, { id: uuidv4(), title: '', content: '' }]})}>+ Add Point</Button>
              </div>
              <div className="pt-6 border-t">
-               <Button onClick={handleFetchNews} disabled={isFetchingNews} className="w-full">
-                 {isFetchingNews ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                 {t('fetchNews')}
-               </Button>
+               <div className="flex justify-between items-center mb-4">
+                 <h4 className="font-bold flex items-center gap-2"><Newspaper size={18} /> {t('relatedNews')}</h4>
+                 <Button onClick={handleFetchNews} disabled={isFetchingNews || !data.country} size="sm">
+                   {isFetchingNews ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />}
+                   {t('fetchNews')}
+                 </Button>
+               </div>
+               <div className="space-y-4">
+                  {data.relatedNews.map((news, idx) => (
+                    <Card key={news.id} className="p-4 relative bg-gray-50/50">
+                       <button onClick={() => {
+                          const list = [...data.relatedNews];
+                          list.splice(idx, 1);
+                          setData({...data, relatedNews: list});
+                       }} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                          <Input label="Title" value={news.title} onChange={e => {
+                             const list = [...data.relatedNews];
+                             list[idx].title = e.target.value;
+                             setData({...data, relatedNews: list});
+                          }} />
+                          <Input label="Source / Date" value={news.source || news.date} onChange={e => {
+                             const list = [...data.relatedNews];
+                             list[idx].source = e.target.value;
+                             setData({...data, relatedNews: list});
+                          }} />
+                       </div>
+                       <RichTextarea label="Summary" value={news.summary} onChange={(val: string) => {
+                          const list = [...data.relatedNews];
+                          list[idx].summary = val;
+                          setData({...data, relatedNews: list});
+                       }} />
+                    </Card>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={() => setData({...data, relatedNews: [...data.relatedNews, { id: uuidv4(), title: '', source: '', date: '', summary: '' }]})}>+ Add Manual News Item</Button>
+               </div>
              </div>
           </div>
         );
