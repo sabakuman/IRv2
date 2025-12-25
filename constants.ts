@@ -315,6 +315,7 @@ export const TRANSLATIONS = {
     lastUpdated: 'Last Updated',
     // Letter Log
     letterLog: 'Letter Log',
+    letterLogSubtitle: 'Track strategic correspondence, incoming/outgoing ministerial letters, and their status.',
     addLetter: 'Add New Letter',
     viewLetterLog: 'View Letter Log',
     totalLetters: 'Total Letters Logged',
@@ -500,6 +501,7 @@ export const TRANSLATIONS = {
     lastUpdated: 'آخر تحديث',
     // Letter Log
     letterLog: 'سجل المراسلات',
+    letterLogSubtitle: 'متابعة المراسلات الاستراتيجية، والرسائل الوزارية الواردة والصادرة، وحالتها.',
     addLetter: 'إضافة مراسلة جديدة',
     viewLetterLog: 'عرض سجل المراسلات',
     totalLetters: 'إجمالي المراسلات المسجلة',

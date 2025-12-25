@@ -123,7 +123,7 @@ export default function LetterLogList() {
              <Mail size={32} /> {t('letterLog')}
           </h1>
           <p className="text-muted-foreground mt-1 dark:text-gray-400">
-             Track strategic correspondence, incoming/outgoing ministerial letters, and their status.
+             {t('letterLogSubtitle')}
           </p>
         </div>
         <Button onClick={() => { setCurrentLetter(null); setFormData({ status: 'open', label_color: '#3B82F6' }); setIsEditorOpen(true); }}>
@@ -159,7 +159,7 @@ export default function LetterLogList() {
       </div>
 
       {/* List / Grid */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-3">
          {loading ? (
            <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto text-primary" size={40} /></div>
          ) : filteredLetters.length === 0 ? (
@@ -175,9 +175,9 @@ export default function LetterLogList() {
                style={{ borderLeftColor: letter.label_color }}
                onClick={() => handleOpenDetails(letter)}
              >
-                <div className="p-5 flex flex-col md:flex-row gap-4 items-start md:items-center">
+                <div className="py-3 px-5 flex flex-col md:flex-row gap-3 items-start md:items-center">
                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
                          <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${letter.status === 'open' ? 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse' : 'bg-green-50 text-green-600 border-green-100'}`}>
                             {t(letter.status)}
                          </span>
@@ -186,21 +186,21 @@ export default function LetterLogList() {
                               {letter.label}
                            </span>
                          )}
-                         <span className="text-[10px] font-mono text-gray-400 font-bold uppercase">{letter.internal_ref || 'No Ref'}</span>
+                         <span className="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-tight">{letter.internal_ref || 'No Ref'}</span>
                       </div>
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{letter.title}</h3>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                         <FileText size={14} /> {letter.topic}
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-0">{letter.title}</h3>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 opacity-80">
+                         <FileText size={12} /> {letter.topic}
                       </p>
                    </div>
-                   <div className="flex flex-row md:flex-col items-end gap-2 text-right">
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                         <Calendar size={12} /> {format(new Date(letter.created_at), 'MMM dd, yyyy')}
+                   <div className="flex flex-row md:flex-col items-end gap-1.5 text-right">
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-semibold">
+                         <Calendar size={10} /> {format(new Date(letter.created_at), 'MMM dd, yyyy')}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                         <User size={12} /> {letter.created_by}
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-semibold">
+                         <User size={10} /> {letter.created_by}
                       </div>
-                      <ChevronRight size={18} className={`text-gray-300 group-hover:text-primary transition-all mt-2 ${isRTL ? 'rotate-180' : ''}`} />
+                      <ChevronRight size={18} className={`text-gray-300 group-hover:text-primary transition-all ${isRTL ? 'rotate-180' : ''}`} />
                    </div>
                 </div>
              </Card>
