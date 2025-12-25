@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ShieldAlert } from "lucide-react";
 
@@ -116,15 +117,8 @@ export const SectionHeader = ({
 /* ===============================
    KPI COMPONENT
 ================================ */
-export const KPI = ({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  chip,
-  tone = "info",
-  labelClassName,
-}: {
+// Fixed: Explicitly typed as React.FC to allow standard list 'key' prop and resolve TypeScript error in PrintView
+export const KPI: React.FC<{
   icon: any;
   label: string;
   value: string | number;
@@ -132,6 +126,14 @@ export const KPI = ({
   chip?: string;
   tone?: "ok" | "warn" | "info" | "restrict";
   labelClassName?: string;
+}> = ({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  chip,
+  tone = "info",
+  labelClassName,
 }) => (
   <div className="kpi-card avoid-break h-full flex flex-col">
     <div className="kpi-row items-start">

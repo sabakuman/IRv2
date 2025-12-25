@@ -119,7 +119,7 @@ export default function Wizard() {
 
     try {
       const ai = new GoogleGenAI({ apiKey });
-      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Include Top 5 export products, Top 5 import products, education enrollment rates, TIP rank, and annual remittances from UAE. Return as JSON.`;
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Include Top 5 export products, Top 5 import products, education enrollment rates, TIP rank, and annual remittances from UAE. Return as JSON.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -518,7 +518,7 @@ export default function Wizard() {
                  <div>
                    <label className="text-sm font-semibold mb-2 block">{t('migrationDestinations')}</label>
                    {data.workforceStats.migrationDestinations.map((dest, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={dest.country} placeholder="Country" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><Input value={dest.count} placeholder="Count" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].count = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: data.workforceStats.migrationDestinations.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
+                     <div key={i} className="flex gap-2 mb-2"><Input value={dest.country} placeholder="Country" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><Input value={dest.count} placeholder="Count" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].count = e.target.value; setData({...data, workforceStats: {...data.uaeWorkforceStats, migrationDestinations: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: data.workforceStats.migrationDestinations.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: [...data.workforceStats.migrationDestinations, { country: '', count: '' }]}})}>+ Add Destination</Button>
                  </div>
@@ -584,7 +584,7 @@ export default function Wizard() {
                  <div className="pt-4 border-t">
                     <div className="flex justify-between items-center mb-4">
                        <h5 className="font-bold text-sm uppercase tracking-wider text-primary">{t('educationInsights')}</h5>
-                       <Button size="sm" onClick={handleFetchEducation} disabled={isFetchingAI} variant="outline"><Sparkles size={14} /> {t('fetchEconomy')}</Button>
+                       <Button size="sm" onClick={handleFetchEducation} disabled={isFetchingAI} variant="outline"><Sparkles size={14} /> {t('fetchEducation')}</Button>
                     </div>
                     <div className="grid grid-cols-2 gap-6"><Input label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} /></div>
                     <div className="mt-4">

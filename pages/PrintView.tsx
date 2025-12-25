@@ -98,11 +98,20 @@ export default function PrintView() {
     return !isNaN(dateA) && !isNaN(dateB) ? dateB - dateA : (b.date || '').localeCompare(a.date || '');
   });
 
-  const formatCompactNumber = (value: any) => {
-    const num = Number(value);
-    if (isNaN(num)) return value;
-    return new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(num);
+  // Fixed: Added chunkArray helper to split long lists into printable segments
+  const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+    const chunks: T[][] = [];
+    if (!arr) return chunks;
+    for (let i = 0; i < arr.length; i += size) {
+      chunks.push(arr.slice(i, i + size));
+    }
+    return chunks;
   };
+
+  // Fixed: Defined missing chunk variables for section pagination in PrintView
+  const interactionChunks = chunkArray(data.recentInteractions || [], 4);
+  const pointsChunks = chunkArray(data.pointsOfDiscussion || [], 5);
+  const agreementChunks = chunkArray(sortedAgreements || [], 6);
 
   const getSource = (type: string) => {
     const sources: Record<string, Record<string, string>> = {
@@ -110,12 +119,6 @@ export default function PrintView() {
       ar: { demo: '*(البنك الدولي، 2025)', economy: '*(البنك الدولي، 2025)', trade: '*(كوم تريد، 2025)', edu: '*(اليونسكو، 2025)', gov: '*(البوابة الرسمية، 2025)', crime: '*(الأمم المتحدة، 2025)', literacy: '*(اليونسكو، 2025)', tip: '*(تقرير الاتجار، 2024)', mohre: '*(بيانات الوزارة، 2025)', icp: '*(بيانات الهيئة، 2025)' }
     };
     return sources[language]?.[type] || '';
-  };
-
-  const translateEmirate = (name: string) => {
-    if (!isRTL) return name;
-    const map: Record<string, string> = { 'Abu Dhabi': 'أبوظبي', 'Dubai': 'دبي', 'Sharjah': 'الشارقة', 'Ajman': 'عجمان', 'Umm Al Quwain': 'أم القيوين', 'Ras Al Khaimah': 'رأس الخيمة', 'Fujairah': 'الفجيرة' };
-    return map[name] || name;
   };
 
   const DefaultFooter = () => (
@@ -140,7 +143,7 @@ export default function PrintView() {
     return (
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
         <div className="flex items-center gap-3">
-          <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
+          <img flagUrl={flagSrc} className="h-6 w-auto shadow-sm object-cover" src={flagSrc} alt={country} />
           <div className="h-8 w-px bg-gray-200" />
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
@@ -155,101 +158,38 @@ export default function PrintView() {
     );
   };
 
-  const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
-  const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
-
-  // High-Density Pagination Chunks (Increased to 5 per page)
-  const CHUNK_SIZE_INTERACTIONS = 5; 
-  const interactionChunks = [];
-  for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE_INTERACTIONS) {
-    interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE_INTERACTIONS));
-  }
-
-  const CHUNK_SIZE_POINTS = 5; 
-  const pointsChunks = [];
-  for (let i = 0; i < data.pointsOfDiscussion.length; i += CHUNK_SIZE_POINTS) {
-    pointsChunks.push(data.pointsOfDiscussion.slice(i, i + CHUNK_SIZE_POINTS));
-  }
-
-  const CHUNK_SIZE_AGREEMENTS = 5;
-  const agreementChunks = [];
-  for (let i = 0; i < sortedAgreements.length; i += CHUNK_SIZE_AGREEMENTS) {
-    agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE_AGREEMENTS));
-  }
-
-  // Sorted Emirate Charts (Descending order: Largest to Smallest)
-  const sortedMohreEmirates = [...data.uaeWorkforceStats.mohre.byEmirate].sort((a, b) => b.value - a.value);
-  const sortedIcpEmirates = [...data.uaeWorkforceStats.icp.byEmirate].sort((a, b) => b.value - a.value);
-
   const handlePrint = () => {
     window.print();
   };
-
-  // Logic for Horizontal Bar Sections
-  const maxMigrationDest = Math.max(...data.workforceStats.migrationDestinations.map(d => parseFloat(d.count) || 0), 1);
-  const maxPartnerSector = Math.max(...data.workforceStats.topSectors.map(s => s.value), 1);
 
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
       <style>
         {`
-          .report-root {
-            font-family: "Sakkal Majalla", serif !important;
-          }
-          .report-root * {
-            font-family: "Sakkal Majalla", serif !important;
-          }
-          .report-root .kpi-label {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            font-weight: 600 !important;
-            transform: scale(1.05);
-            display: inline-block !important;
-          }
-          
-          [dir="rtl"] .report-root .kpi-label {
-            transform-origin: right center;
-          }
-
-          [dir="ltr"] .report-root .kpi-label {
-            transform-origin: left center;
-          }
+          .report-root { font-family: "Sakkal Majalla", serif !important; }
+          .report-root * { font-family: "Sakkal Majalla", serif !important; }
         `}
       </style>
-      {/* Floating Action Bar */}
       <div className={`fixed top-6 z-50 flex gap-3 no-print p-2 rounded-2xl bg-white/80 backdrop-blur-md shadow-2xl border border-white/20 ${isRTL ? 'left-6' : 'right-6'}`}>
          <button onClick={handlePrint} className="bg-primary text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold active:scale-95">
             <Printer size={18} /> {t('printNow')}
          </button>
-         <div className="w-px h-8 bg-gray-200 mx-1 self-center" />
          <button onClick={() => window.close()} className="bg-white text-gray-500 hover:text-red-500 p-2.5 rounded-xl transition-all border border-gray-100 hover:bg-red-50">
             <X size={20} />
          </button>
       </div>
 
       <div id="report-content" className="overflow-visible report-root">
-        {/* --- PAGE 1: COVER --- */}
+        {/* PAGE 1: COVER */}
         <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
-          <div className="absolute inset-0 opacity-[0.03] z-0 flex items-center justify-center overflow-hidden pointer-events-none">
-              <svg viewBox="0 0 1000 500" className="w-[150%] h-auto text-primary fill-current">
-                <path d="M50,250 Q250,50 500,250 T950,250" stroke="currentColor" strokeWidth="2" fill="none" />
-                <circle cx="200" cy="200" r="50" stroke="currentColor" strokeWidth="2" fill="none" />
-                <path d="M0,0 L1000,500 M1000,0 L0,500" stroke="currentColor" strokeWidth="0.5" />
-              </svg>
-          </div>
           <div className="flex-1 flex flex-col justify-center px-20 relative z-10">
               <div className={`mb-12 border-accent py-6 ${isRTL ? 'border-r-[8px] pr-12' : 'border-l-[8px] pl-12'}`}>
-                <div className="flex items-center gap-4 mb-8 opacity-60">
-                  <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto" alt="UAE" />
-                  <span className="text-sm font-bold uppercase tracking-[0.2em] text-primary">UAE • MOHRE</span>
-                </div>
                 <h1 className="text-[64px] font-serif font-extrabold text-gray-900 leading-[1.1] mb-4">{t('loginTitle')}</h1>
                 <p className="text-2xl text-gray-500 font-light uppercase tracking-wider">{t('strategicOverview')}</p>
               </div>
               <div className="bg-gray-50 rounded-3xl p-10 border border-gray-100 max-w-xl">
                 <div className="flex items-center gap-8 mb-8">
-                    <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${data.country.toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" alt="flag" /></div>
+                    <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/ae.png`} className="w-full h-full object-cover" alt="flag" /></div>
                     <div>
                       <p className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1">{t('subjectMarket')}</p>
                       <h2 className="text-4xl font-serif font-bold text-gray-900">{data.country}</h2>
@@ -258,18 +198,16 @@ export default function PrintView() {
                 <div className="grid grid-cols-2 gap-8">
                     <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('reference')}</p><p className="font-mono text-base text-gray-800">{report.id}</p></div>
                     <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('date')}</p><p className="font-mono text-base text-gray-800">{data.reportDate}</p></div>
-                    <div className="col-span-2"><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('securityClass')}</p><span className="kpi-chip chip-restrict inline-flex items-center gap-2 px-3 py-1"><ShieldAlert size={12} /> {t('officialRestricted')}</span></div>
                 </div>
               </div>
           </div>
-          <div className="h-3 bg-primary w-full"></div>
         </div>
 
-        {/* --- PAGE 2: PROFILE & ECONOMY --- */}
+        {/* PAGE 2: PROFILE & ECONOMY */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact={true} />
-          <div className="grid grid-cols-4 gap-3 mb-4 profile-kpi-grid">
+          <div className="grid grid-cols-4 gap-3 mb-4">
             <KPI icon={Landmark} label={t('capital')} value={data.capital} />
             <KPI icon={Users} label={t('population')} value={data.population} sub={getSource('demo')} />
             <KPI icon={Banknote} label={t('currency')} value={data.currency} />
@@ -297,19 +235,185 @@ export default function PrintView() {
           <div className="grid grid-cols-3 gap-3">
             <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
             <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center shadow-sm">
-              <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                {t('topUniversities')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('edu')}</span>
-              </p>
-              <ul className="text-[11px] text-gray-700 leading-snug space-y-1">
-                {data.educationStats.topUniversities.slice(0, 5).map((u, i) => (
-                  <li key={i} className="flex gap-1.5 items-start">
-                    <span className="shrink-0 font-bold text-primary opacity-60">•</span>
-                    <span className="break-words leading-tight flex-1 font-medium">{u}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm">
+              <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">{t('topUniversities')} <span className="text-[8px] text-gray-400 font-normal italic">{getSource('edu')}</span></p>
+              <ul className="text-[11px] text-gray-700 space-y-1">{data.educationStats.topUniversities.slice(0, 5).map((u, i) => (<li key={i} className="flex gap-1.5 items-start font-medium"><span className="text-primary">•</span><span className="break-words">{u}</span></li>))}</ul>
             </div>
           </div>
         </PageContainer>
-        {/* ... Rest of the pages unchanged ... */}
+
+        {/* PAGE 3: WORKFORCE IN UAE */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader icon={Users} title={t('sectionUaeWorkforce')} subtitle={t('domesticAnalysis')} />
+          <div className="grid grid-cols-3 gap-4 mb-6">
+             <KPI icon={Users} label={t('totalPrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={t('dataAsOf') + ' ' + data.uaeWorkforceStats.mohre.totalPrivate.date} chip="MOHRE" />
+             <KPI icon={Users} label={t('totalDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={t('dataAsOf') + ' ' + data.uaeWorkforceStats.mohre.totalDomestic.date} chip="MOHRE" />
+             {data.uaeWorkforceStats.custom.map(stat => (
+                <KPI key={stat.id} icon={TrendingUp} label={stat.label} value={stat.value} sub={t('dataAsOf') + ' ' + stat.date} tone={stat.isTotal ? "ok" : "info"} />
+             ))}
+          </div>
+          <div className="grid grid-cols-2 gap-8">
+             <div className="space-y-6">
+                <h4 className="text-sm font-bold text-gray-700 uppercase tracking-widest border-b border-gray-100 pb-2">{t('workersByEmirate')}</h4>
+                <div className="h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} layout="vertical" margin={{ left: 10, right: 40, top: 0, bottom: 0 }}>
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 600 }} />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
+                        {data.uaeWorkforceStats.mohre.byEmirate.map((_, i) => <Cell key={i} fill={BLUE_PALETTE[i % 6]} />)}
+                        <LabelList dataKey="value" position="right" style={{ fontSize: 10, fontWeight: 700, fill: '#374151' }} formatter={(v: any) => new Intl.NumberFormat('en-US').format(v)} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+             </div>
+             <div className="space-y-6">
+                <h4 className="text-sm font-bold text-gray-700 uppercase tracking-widest border-b border-gray-100 pb-2">{t('residentsByEmirate')}</h4>
+                <div className="h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.uaeWorkforceStats.icp.byEmirate} layout="vertical" margin={{ left: 10, right: 40, top: 0, bottom: 0 }}>
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 600 }} />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
+                        {data.uaeWorkforceStats.icp.byEmirate.map((_, i) => <Cell key={i} fill="#4b5563" />)}
+                        <LabelList dataKey="value" position="right" style={{ fontSize: 10, fontWeight: 700, fill: '#374151' }} formatter={(v: any) => new Intl.NumberFormat('en-US').format(v)} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+             </div>
+          </div>
+        </PageContainer>
+
+        {/* PAGE 4: PARTNER WORKFORCE */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader icon={Briefcase} title={t('sectionWorkforce')} subtitle={t('sourceMarketAnalysis')} />
+          <div className="grid grid-cols-4 gap-3 mb-8">
+             <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} />
+             <KPI icon={Activity} label={t('maleParticipation')} value={`${data.workforceStats.participationMale}%`} />
+             <KPI icon={Activity} label={t('femaleParticipation')} value={`${data.workforceStats.participationFemale}%`} />
+             <KPI icon={Banknote} label={t('avgWage')} value={data.averageWage} />
+          </div>
+          <div className="grid grid-cols-2 gap-10">
+             <div className="space-y-4">
+                <h4 className="text-sm font-bold text-gray-700 uppercase tracking-widest border-b pb-2">{t('migrationDestinations')}</h4>
+                <div className="space-y-4">
+                   {data.workforceStats.migrationDestinations.map((dest, idx) => (
+                     <div key={idx} className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold"><span className="text-gray-600">{dest.country}</span><span className="text-primary">{dest.count}</span></div>
+                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-primary" style={{ width: `${Math.min((parseFloat(dest.count) / 10) * 100, 100)}%` }} /></div>
+                     </div>
+                   ))}
+                </div>
+             </div>
+             <div className="space-y-4">
+                <h4 className="text-sm font-bold text-gray-700 uppercase tracking-widest border-b pb-2">{t('sectorDistribution')}</h4>
+                <div className="h-[250px]">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={data.workforceStats.topSectors} margin={{ right: 40 }}>
+                         <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} />
+                         <YAxis hide />
+                         <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40}>
+                            {data.workforceStats.topSectors.map((_, i) => <Cell key={i} fill={BLUE_PALETTE[i % 6]} />)}
+                            <LabelList dataKey="value" position="top" style={{ fontSize: 11, fontWeight: 800 }} formatter={(v: any) => `${v}%`} />
+                         </Bar>
+                      </BarChart>
+                   </ResponsiveContainer>
+                </div>
+             </div>
+          </div>
+          <div className="mt-12 bg-gray-50 rounded-2xl p-6 border">
+             <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest mb-4 flex items-center gap-2"><Hammer size={16} /> {t('availableSkills')}</h4>
+             <div className="flex flex-wrap gap-2">{data.workforceStats.availableSkills.map((skill, i) => (<span key={i} className="px-3 py-1 bg-white border border-gray-200 text-gray-700 text-[11px] font-bold rounded-lg shadow-sm"># {skill}</span>))}</div>
+          </div>
+        </PageContainer>
+
+        {/* RELATIONSHIP & INTERACTIONS PAGES */}
+        {interactionChunks.map((chunk, pIdx) => (
+          <PageContainer key={`int-${pIdx}`} footer={<DefaultFooter />}>
+            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <SectionHeader icon={Handshake} title={t('sectionInteractions')} subtitle={t('recentHighLevelInteractions')} />
+            <div className="space-y-4">
+              {chunk.map(item => (
+                <div key={item.id} className="bg-white border rounded-xl p-4 shadow-sm">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-sm text-primary">{item.title}</h4>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-0.5 rounded">{item.date}</span>
+                  </div>
+                  {renderRichText(item.details)}
+                </div>
+              ))}
+            </div>
+          </PageContainer>
+        ))}
+
+        {pointsChunks.map((chunk, pIdx) => (
+          <PageContainer key={`pts-${pIdx}`} footer={<DefaultFooter />}>
+            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <SectionHeader icon={MessageSquare} title={t('pointsDiscussion')} />
+            <div className="space-y-4">
+              {chunk.map(item => (
+                <div key={item.id} className="p-4 bg-gray-50 border rounded-xl">
+                  <h4 className="font-bold text-sm mb-2">{item.title}</h4>
+                  {renderRichText(item.content)}
+                </div>
+              ))}
+            </div>
+          </PageContainer>
+        ))}
+
+        {/* AGREEMENTS PAGE */}
+        {agreementChunks.length > 0 ? agreementChunks.map((chunk, pIdx) => (
+          <PageContainer key={`agr-${pIdx}`} footer={<DefaultFooter />}>
+            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <SectionHeader icon={FileText} title={t('sectionAgreements')} subtitle={t('keyAgreements')} />
+            <div className="space-y-4">
+              {chunk.map((agreement, idx) => (
+                <div key={idx} className="border-b last:border-0 pb-4 last:pb-0">
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className="text-sm font-bold text-primary">{agreement.title}</h4>
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${agreement.status === 'Active' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>{agreement.status}</span>
+                  </div>
+                  <p className="text-[10px] text-gray-400 font-bold mb-2 uppercase">{t('date')}: {agreement.date}</p>
+                  {renderRichText(agreement.summary)}
+                </div>
+              ))}
+            </div>
+          </PageContainer>
+        )) : (
+          <PageContainer footer={<DefaultFooter />}>
+            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <SectionHeader icon={FileText} title={t('sectionAgreements')} />
+            <div className="text-center py-20 text-gray-400 border-2 border-dashed rounded-3xl"><p>{t('noAgreements')}</p></div>
+          </PageContainer>
+        )}
+
+        {/* DELEGATION PAGE */}
+        <PageContainer footer={<DefaultFooter />}>
+          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <SectionHeader icon={Users} title={t('uaeDelegation')} subtitle={t('ministryOfficials')} />
+          <div className="grid grid-cols-2 gap-4 mb-10">
+            {data.delegations.uae.map(member => (
+              <div key={member.id} className="flex gap-4 p-3 bg-gray-50 rounded-xl border">
+                <div className="w-16 h-20 bg-gray-200 rounded-lg overflow-hidden shrink-0"><img src={member.imageUrl} className="w-full h-full object-cover" /></div>
+                <div><h4 className="text-xs font-bold">{member.name}</h4><p className="text-[10px] text-primary-dark font-medium mb-1">{member.title}</p>{renderRichText(member.bio, "text-[9px]")}</div>
+              </div>
+            ))}
+          </div>
+          <SectionHeader icon={Users} title={t('partnerDelegation')} subtitle={t('counterpartOfficials')} />
+          <div className="grid grid-cols-2 gap-4">
+            {data.delegations.partner.map(member => (
+              <div key={member.id} className="flex gap-4 p-3 bg-gray-50 rounded-xl border">
+                <div className="w-16 h-20 bg-gray-200 rounded-lg overflow-hidden shrink-0"><img src={member.imageUrl} className="w-full h-full object-cover" /></div>
+                <div><h4 className="text-xs font-bold">{member.name}</h4><p className="text-[10px] text-accent font-medium mb-1">{member.title}</p>{renderRichText(member.bio, "text-[9px]")}</div>
+              </div>
+            ))}
+          </div>
+        </PageContainer>
+      </div>
+    </div>
+  );
+}
