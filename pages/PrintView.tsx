@@ -184,6 +184,10 @@ export default function PrintView() {
     window.print();
   };
 
+  // Logic for Horizontal Bar Sections
+  const maxMigrationDest = Math.max(...data.workforceStats.migrationDestinations.map(d => parseFloat(d.count) || 0), 1);
+  const maxPartnerSector = Math.max(...data.workforceStats.topSectors.map(s => s.value), 1);
+
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
       <style>
@@ -198,16 +202,17 @@ export default function PrintView() {
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
-          }
-          /* Make labels bigger ONLY for the Profile KPI grid (HDI page). Numbers stay unchanged. */
-          .report-root .profile-kpi-grid .kpi-label {
+            font-weight: 600 !important;
+            transform: scale(1.05);
             display: inline-block !important;
-            transform: scale(1.08); /* tiny but noticeable */
+          }
+          
+          [dir="rtl"] .report-root .kpi-label {
+            transform-origin: right center;
           }
 
-          /* RTL-friendly origin */
-          [dir="rtl"] .report-root .profile-kpi-grid .kpi-label {
-            transform-origin: right center;
+          [dir="ltr"] .report-root .kpi-label {
+            transform-origin: left center;
           }
         `}
       </style>
@@ -407,23 +412,36 @@ export default function PrintView() {
           <div className="grid grid-cols-2 gap-6 mb-8">
             <div className="kpi-card p-4 shadow-sm">
                 <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Plane size={16} /> {t('migrationDestinations')}</p>
-                <div className="space-y-3 text-[14px]">
-                  {data.workforceStats.migrationDestinations.slice(0, 5).map((dest, i) => (
-                      <div key={i} className="flex justify-between items-center pb-2 border-b border-gray-50 last:border-0">
-                        <span className="font-bold text-gray-700">{dest.country}</span>
-                        <span className="font-mono text-gray-500">{dest.count}</span>
+                <div className="space-y-4">
+                  {data.workforceStats.migrationDestinations.slice(0, 5).map((dest, i) => {
+                    const val = parseFloat(dest.count) || 0;
+                    return (
+                      <div key={i} className="space-y-1">
+                        <div className="flex justify-between text-[11px] font-bold text-gray-700">
+                          <span>{dest.country}</span>
+                          <span className="font-mono text-gray-500">{dest.count}</span>
+                        </div>
+                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-primary-dark rounded-full" style={{ width: `${(val / maxMigrationDest) * 100}%` }} />
+                        </div>
                       </div>
-                  ))}
+                    );
+                  })}
                 </div>
             </div>
             <div className="kpi-card p-4 shadow-sm">
                 <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Briefcase size={16} /> {t('workersBySector')}</p>
-                <div className="space-y-3 text-[14px]">
+                <div className="space-y-4">
                   {data.workforceStats.topSectors.slice(0, 5).map((sec, i) => (
-                      <div key={i} className="flex justify-between items-center pb-2 border-b border-gray-50 last:border-0">
-                        <span className="font-bold text-gray-700">{sec.name}</span>
+                    <div key={i} className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-bold text-gray-700">
+                        <span>{sec.name}</span>
                         <span className="font-mono text-gray-500">{sec.value}</span>
                       </div>
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary-dark rounded-full" style={{ width: `${(sec.value / maxPartnerSector) * 100}%` }} />
+                      </div>
+                    </div>
                   ))}
                 </div>
             </div>
