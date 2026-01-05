@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { UserProfile, UserRole } from '../types';
 import { Button, Card, Badge, Input } from '../components/ui/LayoutComponents';
-import { Trash2, UserPlus, ShieldAlert, User, Mail, X, Key, RefreshCcw } from 'lucide-react';
+import { Trash2, UserPlus, ShieldAlert, User, Mail, X, Key, RefreshCcw, ShieldCheck } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminUsers() {
@@ -57,6 +58,22 @@ export default function AdminUsers() {
     }
   };
 
+  const handleToggleRole = async (user: UserProfile) => {
+    if (user.id === 'u-admin') {
+      alert("Root administrator role cannot be changed.");
+      return;
+    }
+    const newRole = user.role === 'admin' ? 'user' : 'admin';
+    if (window.confirm(`Are you sure you want to change ${user.fullName}'s role to ${newRole}?`)) {
+      try {
+        await MockService.updateUserRole(user.id, newRole);
+        await fetchUsers();
+      } catch (e) {
+        alert("Failed to update user role.");
+      }
+    }
+  };
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUser.fullName || !newUser.email || !newUser.password) return;
@@ -91,7 +108,7 @@ export default function AdminUsers() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {users.map(user => (
-          <Card key={user.id} className="relative group overflow-hidden border-border dark:bg-secondary">
+          <Card key={user.id} className="relative group overflow-hidden border-border dark:bg-secondary flex flex-col h-full">
              <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                    <img src={user.avatarUrl} alt={user.fullName} className="w-12 h-12 rounded-full border border-gray-200" />
@@ -111,7 +128,7 @@ export default function AdminUsers() {
                 )}
              </div>
              
-             <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+             <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400 flex-1">
                 <div className="flex items-center gap-2">
                    <Mail size={14} className="opacity-70" />
                    {user.email}
@@ -120,16 +137,21 @@ export default function AdminUsers() {
                    <ShieldAlert size={14} className="opacity-70" />
                    ID: <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">{user.id}</span>
                 </div>
-                
-                {/* Admin Password Reset Action */}
-                <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
-                  <button 
-                    onClick={() => handleResetPassword(user.id)}
-                    className="flex items-center gap-2 text-xs font-semibold text-primary hover:text-primary-dark dark:text-primary-light transition-colors w-full"
-                  >
-                    <RefreshCcw size={12} /> Reset Password
-                  </button>
-                </div>
+             </div>
+
+             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-2">
+                <button 
+                  onClick={() => handleToggleRole(user)}
+                  className="flex items-center gap-2 text-xs font-semibold text-primary hover:text-primary-dark dark:text-primary-light transition-colors w-full"
+                >
+                  <ShieldCheck size={12} /> Change to {user.role === 'admin' ? 'User' : 'Admin'} Role
+                </button>
+                <button 
+                  onClick={() => handleResetPassword(user.id)}
+                  className="flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors w-full"
+                >
+                  <RefreshCcw size={12} /> Reset Password
+                </button>
              </div>
           </Card>
         ))}

@@ -203,6 +203,10 @@ app.post('/api/reports', (req, res) => {
 });
 
 app.delete('/api/reports/:id', (req, res) => {
+  const userRole = req.headers['x-user-role'];
+  if (userRole !== 'admin') {
+    return res.status(403).json({ error: 'Permission denied. Only admins can delete reports.' });
+  }
   db.run("DELETE FROM reports WHERE id = ?", [req.params.id], (err) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
@@ -288,6 +292,13 @@ app.post('/api/users/:id/apikey', (req, res) => {
   db.run("UPDATE users SET apiKey = ? WHERE id = ?", [req.body.apiKey, req.params.id], (err) => {
     if (err) return res.status(500).json({ error: err.message });
     db.get("SELECT * FROM users WHERE id = ?", [req.params.id], (e, row) => res.json(row));
+  });
+});
+
+app.post('/api/users/:id/role', (req, res) => {
+  db.run("UPDATE users SET role = ? WHERE id = ?", [req.body.role, req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
   });
 });
 

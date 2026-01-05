@@ -175,7 +175,8 @@ export default function Wizard() {
               economicStats_totalExportsToUAE: { type: Type.STRING },
               economicStats_totalImportsFromUAE: { type: Type.STRING },
               tipRank: { type: Type.STRING },
-              remittancesFromUAE: { type: Type.STRING }
+              remittancesFromUAE: { type: Type.STRING },
+              topUniversities: { type: Type.ARRAY, items: { type: Type.STRING } }
             }
           }
         }
@@ -196,6 +197,12 @@ export default function Wizard() {
             topImportProducts: aiData.topImportProducts || prev.economicStats.topImportProducts,
             tipRank: aiData.tipRank || prev.economicStats.tipRank,
             remittancesFromUAE: aiData.remittancesFromUAE || prev.economicStats.remittancesFromUAE,
+          },
+          educationStats: {
+            ...prev.educationStats,
+            topUniversities: aiData.topUniversities || prev.educationStats.topUniversities,
+            primaryEnrollment: aiData.primaryEnrollment || prev.educationStats.primaryEnrollment,
+            higherEducationEnrollment: aiData.higherEducationEnrollment || prev.educationStats.higherEducationEnrollment
           },
           workforceStats: { ...prev.workforceStats, ...aiData } 
         }));
@@ -483,7 +490,7 @@ export default function Wizard() {
                  <div>
                    <label className="text-sm font-semibold mb-2 block">{t('sectorDistribution')}</label>
                    {data.workforceStats.topSectors.map((sec, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
+                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
                  </div>
@@ -525,6 +532,32 @@ export default function Wizard() {
                     <h5 className="font-bold text-sm mb-3">Custom Trade/Economic Indicators</h5>
                     {data.economicStats.customStats.map((stat, i) => (<div key={stat.id} className="flex gap-4 mb-2 items-end"><Input label="Indicator" value={stat.label} onChange={e => { const list = [...data.economicStats.customStats]; list[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><Input label="Value" value={stat.value} onChange={e => { const list = [...data.economicStats.customStats]; list[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><button onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: data.economicStats.customStats.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button></div>))}
                     <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: [...data.economicStats.customStats, { id: uuidv4(), label: '', value: '' }]}})}>+ Add Indicator</Button>
+                 </div>
+
+                 <div className="pt-4 border-t">
+                    <h5 className="font-bold text-sm mb-3">{t('topUniversities')} (Max 5)</h5>
+                    {data.educationStats.topUniversities.map((uni, idx) => (
+                      <div key={idx} className="flex gap-2 mb-2">
+                        <Input
+                          value={uni}
+                          onChange={e => {
+                            const list = [...data.educationStats.topUniversities];
+                            list[idx] = e.target.value;
+                            setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
+                          }}
+                          placeholder={`University ${idx + 1}`}
+                        />
+                        <button onClick={() => {
+                          const list = data.educationStats.topUniversities.filter((_, i) => i !== idx);
+                          setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
+                        }} className="text-red-400"><X size={16} /></button>
+                      </div>
+                    ))}
+                    {data.educationStats.topUniversities.length < 5 && (
+                      <Button size="sm" variant="outline" onClick={() => setData({...data, educationStats: {...data.educationStats, topUniversities: [...data.educationStats.topUniversities, '']}})}>
+                        + Add University
+                      </Button>
+                    )}
                  </div>
                </>
              )}

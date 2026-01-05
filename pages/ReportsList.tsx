@@ -46,7 +46,7 @@ export default function ReportsList() {
     if (window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
       setDeletingId(id);
       try {
-        await MockService.deleteReport(id);
+        await MockService.deleteReport(id, user.role);
         await fetchData();
       } catch (error) {
         console.error("Delete failed", error);

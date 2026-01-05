@@ -36,8 +36,11 @@ export const MockService = {
     });
   },
 
-  deleteReport: async (id: string): Promise<void> => {
-    await fetch(`${API_URL}/reports/${id}`, { method: 'DELETE' });
+  deleteReport: async (id: string, role: string): Promise<void> => {
+    await fetch(`${API_URL}/reports/${id}`, { 
+      method: 'DELETE',
+      headers: { 'X-User-Role': role }
+    });
   },
 
   // --- Letter Logs ---
@@ -123,6 +126,14 @@ export const MockService = {
         body: JSON.stringify({ apiKey })
     });
     return res.ok ? await res.json() : null;
+  },
+
+  updateUserRole: async (userId: string, role: string): Promise<void> => {
+    await fetch(`${API_URL}/users/${userId}/role`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role })
+    });
   },
 
   // --- Announcements ---
