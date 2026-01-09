@@ -211,21 +211,25 @@ export default function PrintView() {
   const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
 
-  const CHUNK_SIZE = 5;
+  // Pagination Logic Constants
+  const INT_CHUNK_SIZE = 5;
+  const POINTS_CHUNK_SIZE = 3; // Discussion points are text-heavy, limit to 3 per page
+  const AGR_CHUNK_SIZE = 6;
+
   const interactionChunks = [];
-  for (let i = 0; i < data.recentInteractions.length; i += CHUNK_SIZE) {
-    interactionChunks.push(data.recentInteractions.slice(i, i + CHUNK_SIZE));
+  for (let i = 0; i < data.recentInteractions.length; i += INT_CHUNK_SIZE) {
+    interactionChunks.push(data.recentInteractions.slice(i, i + INT_CHUNK_SIZE));
   }
 
   const pointsChunks = [];
-  for (let i = 0; i < data.pointsOfDiscussion.length; i += CHUNK_SIZE) {
-    pointsChunks.push(data.pointsOfDiscussion.slice(i, i + CHUNK_SIZE));
+  for (let i = 0; i < data.pointsOfDiscussion.length; i += POINTS_CHUNK_SIZE) {
+    pointsChunks.push(data.pointsOfDiscussion.slice(i, i + POINTS_CHUNK_SIZE));
   }
 
   const sortedAgreements = [...data.bilateralAgreements].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const agreementChunks = [];
-  for (let i = 0; i < sortedAgreements.length; i += CHUNK_SIZE) {
-    agreementChunks.push(sortedAgreements.slice(i, i + CHUNK_SIZE));
+  for (let i = 0; i < sortedAgreements.length; i += AGR_CHUNK_SIZE) {
+    agreementChunks.push(sortedAgreements.slice(i, i + AGR_CHUNK_SIZE));
   }
 
   const maxMigrationDest = Math.max(...data.workforceStats.migrationDestinations.map(d => parseFloat(d.count) || 0), 1);
@@ -233,48 +237,37 @@ export default function PrintView() {
 
   /**
    * REFINED STATUS BADGE LOGIC
-   * Follows strict lowercase key matching for colors and localized strings for text.
+   * Strictly matches the requested rules: Green for Active, Yellow for Pending/Custom.
    */
   const getAgreementStatusDisplay = (agr: any) => {
-    // 1. Normalize the raw status string/key
-    let statusKey = (agr.status || 'active').toLowerCase();
+    // Force lowercase for strict checking
+    const status = String(agr.status || 'active').toLowerCase();
     
-    // 2. Handle legacy full-string statuses (e.g. "نشط/Active" -> "active")
-    if (statusKey.includes('active') || statusKey.includes('نشط') || statusKey.includes('ساري')) {
-      statusKey = 'active';
-    } else if (statusKey.includes('pending') || statusKey.includes('تنفيذ')) {
-      statusKey = 'pending';
-    } else if (statusKey === 'custom') {
-      statusKey = 'custom';
-    } else {
-      // Default fallback for unknown strings
-      statusKey = 'custom';
-    }
-
-    // 3. Define Badge Attributes
-    if (statusKey === 'active') {
+    // Rule: active badge text and color (GREEN)
+    if (status === 'active' || status.includes('ساري') || (status.includes('active') && !status.includes('in'))) {
       return { 
         label: isRTL ? 'ساري' : 'Active', 
         class: 'bg-green-100 text-green-800 border-green-200' 
       };
     }
     
-    if (statusKey === 'pending') {
+    // Rule: pending badge text and color (YELLOW)
+    if (status === 'pending' || status.includes('تنفيذ') || status.includes('pending')) {
       return { 
         label: isRTL ? 'قيد التنفيذ' : 'Pending', 
         class: 'bg-yellow-100 text-yellow-800 border-yellow-200' 
       };
     }
     
-    if (statusKey === 'custom') {
+    // Rule: custom status (YELLOW)
+    if (status === 'custom' || agr.customStatusText) {
       return { 
-        // Fallback to "Pending" text if customStatusText is empty but key is custom
-        label: agr.customStatusText || (isRTL ? 'قيد التنفيذ' : 'Pending'), 
+        label: agr.customStatusText || (isRTL ? 'مخصص' : 'Custom'), 
         class: 'bg-yellow-100 text-yellow-800 border-yellow-200' 
       };
     }
 
-    // Absolute fallback
+    // Default fallback (Green for active is the safest default per logic)
     return { label: isRTL ? 'ساري' : 'Active', class: 'bg-green-100 text-green-800 border-green-200' };
   };
 
