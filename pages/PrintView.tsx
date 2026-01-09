@@ -537,23 +537,30 @@ export default function PrintView() {
           </PageContainer>
         ))}
 
-        {pointsChunks.map((chunk, cIdx) => (
-          <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-            <SectionHeader icon={MessageSquare} title={`${t('pointsDiscussion')}${pointsChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} />
-            <div className="flex flex-col gap-2 mt-2">
-              {chunk.map((point, idx) => (
-                <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break">
-                    <span className="text-accent font-bold text-lg leading-none">•</span>
-                    <div className="flex-1">
-                      <strong className="block text-[12.5px] text-gray-900 mb-0.5 uppercase tracking-wide leading-tight">{point.title}</strong>
-                      {renderRichText(point.content)}
-                    </div>
-                </div>
-              ))}
-            </div>
-          </PageContainer>
-        ))}
+        {pointsChunks.map((chunk, cIdx) => {
+          // Dynamic title with page numbers (e.g., "محاور النقاش", "محاور النقاش 2")
+          const pageTitle = cIdx === 0 
+            ? t('pointsDiscussion') 
+            : `${t('pointsDiscussion')} ${cIdx + 1}`;
+
+          return (
+            <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+              <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+              <SectionHeader icon={MessageSquare} title={pageTitle} />
+              <div className="flex flex-col gap-2 mt-2">
+                {chunk.map((point, idx) => (
+                  <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break">
+                      <span className="text-accent font-bold text-lg leading-none">•</span>
+                      <div className="flex-1">
+                        <strong className="block text-[12.5px] text-gray-900 mb-0.5 uppercase tracking-wide leading-tight">{point.title}</strong>
+                        {renderRichText(point.content)}
+                      </div>
+                  </div>
+                ))}
+              </div>
+            </PageContainer>
+          );
+        })}
 
         {agreementChunks.length > 0 ? agreementChunks.map((chunk, pIdx) => (
           <PageContainer key={`agr-${pIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
