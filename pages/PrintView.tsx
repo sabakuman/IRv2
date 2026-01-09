@@ -51,9 +51,20 @@ const renderRichText = (text: string, sizeClass: string = "text-[12px]") => {
   return <div className={`rich-text-content ${sizeClass} leading-[1.5] overflow-visible`}>{result.length > 0 ? result : text}</div>;
 };
 
-// Helper for clickable references
-const SourceLink = ({ label, url }: { label: string, url?: string }) => {
+// Helper for clickable references with specific logic for Ministry/CBUAE
+const SourceLink = ({ label, type }: { label: string, type: string }) => {
+  const urls: Record<string, string> = {
+    demo: 'https://data.worldbank.org',
+    economy: 'https://data.worldbank.org',
+    trade: 'https://comtradeplus.un.org',
+    edu: 'https://uis.unesco.org',
+    tip: 'https://www.state.gov/trafficking-in-persons-report/'
+  };
+
+  const url = urls[type];
+  
   if (!url) return <span className="text-[9px] text-gray-500 italic">{label}</span>;
+  
   return (
     <a 
       href={url} 
@@ -107,6 +118,8 @@ export default function PrintView() {
 
   const { data } = report;
   const isRTL = language === 'ar';
+  
+  // Dynamic Year Logic
   const reportYear = data.reportDate ? new Date(data.reportDate).getFullYear() : 2025;
   const prevYear = reportYear - 1;
   const prevMonthAr = 'ديسمبر';
@@ -119,14 +132,6 @@ export default function PrintView() {
   };
 
   const getSource = (type: string) => {
-    const urls: Record<string, string> = {
-      demo: 'https://data.worldbank.org',
-      economy: 'https://data.worldbank.org',
-      trade: 'https://comtradeplus.un.org',
-      edu: 'https://uis.unesco.org',
-      tip: 'https://www.state.gov/trafficking-in-persons-report/'
-    };
-
     const labels: Record<string, Record<string, string>> = {
       en: { 
         demo: `*(World Bank, ${reportYear})`, 
@@ -149,19 +154,20 @@ export default function PrintView() {
     };
 
     const label = labels[language]?.[type] || '';
-    const url = urls[type];
-    
-    return <SourceLink label={label} url={url} />;
+    return <SourceLink label={label} type={type} />;
   };
 
   const normalizeWageDisplay = (wage: string) => {
     if (!wage) return 'N/A';
-    // AI normalization check
     const upper = wage.toUpperCase();
+    // Enforce USD or AED symbols
     if (upper.includes('$') || upper.includes('USD') || upper.includes('AED') || upper.includes('درهم')) {
       return wage;
     }
-    // If local currency detected without normalization, add warning or just return
+    // Fallback to USD if no currency is detected (assume AI returned raw number)
+    if (!isNaN(Number(wage.replace(/[^0-9.]/g, '')))) {
+      return `$${wage}`;
+    }
     return wage;
   };
 
