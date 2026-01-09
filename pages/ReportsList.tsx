@@ -133,7 +133,7 @@ export default function ReportsList() {
               {filteredReports.map((report) => {
                 const isOwner = user?.id === report.userId;
                 const isAdmin = user?.role === 'admin';
-                const canEdit = isAdmin || isOwner;
+                const canEdit = true; // All users can edit
                 const canDelete = isAdmin;
                 const isDeleting = deletingId === report.id;
                 
@@ -165,19 +165,13 @@ export default function ReportsList() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                         {canEdit ? (
-                            <button 
-                              onClick={() => navigate(`/wizard/${report.id}`)}
-                              className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors"
-                              title="Edit Report"
-                            >
-                              <Edit3 size={16} />
-                            </button>
-                         ) : (
-                           <span className="text-gray-300 dark:text-gray-600 p-2 cursor-not-allowed" title="View Only">
-                             <Lock size={16} />
-                           </span>
-                         )}
+                         <button 
+                           onClick={() => navigate(`/wizard/${report.id}`)}
+                           className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors"
+                           title="Edit Report"
+                         >
+                           <Edit3 size={16} />
+                         </button>
 
                          {canDelete && (
                             <button 
@@ -189,15 +183,13 @@ export default function ReportsList() {
                             </button>
                          )}
                         
-                        {(canEdit || isAdmin) && (
-                          <button 
-                            onClick={() => handlePrint(report.id)}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300 transition-colors"
-                            title="Export PDF"
-                          >
-                            <Printer size={16} />
-                          </button>
-                        )}
+                        <button 
+                          onClick={() => handlePrint(report.id)}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300 transition-colors"
+                          title="Export PDF"
+                        >
+                          <Printer size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>

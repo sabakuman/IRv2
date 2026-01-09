@@ -10,7 +10,6 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [resettingId, setResettingId] = useState<string | null>(null);
 
   // New User Form State
   const [newUser, setNewUser] = useState({

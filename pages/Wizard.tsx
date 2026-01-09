@@ -119,7 +119,7 @@ export default function Wizard() {
 
     try {
       const ai = new GoogleGenAI({ apiKey });
-      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Include Top 5 export products and Top 5 import products as individual string arrays. Also include 'tipRank' (Trafficking in Persons Rank, e.g. Tier 2) and 'remittancesFromUAE' (annual amount).`;
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Always normalize monthly wages to USD ($) or AED (درهم) - do not use local currency. Include Top 5 export products and Top 5 import products as individual string arrays. Also include 'tipRank' (Trafficking in Persons Rank, e.g. Tier 2) and 'remittancesFromUAE' (annual amount). List Top 5 Universities.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -474,7 +474,10 @@ export default function Wizard() {
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
              {currentStep === 2 ? (
                <>
-                 <div className="grid grid-cols-2 gap-6"><Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} /><Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} /></div>
+                 <div className="grid grid-cols-2 gap-6">
+                    <Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. $450/month" />
+                    <Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. $150/month" />
+                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Input label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} />
                     <Input label={t('maleParticipation')} type="number" value={data.workforceStats.participationMale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationMale: Number(e.target.value)}})} />
@@ -490,7 +493,7 @@ export default function Wizard() {
                  <div>
                    <label className="text-sm font-semibold mb-2 block">{t('sectorDistribution')}</label>
                    {data.workforceStats.topSectors.map((sec, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
+                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
                  </div>
@@ -528,36 +531,48 @@ export default function Wizard() {
 
                  <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} /></div>
                  
-                 <div className="pt-4">
-                    <h5 className="font-bold text-sm mb-3">Custom Trade/Economic Indicators</h5>
-                    {data.economicStats.customStats.map((stat, i) => (<div key={stat.id} className="flex gap-4 mb-2 items-end"><Input label="Indicator" value={stat.label} onChange={e => { const list = [...data.economicStats.customStats]; list[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><Input label="Value" value={stat.value} onChange={e => { const list = [...data.economicStats.customStats]; list[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><button onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: data.economicStats.customStats.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button></div>))}
-                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: [...data.economicStats.customStats, { id: uuidv4(), label: '', value: '' }]}})}>+ Add Indicator</Button>
+                 <div className="pt-4 border-t">
+                    <h5 className="font-bold text-sm mb-3">{t('topUniversities')} (Max 5)</h5>
+                    <div className="space-y-3">
+                      {data.educationStats.topUniversities.map((uni, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <span className="text-xs font-bold text-gray-400 w-4">{idx + 1}.</span>
+                          <Input 
+                            value={uni} 
+                            onChange={e => {
+                              const list = [...data.educationStats.topUniversities];
+                              list[idx] = e.target.value;
+                              setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
+                            }} 
+                            placeholder="Enter university name..."
+                          />
+                          <button 
+                            onClick={() => {
+                              const list = data.educationStats.topUniversities.filter((_, i) => i !== idx);
+                              setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
+                            }} 
+                            className="text-red-400 hover:text-red-600 transition-colors"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      ))}
+                      {data.educationStats.topUniversities.length < 5 && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setData({...data, educationStats: {...data.educationStats, topUniversities: [...data.educationStats.topUniversities, '']}})}
+                        >
+                          <Plus size={14} /> Add University
+                        </Button>
+                      )}
+                    </div>
                  </div>
 
                  <div className="pt-4 border-t">
-                    <h5 className="font-bold text-sm mb-3">{t('topUniversities')} (Max 5)</h5>
-                    {data.educationStats.topUniversities.map((uni, idx) => (
-                      <div key={idx} className="flex gap-2 mb-2">
-                        <Input
-                          value={uni}
-                          onChange={e => {
-                            const list = [...data.educationStats.topUniversities];
-                            list[idx] = e.target.value;
-                            setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
-                          }}
-                          placeholder={`University ${idx + 1}`}
-                        />
-                        <button onClick={() => {
-                          const list = data.educationStats.topUniversities.filter((_, i) => i !== idx);
-                          setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
-                        }} className="text-red-400"><X size={16} /></button>
-                      </div>
-                    ))}
-                    {data.educationStats.topUniversities.length < 5 && (
-                      <Button size="sm" variant="outline" onClick={() => setData({...data, educationStats: {...data.educationStats, topUniversities: [...data.educationStats.topUniversities, '']}})}>
-                        + Add University
-                      </Button>
-                    )}
+                    <h5 className="font-bold text-sm mb-3">Custom Trade/Economic Indicators</h5>
+                    {data.economicStats.customStats.map((stat, i) => (<div key={stat.id} className="flex gap-4 mb-2 items-end"><Input label="Indicator" value={stat.label} onChange={e => { const list = [...data.economicStats.customStats]; list[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><Input label="Value" value={stat.value} onChange={e => { const list = [...data.economicStats.customStats]; list[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><button onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: data.economicStats.customStats.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button></div>))}
+                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: [...data.economicStats.customStats, { id: uuidv4(), label: '', value: '' }]}})}>+ Add Indicator</Button>
                  </div>
                </>
              )}
