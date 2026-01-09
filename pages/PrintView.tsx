@@ -191,7 +191,7 @@ export default function PrintView() {
     return (
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
         <div className="flex items-center gap-3">
-          <img flagSrc={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
+          <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
           <div className="h-8 w-px bg-gray-200" />
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
@@ -231,6 +231,20 @@ export default function PrintView() {
 
   const maxMigrationDest = Math.max(...data.workforceStats.migrationDestinations.map(d => parseFloat(d.count) || 0), 1);
   const maxPartnerSector = Math.max(...data.workforceStats.topSectors.map(s => s.value), 1);
+
+  const getAgreementStatusDisplay = (agr: any) => {
+    const status = (agr.status || 'active').toLowerCase();
+    if (status === 'active' || status === 'Active') {
+      return { label: isRTL ? 'ساري' : 'Active', class: 'bg-green-100 text-green-800 border-green-200' };
+    }
+    if (status === 'pending' || status === 'Pending') {
+      return { label: isRTL ? 'قيد التنفيذ' : 'Pending', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+    }
+    if (status === 'custom') {
+      return { label: agr.customStatusText || (isRTL ? 'مخصص' : 'Custom'), class: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+    }
+    return { label: agr.status, class: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+  };
 
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
@@ -514,13 +528,16 @@ export default function PrintView() {
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={FileText} title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${pIdx + 1})` : ''}`} />
             <div className="space-y-3 mt-4">
-              {chunk.map((agreement, idx) => (
-                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 grid grid-cols-12 gap-3 items-start shadow-sm avoid-break">
-                    <div className="col-span-3"><p className="text-[12.5px] font-bold text-gray-900 leading-tight">{agreement.title}</p><p className="text-[8px] font-mono font-bold text-gray-500 mt-1">{formatDate(agreement.date)}</p></div>
-                    <div className="col-span-7">{renderRichText(agreement.summary)}</div>
-                    <div className="col-span-2 text-end"><span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase ${agreement.status === 'Active' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'}`}>{agreement.status}</span></div>
-                </div>
-              ))}
+              {chunk.map((agreement, idx) => {
+                const statusInfo = getAgreementStatusDisplay(agreement);
+                return (
+                  <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 grid grid-cols-12 gap-3 items-start shadow-sm avoid-break">
+                      <div className="col-span-3"><p className="text-[12.5px] font-bold text-gray-900 leading-tight">{agreement.title}</p><p className="text-[8px] font-mono font-bold text-gray-500 mt-1">{formatDate(agreement.date)}</p></div>
+                      <div className="col-span-7">{renderRichText(agreement.summary)}</div>
+                      <div className="col-span-2 text-end"><span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase border ${statusInfo.class}`}>{statusInfo.label}</span></div>
+                  </div>
+                );
+              })}
             </div>
           </PageContainer>
         )) : (

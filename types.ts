@@ -175,7 +175,8 @@ export interface ReportData {
   bilateralAgreements: Array<{
     title: string;
     date: string;
-    status: 'Active' | 'Pending' | 'Expired';
+    status: 'active' | 'pending' | 'custom';
+    customStatusText?: string;
     summary: string;
   }>;
   

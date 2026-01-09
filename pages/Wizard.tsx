@@ -224,7 +224,7 @@ export default function Wizard() {
     try {
       const ai = new GoogleGenAI({ apiKey });
       const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
-      const prompt = `Identify and list 5-10 formal bilateral labour agreements, MoUs, or protocols between the UAE (MOHRE/MOFA) and ${data.country}. Return as JSON array with title, date, status (Active/Pending), and summary. Language: ${targetLanguage}.`;
+      const prompt = `Identify and list 5-10 formal bilateral labour agreements, MoUs, or protocols between the UAE (MOHRE/MOFA) and ${data.country}. Return as JSON array with title, date, status (active or pending), and summary. Language: ${targetLanguage}.`;
       
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -238,7 +238,7 @@ export default function Wizard() {
               properties: {
                 title: { type: Type.STRING },
                 date: { type: Type.STRING },
-                status: { type: Type.STRING },
+                status: { type: Type.STRING, enum: ['active', 'pending'] },
                 summary: { type: Type.STRING }
               }
             }
@@ -654,9 +654,43 @@ export default function Wizard() {
              {data.bilateralAgreements.map((agreement, idx) => (
                 <Card key={idx} className="p-4 relative">
                    <button onClick={() => setData({...data, bilateralAgreements: data.bilateralAgreements.filter((_, i) => i !== idx)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
-                   <Input value={agreement.title} className="font-bold mb-2" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].title = e.target.value; setData({...data, bilateralAgreements: list}); }} /><Input value={agreement.date} label="Date" className="mb-2" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].date = e.target.value; setData({...data, bilateralAgreements: list}); }} /><RichTextarea label="Summary" value={agreement.summary} onChange={(val: string) => { const list = [...data.bilateralAgreements]; list[idx].summary = val; setData({...data, bilateralAgreements: list}); }} /></Card>
+                   <Input value={agreement.title} className="font-bold mb-2" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].title = e.target.value; setData({...data, bilateralAgreements: list}); }} />
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                     <Input value={agreement.date} label="Date" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].date = e.target.value; setData({...data, bilateralAgreements: list}); }} />
+                     <div className="space-y-1.5">
+                       <label className="text-sm font-semibold text-foreground/80">{t('status')}</label>
+                       <select 
+                         className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-primary transition-all"
+                         value={agreement.status || 'active'}
+                         onChange={e => {
+                           const list = [...data.bilateralAgreements];
+                           list[idx].status = e.target.value as any;
+                           setData({...data, bilateralAgreements: list});
+                         }}
+                       >
+                         <option value="active">{t('activeLabel')}</option>
+                         <option value="pending">{t('pendingLabel')}</option>
+                         <option value="custom">{t('customLabel')}</option>
+                       </select>
+                     </div>
+                   </div>
+                   {agreement.status === 'custom' && (
+                     <Input 
+                        label={t('customStatusText')} 
+                        value={agreement.customStatusText || ''} 
+                        onChange={e => {
+                          const list = [...data.bilateralAgreements];
+                          list[idx].customStatusText = e.target.value;
+                          setData({...data, bilateralAgreements: list});
+                        }}
+                        className="mb-2"
+                        placeholder="e.g. Under Review"
+                     />
+                   )}
+                   <RichTextarea label="Summary" value={agreement.summary} onChange={(val: string) => { const list = [...data.bilateralAgreements]; list[idx].summary = val; setData({...data, bilateralAgreements: list}); }} />
+                </Card>
              ))}
-             <Button variant="outline" onClick={() => setData({...data, bilateralAgreements: [...data.bilateralAgreements, { title: '', date: '', status: 'Active', summary: '' }]})}>+ Add Agreement</Button>
+             <Button variant="outline" onClick={() => setData({...data, bilateralAgreements: [...data.bilateralAgreements, { title: '', date: '', status: 'active', summary: '' }]})}>+ Add Agreement</Button>
           </div>
         );
       case 6:
