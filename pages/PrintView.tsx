@@ -159,15 +159,7 @@ export default function PrintView() {
 
   const normalizeWageDisplay = (wage: string) => {
     if (!wage) return 'N/A';
-    const upper = wage.toUpperCase();
-    // Enforce USD or AED symbols
-    if (upper.includes('$') || upper.includes('USD') || upper.includes('AED') || upper.includes('درهم')) {
-      return wage;
-    }
-    // Fallback to USD if no currency is detected (assume AI returned raw number)
-    if (!isNaN(Number(wage.replace(/[^0-9.]/g, '')))) {
-      return `$${wage}`;
-    }
+    // User or AI should provide full string like "500 USD" or "1800 AED"
     return wage;
   };
 
@@ -199,7 +191,7 @@ export default function PrintView() {
     return (
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
         <div className="flex items-center gap-3">
-          <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
+          <img flagSrc={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
           <div className="h-8 w-px bg-gray-200" />
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
@@ -366,7 +358,7 @@ export default function PrintView() {
                 </div>
             </div>
             <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
-                <p className="text-center text-[10px] font-bold text-accent mb-2 uppercase tracking-wider">{isRTL ? 'توزيع العاملين حسب الإمارة (ICP)' : 'Residents distribution by Emirate (ICP)'}</p>
+                <p className="text-center text-[10px] font-bold text-accent mb-2 uppercase tracking-wider">{isRTL ? 'توزيع العاملين حسب الإمارة (ICP)' : 'Workers distribution by Emirate (ICP)'}</p>
                 <div className="h-32 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sortedIcpEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>

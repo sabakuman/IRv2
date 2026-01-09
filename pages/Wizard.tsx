@@ -119,7 +119,7 @@ export default function Wizard() {
 
     try {
       const ai = new GoogleGenAI({ apiKey });
-      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Always normalize monthly wages to USD ($) or AED (درهم) - do not use local currency. Include Top 5 export products and Top 5 import products as individual string arrays. Also include 'tipRank' (Trafficking in Persons Rank, e.g. Tier 2) and 'remittancesFromUAE' (annual amount). List Top 5 Universities.`;
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Always provide monthly wages in USD ($) or AED (درهم) only - convert from local currency if necessary. Include Top 5 export products and Top 5 import products as individual string arrays. Also include 'tipRank' (Trafficking in Persons Rank, e.g. Tier 2) and 'remittancesFromUAE' (annual amount). List Top 5 Universities.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -475,8 +475,8 @@ export default function Wizard() {
              {currentStep === 2 ? (
                <>
                  <div className="grid grid-cols-2 gap-6">
-                    <Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. $450/month" />
-                    <Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. $150/month" />
+                    <Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. 500 USD" />
+                    <Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. 150 USD" />
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Input label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} />
