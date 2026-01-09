@@ -159,7 +159,6 @@ export default function PrintView() {
 
   const normalizeWageDisplay = (wage: string) => {
     if (!wage) return 'N/A';
-    // User or AI should provide full string like "500 USD" or "1800 AED"
     return wage;
   };
 
@@ -232,18 +231,51 @@ export default function PrintView() {
   const maxMigrationDest = Math.max(...data.workforceStats.migrationDestinations.map(d => parseFloat(d.count) || 0), 1);
   const maxPartnerSector = Math.max(...data.workforceStats.topSectors.map(s => s.value), 1);
 
+  /**
+   * REFINED STATUS BADGE LOGIC
+   * Follows strict lowercase key matching for colors and localized strings for text.
+   */
   const getAgreementStatusDisplay = (agr: any) => {
-    const status = (agr.status || 'active').toLowerCase();
-    if (status === 'active' || status === 'Active') {
-      return { label: isRTL ? 'ساري' : 'Active', class: 'bg-green-100 text-green-800 border-green-200' };
+    // 1. Normalize the raw status string/key
+    let statusKey = (agr.status || 'active').toLowerCase();
+    
+    // 2. Handle legacy full-string statuses (e.g. "نشط/Active" -> "active")
+    if (statusKey.includes('active') || statusKey.includes('نشط') || statusKey.includes('ساري')) {
+      statusKey = 'active';
+    } else if (statusKey.includes('pending') || statusKey.includes('تنفيذ')) {
+      statusKey = 'pending';
+    } else if (statusKey === 'custom') {
+      statusKey = 'custom';
+    } else {
+      // Default fallback for unknown strings
+      statusKey = 'custom';
     }
-    if (status === 'pending' || status === 'Pending') {
-      return { label: isRTL ? 'قيد التنفيذ' : 'Pending', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+
+    // 3. Define Badge Attributes
+    if (statusKey === 'active') {
+      return { 
+        label: isRTL ? 'ساري' : 'Active', 
+        class: 'bg-green-100 text-green-800 border-green-200' 
+      };
     }
-    if (status === 'custom') {
-      return { label: agr.customStatusText || (isRTL ? 'مخصص' : 'Custom'), class: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+    
+    if (statusKey === 'pending') {
+      return { 
+        label: isRTL ? 'قيد التنفيذ' : 'Pending', 
+        class: 'bg-yellow-100 text-yellow-800 border-yellow-200' 
+      };
     }
-    return { label: agr.status, class: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+    
+    if (statusKey === 'custom') {
+      return { 
+        // Fallback to "Pending" text if customStatusText is empty but key is custom
+        label: agr.customStatusText || (isRTL ? 'قيد التنفيذ' : 'Pending'), 
+        class: 'bg-yellow-100 text-yellow-800 border-yellow-200' 
+      };
+    }
+
+    // Absolute fallback
+    return { label: isRTL ? 'ساري' : 'Active', class: 'bg-green-100 text-green-800 border-green-200' };
   };
 
   return (

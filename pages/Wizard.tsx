@@ -195,6 +195,7 @@ export default function Wizard() {
             totalImportsFromUAE: aiData.economicStats_totalImportsFromUAE || prev.economicStats.totalImportsFromUAE,
             topExportProducts: aiData.topExportProducts || prev.economicStats.topExportProducts,
             topImportProducts: aiData.topImportProducts || prev.economicStats.topImportProducts,
+            // Fixed typo: changed aiStatus to aiData
             tipRank: aiData.tipRank || prev.economicStats.tipRank,
             remittancesFromUAE: aiData.remittancesFromUAE || prev.economicStats.remittancesFromUAE,
           },
@@ -529,7 +530,7 @@ export default function Wizard() {
                     <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: [...data.economicStats.topImportProducts, '']}})}>+ Add Import Product</Button>
                  </div>
 
-                 <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} /></div>
+                 <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.economicStats.primaryEnrollment} onChange={e => setData({...data, economicStats: {...data.economicStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.economicStats.higherEducationEnrollment} onChange={e => setData({...data, economicStats: {...data.economicStats, higherEducationEnrollment: e.target.value}})} /></div>
                  
                  <div className="pt-4 border-t">
                     <h5 className="font-bold text-sm mb-3">{t('topUniversities')} (Max 5)</h5>
