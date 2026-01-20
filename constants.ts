@@ -276,6 +276,7 @@ export const TRANSLATIONS = {
     educationDetails: 'Education Details',
     openLabel: 'Open',
     closedLabel: 'Closed',
+    addNoteLabel: 'Add Note',
   },
   ar: {
     dashboard: 'لوحة القيادة',
@@ -404,5 +405,6 @@ export const TRANSLATIONS = {
     educationDetails: 'تفاصيل التعليم والمهارات',
     openLabel: 'مفتوح',
     closedLabel: 'مغلق',
+    addNoteLabel: 'إضافة ملاحظة',
   }
 };

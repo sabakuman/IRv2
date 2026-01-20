@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } from 'recharts';
+// Fix: Added missing Flag and User icon imports from lucide-react
 import { 
   Globe, Users, TrendingUp, Building, 
   Landmark, Plane, Banknote, 
   AlertTriangle, ShieldAlert,
   GraduationCap, Briefcase, FileText, Activity,
   ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer,
-  ExternalLink, MapPin
+  ExternalLink, MapPin, Flag, User
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
@@ -36,6 +37,31 @@ const translateEmirate = (name: string): string => {
     'Fujairah': 'الفجيرة',
   };
   return translations[name] || name;
+};
+
+const renderRichText = (text: string, sizeClass: string = "text-[12px]") => {
+  if (!text) return null;
+  let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  const lines = processed.split('\n');
+  const result: React.ReactNode[] = [];
+  let inList = false;
+  let listItems: string[] = [];
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('- ')) {
+      if (!inList) { inList = true; listItems = []; }
+      listItems.push(trimmed.substring(2));
+    } else {
+      if (inList) {
+        result.push(<ul key={`list-${i}`} className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
+        inList = false;
+      }
+      if (trimmed) { result.push(<p key={i} className="mb-1 block" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
+    }
+  });
+  if (inList) { result.push(<ul key="list-final" className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
+  return <div className={`rich-text-content ${sizeClass} leading-[1.5] overflow-visible`}>{result.length > 0 ? result : text}</div>;
 };
 
 const SourceLink = ({ label, type }: { label: string, type: string }) => {
@@ -501,7 +527,54 @@ export default function PrintView() {
           </div>
         </PageContainer>
 
-        {/* ADDITIONAL SECTIONS FOR AGREEMENTS, NEWS, INTERACTIONS WOULD FOLLOW */}
+        {/* PAGE 5: DELEGATIONS */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBandInternal country={data.country} reportId={report.id} flagUrl={data.flagUrl} />
+          
+          <SectionHeader icon={Users} title={t('sectionDelegation')} subtitle={isRTL ? 'أعضاء الوفود الرسمية' : 'Official Delegation Members'} compact />
+          
+          <div className="space-y-8">
+             <div className="space-y-4">
+                <h4 className="text-[11px] font-extrabold uppercase tracking-widest text-primary border-b pb-1 mb-4 flex items-center gap-2">
+                   <Flag size={14} /> {t('uaeDelegation')}
+                </h4>
+                <div className="grid grid-cols-2 gap-6">
+                   {data.delegations.uae.map((del) => (
+                      <div key={del.id} className="flex gap-4 items-start bg-gray-50/30 p-4 rounded-2xl border border-gray-100">
+                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
+                            {del.imageUrl ? <img src={del.imageUrl} className="w-full h-full object-cover" alt={del.name} /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300"><User size={24} /></div>}
+                         </div>
+                         <div>
+                            <p className="text-sm font-bold text-gray-900">{del.name}</p>
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-tight mb-2">{del.title}</p>
+                            <p className="text-[10px] text-gray-500 leading-snug line-clamp-2 italic">{del.bio}</p>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
+
+             <div className="space-y-4 pt-4">
+                <h4 className="text-[11px] font-extrabold uppercase tracking-widest text-accent border-b pb-1 mb-4 flex items-center gap-2">
+                   <MapPin size={14} /> {t('partnerDelegation')}
+                </h4>
+                <div className="grid grid-cols-2 gap-6">
+                   {data.delegations.partner.map((del) => (
+                      <div key={del.id} className="flex gap-4 items-start bg-gray-50/30 p-4 rounded-2xl border border-gray-100">
+                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-accent/20 shrink-0">
+                            {del.imageUrl ? <img src={del.imageUrl} className="w-full h-full object-cover" alt={del.name} /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300"><User size={24} /></div>}
+                         </div>
+                         <div>
+                            <p className="text-sm font-bold text-gray-900">{del.name}</p>
+                            <p className="text-[10px] font-bold text-accent uppercase tracking-tight mb-2">{del.title}</p>
+                            <p className="text-[10px] text-gray-500 leading-snug line-clamp-2 italic">{del.bio}</p>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          </div>
+        </PageContainer>
       </div>
     </div>
   );
