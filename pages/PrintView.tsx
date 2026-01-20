@@ -44,7 +44,7 @@ const renderRichText = (text: string, sizeClass: string = "text-[12px]") => {
         result.push(<ul key={`list-${i}`} className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
         inList = false;
       }
-      if (trimmed) { result.push(<p key={i} className="mb-1" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
+      if (trimmed) { result.push(<p key={i} className="mb-1 block" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
     }
   });
   if (inList) { result.push(<ul key="list-final" className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
@@ -63,7 +63,7 @@ const SourceLink = ({ label, type }: { label: string, type: string }) => {
 
   const url = urls[type];
   
-  if (!url) return <span className="text-[9px] text-gray-500 italic">{label}</span>;
+  if (!url) return <span className="text-[9px] text-gray-500 italic block">{label}</span>;
   
   return (
     <a 
@@ -170,10 +170,10 @@ export default function PrintView() {
 
   const DefaultFooter = () => (
     <div className="pt-2 flex justify-between items-center bg-white w-full border-t border-gray-100">
-      <p className="text-[8px] text-gray-400 font-sans">
+      <p className="text-[8px] text-gray-400 font-sans block">
         {t('generatedOn')} <span className="font-sans">{new Date().toLocaleDateString(language === 'ar' ? 'ar-AE' : 'en-US')}</span>
       </p>
-      <p className="text-[8px] text-gray-400 uppercase tracking-widest">{t('ministry')}</p>
+      <p className="text-[8px] text-gray-400 uppercase tracking-widest block">{t('ministry')}</p>
     </div>
   );
 
@@ -193,8 +193,8 @@ export default function PrintView() {
           <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
           <div className="h-8 w-px bg-gray-200" />
           <div className="flex flex-col">
-            <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500 leading-tight">{title}</p>
-            <p className="text-sm font-bold text-primary-dark uppercase leading-tight">{country}</p>
+            <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500 leading-tight block">{title}</p>
+            <p className="text-sm font-bold text-primary-dark uppercase leading-tight block">{country}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -293,23 +293,23 @@ export default function PrintView() {
               <div className={`mb-12 border-accent py-6 ${isRTL ? 'border-r-[8px] pr-12' : 'border-l-[8px] pl-12'}`}>
                 <div className="flex items-center gap-4 mb-8 opacity-60">
                   <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto" alt="UAE" />
-                  <span className="text-sm font-bold uppercase tracking-[0.2em] text-primary">UAE • MOHRE</span>
+                  <span className="text-sm font-bold uppercase tracking-[0.2em] text-primary block">UAE • MOHRE</span>
                 </div>
-                <h1 className="text-[64px] font-serif font-extrabold text-gray-900 leading-[1.1] mb-4">{t('loginTitle')}</h1>
-                <p className="text-2xl text-gray-500 font-light uppercase tracking-wider">{t('strategicOverview')}</p>
+                <h1 className="text-[64px] font-serif font-extrabold text-gray-900 leading-[1.1] mb-4 block">{t('loginTitle')}</h1>
+                <p className="text-2xl text-gray-500 font-light uppercase tracking-wider block">{t('strategicOverview')}</p>
               </div>
               <div className="bg-gray-50 rounded-3xl p-10 border border-gray-100 max-w-xl">
                 <div className="flex items-center gap-8 mb-8">
                     <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${data.country.toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" alt="flag" /></div>
                     <div>
-                      <p className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1">{t('subjectMarket')}</p>
-                      <h2 className="text-4xl font-serif font-bold text-gray-900">{data.country}</h2>
+                      <p className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1 block">{t('subjectMarket')}</p>
+                      <h2 className="text-4xl font-serif font-bold text-gray-900 block">{data.country}</h2>
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-8">
-                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('reference')}</p><p className="font-mono text-base text-gray-800">{report.id}</p></div>
-                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('date')}</p><p className="font-mono text-base text-gray-800">{data.reportDate}</p></div>
-                    <div className="col-span-2"><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('securityClass')}</p><span className="kpi-chip chip-restrict inline-flex items-center gap-2 px-3 py-1"><ShieldAlert size={12} /> {t('officialRestricted')}</span></div>
+                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1 block">{t('reference')}</p><p className="font-mono text-base text-gray-800 block">{report.id}</p></div>
+                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1 block">{t('date')}</p><p className="font-mono text-base text-gray-800 block">{data.reportDate}</p></div>
+                    <div className="col-span-2"><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1 block">{t('securityClass')}</p><span className="kpi-chip chip-restrict inline-flex items-center gap-2 px-3 py-1"><ShieldAlert size={12} /> {t('officialRestricted')}</span></div>
                 </div>
               </div>
           </div>
@@ -340,8 +340,8 @@ export default function PrintView() {
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-4 shadow-sm">
             <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')} <span className="ms-2">{getSource('trade')}</span></h4>
             <div className="grid grid-cols-2 gap-8">
-                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الواردات إلى ${data.country} من الإمارات` : `Imports to ${data.country} from the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalImportsFromUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{data.economicStats.topImportProducts.join(', ')}</p></div>
-                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الصادرات من ${data.country} إلى الإمارات` : `Exports from ${data.country} to the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalExportsToUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{data.economicStats.topExportProducts.join(', ')}</p></div>
+                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase block">{isRTL ? `الواردات إلى ${data.country} من الإمارات` : `Imports to ${data.country} from the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1 block">{data.economicStats.totalImportsFromUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium block">{data.economicStats.topImportProducts.join(', ')}</p></div>
+                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase block">{isRTL ? `الصادرات من ${data.country} إلى الإمارات` : `Exports from ${data.country} to the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1 block">{data.economicStats.totalExportsToUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium block">{data.economicStats.topExportProducts.join(', ')}</p></div>
             </div>
           </div>
           <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact />
@@ -349,12 +349,12 @@ export default function PrintView() {
             <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
             <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center shadow-sm">
-              <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">{t('topUniversities')} <span className="ms-2">{getSource('edu')}</span></p>
-              <ul className="text-[11px] text-gray-700 leading-snug space-y-1">
+              <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5 block">{t('topUniversities')} <span className="ms-2">{getSource('edu')}</span></p>
+              <ul className="text-[11px] text-gray-700 leading-snug space-y-1 block">
                 {(data.educationStats.topUniversities || []).slice(0, 5).map((u, i) => (
                   <li key={i} className="flex gap-1.5 items-start">
                     <span className="shrink-0 font-bold text-primary opacity-60">•</span>
-                    <span className="break-words leading-tight flex-1 font-medium">{u}</span>
+                    <span className="break-words leading-tight flex-1 font-medium block">{u}</span>
                   </li>
                 ))}
               </ul>
@@ -373,7 +373,7 @@ export default function PrintView() {
           
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
-                <p className="text-center text-[10px] font-bold text-primary mb-2 uppercase tracking-wider">{t('workersByEmirate')}</p>
+                <p className="text-center text-[10px] font-bold text-primary mb-2 uppercase tracking-wider block">{t('workersByEmirate')}</p>
                 <div className="h-32 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sortedMohreEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
@@ -388,7 +388,7 @@ export default function PrintView() {
                 </div>
             </div>
             <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
-                <p className="text-center text-[10px] font-bold text-accent mb-2 uppercase tracking-wider">{isRTL ? 'توزيع العاملين حسب الإمارة (ICP)' : 'Workers distribution by Emirate (ICP)'}</p>
+                <p className="text-center text-[10px] font-bold text-accent mb-2 uppercase tracking-wider block">{isRTL ? 'توزيع العاملين حسب الإمارة (ICP)' : 'Workers distribution by Emirate (ICP)'}</p>
                 <div className="h-32 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sortedIcpEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
@@ -406,13 +406,13 @@ export default function PrintView() {
 
           <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
             <div className="border border-gray-200 rounded-2xl p-4 flex flex-col bg-white shadow-sm">
-                <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
+                <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider block">
                   {isRTL ? `توزيع العمال حسب القطاع في ${data.country}` : `Workers distribution by sector in ${data.country}`}
                   <span className="ms-2">{getSource('mohre')}</span>
                 </p>
                 <div className="space-y-1.5 flex-1 overflow-hidden">
                   {mohreSectors.slice(0, 10).map((s, i) => (
-                      <div key={i}>
+                      <div key={i} className="block">
                         <div className="flex justify-between text-[10px] mb-0.5">
                             <span className="font-bold text-gray-700 truncate">{s.name}</span>
                             <span className="font-mono text-gray-900 font-bold">{formatCompactNumber(s.value)}</span>
@@ -426,15 +426,15 @@ export default function PrintView() {
             </div>
             
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
-                <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">{t('additionalIndicators')}</p>
+                <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider block">{t('additionalIndicators')}</p>
                 <div className="space-y-2">
                   {data.uaeWorkforceStats.custom.map((stat) => (
                       <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-2 last:border-0">
                         <div>
-                            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide leading-tight">{stat.label}</p>
-                            <p className="text-[8px] text-gray-400 font-sans">{stat.date}</p>
+                            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide leading-tight block">{stat.label}</p>
+                            <p className="text-[8px] text-gray-400 font-sans block">{stat.date}</p>
                         </div>
-                        <p className="text-lg font-serif font-bold text-gray-900">{stat.value}</p>
+                        <p className="text-lg font-serif font-bold text-gray-900 block">{stat.value}</p>
                       </div>
                   ))}
                 </div>
@@ -449,20 +449,20 @@ export default function PrintView() {
           <div className="grid grid-cols-4 gap-4 mb-6">
             <KPI icon={Users} label={t('totalWorkforce')} value={data.totalWorkforce || data.workforceStats.totalWorkforce} sub={getSource('demo')} />
             <div className="col-span-2 kpi-card flex items-center justify-around py-4 shadow-sm">
-                <div className="text-center"><p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('maleParticipation')}</p><p className="text-2xl font-serif font-bold text-blue-600 leading-none">{data.workforceStats.participationMale}%</p></div>
+                <div className="flex flex-col items-center"><p className="text-xs font-bold text-gray-700 uppercase mb-1 block">{t('maleParticipation')}</p><p className="text-2xl font-serif font-bold text-blue-600 leading-none block">{data.workforceStats.participationMale}%</p></div>
                 <div className="h-8 w-px bg-gray-200"></div>
-                <div className="text-center"><p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('femaleParticipation')}</p><p className="text-2xl font-serif font-bold text-pink-600 leading-none">{data.workforceStats.participationFemale}%</p></div>
+                <div className="flex flex-col items-center"><p className="text-xs font-bold text-gray-700 uppercase mb-1 block">{t('femaleParticipation')}</p><p className="text-2xl font-serif font-bold text-pink-600 leading-none block">{data.workforceStats.participationFemale}%</p></div>
             </div>
             <KPI icon={Banknote} label={t('avgWage')} value={normalizeWageDisplay(data.averageWage)} tone="ok" sub={getSource('demo')} />
           </div>
           <div className="grid grid-cols-2 gap-6 mb-8">
             <div className="kpi-card p-4 shadow-sm">
-                <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Plane size={16} /> {t('migrationDestinations')}</p>
+                <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2 block"><Plane size={16} /> {t('migrationDestinations')}</p>
                 <div className="space-y-4">
                   {data.workforceStats.migrationDestinations.slice(0, 5).map((dest, i) => {
                     const val = parseFloat(dest.count) || 0;
                     return (
-                      <div key={i} className="space-y-1">
+                      <div key={i} className="space-y-1 block">
                         <div className="flex justify-between text-[11px] font-bold text-gray-700">
                           <span>{dest.country}</span>
                           <span className="font-mono text-gray-500">{dest.count}</span>
@@ -476,10 +476,10 @@ export default function PrintView() {
                 </div>
             </div>
             <div className="kpi-card p-4 shadow-sm">
-                <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Briefcase size={16} /> {t('workersBySector')}</p>
+                <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2 block"><Briefcase size={16} /> {t('workersBySector')}</p>
                 <div className="space-y-4">
                   {data.workforceStats.topSectors.slice(0, 5).map((sec, i) => (
-                    <div key={i} className="space-y-1">
+                    <div key={i} className="space-y-1 block">
                       <div className="flex justify-between text-[11px] font-bold text-gray-700">
                         <span>{sec.name}</span>
                         <span className="font-mono text-gray-500">{sec.value}</span>
@@ -493,11 +493,11 @@ export default function PrintView() {
             </div>
           </div>
           <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 shadow-sm">
-            <h4 className="text-sm font-bold text-primary-dark uppercase mb-4 flex items-center gap-2"><Hammer size={18} /> {t('availableSkills')}</h4>
-            <div className="flex flex-wrap gap-3">
-                {data.workforceStats.availableSkills.slice(0, 12).map((skill, i) => (<span key={i} className="bg-white border border-primary/20 text-primary-dark px-4 py-2 rounded-xl text-sm font-bold shadow-sm">{skill}</span>))}
+            <h4 className="text-sm font-bold text-primary-dark uppercase mb-4 flex items-center gap-2 block"><Hammer size={18} /> {t('availableSkills')}</h4>
+            <div className="flex flex-wrap gap-3 block">
+                {data.workforceStats.availableSkills.slice(0, 12).map((skill, i) => (<span key={i} className="bg-white border border-primary/20 text-primary-dark px-4 py-2 rounded-xl text-sm font-bold shadow-sm inline-block">{skill}</span>))}
             </div>
-            <p className="text-[9px] text-gray-400 mt-4 italic">{t('skillsDisclaimer')}</p>
+            <p className="text-[9px] text-gray-400 mt-4 italic block">{t('skillsDisclaimer')}</p>
           </div>
         </PageContainer>
 
@@ -510,10 +510,10 @@ export default function PrintView() {
               {chunk.map((item, idx) => (
                 <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50 shadow-sm flex flex-col avoid-break">
                     <div className="flex justify-between items-center mb-0.5">
-                      <span className="text-[8px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
-                      <span className="text-[8px] font-mono text-gray-400">{formatDate(item.date)}</span>
+                      <span className="text-[8px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded block">{item.type}</span>
+                      <span className="text-[8px] font-mono text-gray-400 block">{formatDate(item.date)}</span>
                     </div>
-                    <p className="text-[12.5px] font-bold text-gray-900 mb-0.5 leading-tight">{item.title}</p>
+                    <p className="text-[12.5px] font-bold text-gray-900 mb-0.5 leading-tight block">{item.title}</p>
                     {renderRichText(item.details)}
                 </div>
               ))}
@@ -534,7 +534,7 @@ export default function PrintView() {
               <div className="flex flex-col gap-2 mt-2">
                 {chunk.map((point, idx) => (
                   <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break">
-                      <span className="text-accent font-bold text-lg leading-none">•</span>
+                      <span className="text-accent font-bold text-lg leading-none inline-block">•</span>
                       <div className="flex-1">
                         <strong className="block text-[12.5px] text-gray-900 mb-0.5 uppercase tracking-wide leading-tight">{point.title}</strong>
                         {renderRichText(point.content)}
@@ -555,9 +555,9 @@ export default function PrintView() {
                 const statusInfo = getAgreementStatusDisplay(agreement);
                 return (
                   <div key={idx} className="bg-gray-50 border border-gray-200 rounded-xl p-3 grid grid-cols-12 gap-3 items-start shadow-sm avoid-break">
-                      <div className="col-span-3"><p className="text-[12.5px] font-bold text-gray-900 leading-tight">{agreement.title}</p><p className="text-[8px] font-mono font-bold text-gray-500 mt-1">{formatDate(agreement.date)}</p></div>
+                      <div className="col-span-3"><p className="text-[12.5px] font-bold text-gray-900 leading-tight block">{agreement.title}</p><p className="text-[8px] font-mono font-bold text-gray-500 mt-1 block">{formatDate(agreement.date)}</p></div>
                       <div className="col-span-7">{renderRichText(agreement.summary)}</div>
-                      <div className="col-span-2 text-end"><span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase border ${statusInfo.class}`}>{statusInfo.label}</span></div>
+                      <div className="col-span-2 text-end"><span className={`text-[8px] font-bold px-2 py-0.5 rounded-full uppercase border ${statusInfo.class} inline-block`}>{statusInfo.label}</span></div>
                   </div>
                 );
               })}
@@ -567,7 +567,7 @@ export default function PrintView() {
           <PageContainer footer={<DefaultFooter />}>
             <HeaderBandInternal country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={FileText} title={t('sectionAgreements')} />
-            <div className="text-center py-40 text-gray-300 border-2 border-dashed rounded-3xl opacity-50"><p className="font-bold uppercase tracking-widest">{t('noAgreements')}</p></div>
+            <div className="text-center py-40 text-gray-300 border-2 border-dashed rounded-3xl opacity-50"><p className="font-bold uppercase tracking-widest block">{t('noAgreements')}</p></div>
           </PageContainer>
         )}
 
@@ -576,23 +576,23 @@ export default function PrintView() {
           <SectionHeader icon={Users} title={t('sectionDelegation')} />
           <div className="grid grid-cols-1 gap-8 mt-4">
             <div className="avoid-break">
-                <div className="flex items-center gap-4 mb-4 border-b-2 border-primary pb-2"><img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto" alt="UAE" /><p className="text-xs font-extrabold uppercase text-primary tracking-[0.2em]">{t('uaeDelegation')}</p></div>
+                <div className="flex items-center gap-4 mb-4 border-b-2 border-primary pb-2"><img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto" alt="UAE" /><p className="text-xs font-extrabold uppercase text-primary tracking-[0.2em] block">{t('uaeDelegation')}</p></div>
                 <div className="grid grid-cols-1 gap-4">
                   {data.delegations.uae.slice(0, 1).map((d) => (
                       <div key={d.id} className="flex gap-8 items-start p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 shadow-sm">
                         <div className="w-36 h-48 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-lg">{d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}</div>
-                        <div className="flex-1 pt-1"><p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p><p className="text-sm font-bold text-primary uppercase mb-3 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>{renderRichText(d.bio)}</div>
+                        <div className="flex-1 pt-1"><p className="text-2xl font-serif font-bold text-gray-900 mb-1 block">{d.name}</p><p className="text-sm font-bold text-primary uppercase mb-3 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>{renderRichText(d.bio)}</div>
                       </div>
                   ))}
                 </div>
             </div>
             <div className="avoid-break pt-2">
-                <div className="flex items-center gap-4 mb-4 border-b-2 border-accent pb-2"><img src={data.flagUrl || `https://flagcdn.com/w40/${data.country.toLowerCase().includes('india')?'in':'ph'}.png`} className="h-5 w-auto" alt={data.country} /><p className="text-xs font-extrabold uppercase text-accent tracking-[0.2em]">{t('partnerDelegation')}</p></div>
+                <div className="flex items-center gap-4 mb-4 border-b-2 border-accent pb-2"><img src={data.flagUrl || `https://flagcdn.com/w40/${data.country.toLowerCase().includes('india')?'in':'ph'}.png`} className="h-5 w-auto" alt={data.country} /><p className="text-xs font-extrabold uppercase text-accent tracking-[0.2em] block">{t('partnerDelegation')}</p></div>
                 <div className="grid grid-cols-1 gap-4">
                   {data.delegations.partner.slice(0, 1).map((d) => (
                       <div key={d.id} className="flex gap-8 items-start p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 shadow-sm">
                         <div className="w-36 h-48 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-lg">{d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}</div>
-                        <div className="flex-1 pt-1"><p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p><p className="text-sm font-bold text-accent uppercase mb-3 tracking-[0.15em] border-b border-accent/10 pb-1 inline-block">{d.title}</p>{renderRichText(d.bio)}</div>
+                        <div className="flex-1 pt-1"><p className="text-2xl font-serif font-bold text-gray-900 mb-1 block">{d.name}</p><p className="text-sm font-bold text-accent uppercase mb-3 tracking-[0.15em] border-b border-accent/10 pb-1 inline-block">{d.title}</p>{renderRichText(d.bio)}</div>
                       </div>
                   ))}
                 </div>

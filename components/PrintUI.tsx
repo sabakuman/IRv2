@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ShieldAlert } from "lucide-react";
 
@@ -139,9 +140,9 @@ export const KPI = ({
         <Icon size={16} className="text-primary" />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start mb-1.5">
-          <p className={`kpi-label pr-1 leading-tight ${labelClassName || ''}`}>{label}</p>
+      <div className="flex-1 min-w-0 flex flex-col">
+        <div className="flex justify-between items-start mb-1 w-full">
+          <p className={`kpi-label pr-1 leading-tight block ${labelClassName || ''}`}>{label}</p>
           {chip && (
             <span
               className={`kpi-chip shrink-0 ml-1 ${
@@ -159,11 +160,11 @@ export const KPI = ({
           )}
         </div>
 
-        <p className="kpi-value break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
+        <p className="kpi-value block break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
            <span>{value || 'N/A'}</span>
         </p>
         
-        {sub && <p className="kpi-sub mt-1.5 leading-tight">{sub}</p>}
+        {sub && <p className="kpi-sub block mt-1 leading-tight">{sub}</p>}
       </div>
     </div>
   </div>
