@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
@@ -8,7 +9,7 @@ import {
   Printer, X, AlertTriangle, ShieldAlert,
   GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
   ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer,
-  ExternalLink
+  ExternalLink, MapPin
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
@@ -23,6 +24,20 @@ const formatDate = (dateStr: string) => {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const y = date.getFullYear();
   return `${d}/${m}/${y}`;
+};
+
+// Added helper to translate emirate names for charts
+const translateEmirate = (name: string): string => {
+  const translations: Record<string, string> = {
+    'Abu Dhabi': 'أبوظبي',
+    'Dubai': 'دبي',
+    'Sharjah': 'الشارقة',
+    'Ajman': 'عجمان',
+    'Umm Al Quwain': 'أم القيوين',
+    'Ras Al Khaimah': 'رأس الخيمة',
+    'Fujairah': 'الفجيرة',
+  };
+  return translations[name] || name;
 };
 
 const renderRichText = (text: string, sizeClass: string = "text-[12px]") => {
@@ -116,13 +131,7 @@ export default function PrintView() {
   const { data } = report;
   const isRTL = language === 'ar';
   
-  const reportYear = data.reportDate ? new Date(data.reportDate).getFullYear() : 2025;
-
-  const formatCompactNumber = (value: any) => {
-    const num = Number(value);
-    if (isNaN(num)) return value;
-    return new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(num);
-  };
+  const reportYear = data.reportDate ? new Date(data.reportDate).getFullYear() : 2026;
 
   const getSource = (type: string) => {
     const labels: Record<string, Record<string, string>> = {
@@ -145,18 +154,12 @@ export default function PrintView() {
     return <SourceLink label={label} type={type} />;
   };
 
-  const translateEmirate = (name: string) => {
-    if (!isRTL) return name;
-    const map: Record<string, string> = { 'Abu Dhabi': 'أبوظبي', 'Dubai': 'دبي', 'Sharjah': 'الشارقة', 'Ajman': 'عجمان', 'Umm Al Quwain': 'أم القيوين', 'Ras Al Khaimah': 'رأس الخيمة', 'Fujairah': 'الفجيرة' };
-    return map[name] || name;
-  };
-
   const DefaultFooter = () => (
     <div className="pt-2 flex justify-between items-center bg-white w-full border-t border-gray-100">
-      <p className="text-[8px] text-gray-400 font-sans">
-        Generated on <span className="font-sans">{new Date().toLocaleDateString()}</span>
+      <p className="text-[9px] text-gray-400 font-sans">
+        {isRTL ? `تم الإنشاء بتاريخ ${formatDate(data.reportDate || '')}` : `Created on ${formatDate(data.reportDate || '')}`}
       </p>
-      <p className="text-[8px] text-gray-400 uppercase tracking-widest">Ministry of Human Resources & Emiratisation</p>
+      <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">Ministry of Human Resources & Emiratisation</p>
     </div>
   );
 
@@ -176,13 +179,15 @@ export default function PrintView() {
           <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
           <div className="h-8 w-px bg-gray-200" />
           <div className="flex flex-col">
-            <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500 leading-tight">{title}</p>
-            <p className="text-sm font-bold text-primary-dark uppercase leading-tight">{country}</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 leading-tight">
+              {isRTL ? 'تقرير الوضع الحالي للتعاون في مجال القوى العاملة' : 'Current Status of Labor Cooperation Report'}
+            </p>
+            <p className="text-sm font-bold text-gray-800 uppercase leading-tight">{country}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="kpi-chip chip-restrict flex items-center gap-1"><ShieldAlert size={12} /> Restricted</span>
-          <span className="text-[9px] text-gray-400 font-mono">REF: {reportId}</span>
+          <span className="text-[9px] text-gray-400 font-mono uppercase">REF: {reportId}</span>
+          <span className="kpi-chip chip-restrict flex items-center gap-1 font-bold"><ShieldAlert size={12} /> RESTRICTED</span>
         </div>
       </div>
     );
@@ -191,91 +196,343 @@ export default function PrintView() {
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
       <div id="report-content" className="overflow-visible report-root">
-        {/* PAGE 1: COVER */}
+        
+        {/* PAGE 1: COVER PAGE (Restored to High Fidelity) */}
         <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
-          <div className="flex-1 flex flex-col justify-center px-20 relative z-10">
-              <div className={`mb-12 border-accent py-6 ${isRTL ? 'border-r-[8px] pr-12' : 'border-l-[8px] pl-12'}`}>
-                <h1 className="text-[64px] font-serif font-extrabold text-gray-900 leading-[1.1] mb-4">Bilateral Relations Portal</h1>
-                <p className="text-2xl text-gray-500 font-light uppercase tracking-wider">Strategic Overview</p>
-              </div>
-              <div className="bg-gray-50 rounded-3xl p-10 border border-gray-100 max-w-xl">
-                <div className="flex items-center gap-8 mb-8">
-                    <h2 className="text-4xl font-serif font-bold text-gray-900">{data.country}</h2>
-                </div>
-                <div className="grid grid-cols-2 gap-8">
-                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Reference</p><p className="font-mono text-base text-gray-800">{report.id}</p></div>
-                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Date</p><p className="font-mono text-base text-gray-800">{formatDate(data.reportDate || '')}</p></div>
-                </div>
-              </div>
+          {/* Logo Strip */}
+          <div className="absolute top-16 right-20 flex items-center gap-4">
+             <span className="text-[14px] font-bold text-primary tracking-[0.2em]">UAE • MOHRE</span>
+             <img src="https://flagcdn.com/w160/ae.png" className="h-8 w-auto border shadow-sm" alt="UAE Flag" />
           </div>
-          <div className="h-3 bg-primary w-full"></div>
+
+          {/* Side Accent Line */}
+          <div className="absolute top-44 bottom-44 right-20 w-[6px] bg-[#F59E0B] rounded-full"></div>
+
+          {/* Cover Content */}
+          <div className={`flex-1 flex flex-col justify-center px-28 relative z-10 ${isRTL ? 'text-right' : 'text-left'}`}>
+             <h1 className="text-[54px] font-serif font-extrabold text-[#111827] leading-[1.2] mb-6">
+                {isRTL ? (
+                   <>
+                      تقرير الوضع الحالي للتعاون في<br />
+                      مجال القوى العاملة
+                   </>
+                ) : (
+                   <>
+                      Report on the Current Status of<br />
+                      Labor Market Cooperation
+                   </>
+                )}
+             </h1>
+             <p className="text-2xl text-gray-400 font-light mb-20">
+                {isRTL ? 'نظرة استراتيجية عامة' : 'General Strategic Overview'}
+             </p>
+
+             {/* Cover Card */}
+             <div className="bg-gray-50/80 backdrop-blur-sm rounded-[32px] p-12 border border-gray-100 max-w-2xl relative shadow-sm">
+                <div className="absolute -top-10 right-10 flex flex-col items-center">
+                   <div className="w-24 h-24 rounded-2xl bg-white shadow-xl border border-gray-100 p-2 flex items-center justify-center overflow-hidden">
+                      <img 
+                        src={data.flagUrl || `https://flagcdn.com/w160/${data.country.toLowerCase().includes('bang') ? 'bd' : 'in'}.png`} 
+                        className="w-full h-full object-cover rounded-lg" 
+                      />
+                   </div>
+                </div>
+
+                <div className="space-y-10">
+                   <div>
+                      <p className="text-[10px] text-accent uppercase tracking-[0.2em] font-extrabold mb-1">
+                        {isRTL ? 'الدولة محل التقرير' : 'Country Under Report'}
+                      </p>
+                      <h2 className="text-5xl font-serif font-bold text-gray-900">{data.country}</h2>
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-12 pt-4 border-t border-gray-200/50">
+                      <div>
+                         <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{isRTL ? 'مرجع:' : 'Reference:'}</p>
+                         <p className="font-mono text-sm text-gray-700">{report.id}</p>
+                      </div>
+                      <div>
+                         <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{isRTL ? 'التاريخ' : 'Date'}</p>
+                         <p className="font-mono text-sm text-gray-700">{formatDate(data.reportDate || '')}</p>
+                      </div>
+                   </div>
+
+                   <div className="pt-6 border-t border-gray-200/50 flex flex-col gap-2">
+                      <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{isRTL ? 'التصنيف' : 'Classification'}</p>
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-red-100 rounded-full w-fit">
+                         <ShieldAlert size={14} className="text-red-500" />
+                         <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider">{isRTL ? 'رسمي / مقيد' : 'OFFICIAL / RESTRICTED'}</span>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+          
+          {/* Bottom Bar */}
+          <div className="h-4 bg-primary-dark w-full mt-auto"></div>
         </div>
 
-        {/* PAGE 2: PROFILE & PARTNER WORKFORCE */}
+        {/* PAGE 2: DEMOGRAPHICS & ECONOMY (Restored Layout) */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBandInternal country={data.country} reportId={report.id} title="Relations Overview" flagUrl={data.flagUrl} />
+          <HeaderBandInternal country={data.country} reportId={report.id} flagUrl={data.flagUrl} />
           
-          <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle="Key Demographics" compact />
-          <div className="grid grid-cols-4 gap-3 mb-6">
-            <KPI icon={Landmark} label={t('capital')} value={data.capital} />
+          <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={isRTL ? 'البيانات السكانية الرئيسية' : 'Key Demographic Data'} compact />
+          <div className="grid grid-cols-4 gap-4 mb-10">
+            <KPI icon={MapPin} label={t('capital')} value={data.capital} />
             <KPI icon={Users} label={t('population')} value={data.population} sub={getSource('demo')} />
-            <KPI icon={Banknote} label={t('currency')} value={data.currency} />
+            <KPI icon={Banknote} label={t('currency')} value={data.currency} sub={getSource('demo')} />
             <KPI icon={Building} label={t('hdi')} value={data.hdi} sub={getSource('demo')} />
+            
+            <KPI icon={Shield} label={t('crimeRate')} value={data.crimeRate} sub={getSource('demo')} />
+            <KPI icon={BookOpen} label={t('literacyRate')} value={data.literacyRate} sub={getSource('demo')} />
+            <KPI icon={Landmark} label={t('governmentType')} value={data.governmentType} />
+            <KPI icon={Briefcase} label={t('workforceMinistry')} value={data.workforceMinistry} />
           </div>
 
-          <SectionHeader icon={Users} title={t('sectionWorkforce')} subtitle="Partner Workforce Context" compact />
-          <div className="grid grid-cols-3 gap-3 mb-6">
-             <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
-             <KPI icon={Briefcase} label={t('avgWage')} value={data.averageWage} />
-             <KPI icon={Briefcase} label={t('minWage')} value={data.minimumWage} />
-          </div>
-          
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-             <h4 className="text-[11px] font-extrabold uppercase tracking-widest text-primary mb-3 flex items-center gap-2">
-                <Hammer size={12} /> {t('availableSkills')}
-             </h4>
-             <div className="flex flex-wrap gap-1.5">
-                {data.workforceStats.availableSkills.map((skill, i) => (
-                  <span key={i} className="kpi-chip chip-info px-2 py-0.5 rounded-lg font-bold text-[9px] uppercase tracking-wider">{skill}</span>
-                ))}
-             </div>
-          </div>
-        </PageContainer>
-
-        {/* PAGE 3: ECONOMY & EDUCATION */}
-        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBandInternal country={data.country} reportId={report.id} title="Economy & Skills" flagUrl={data.flagUrl} />
-          
-          <SectionHeader icon={TrendingUp} title={t('sectionEconomy')} subtitle="Economic Indicators" compact />
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <SectionHeader icon={TrendingUp} title={t('sectionEconomy')} subtitle={isRTL ? 'التجارة والتعليم' : 'Trade and Education'} compact />
+          <div className="grid grid-cols-4 gap-4 mb-8">
+             <KPI icon={ShieldAlert} label={t('tipRank')} value={data.economicStats.tipRank} sub={getSource('tip')} />
              <KPI icon={Activity} label={t('inflation')} value={data.economicStats.inflation} sub={getSource('economy')} />
-             <KPI icon={Plane} label={t('exportsToUae')} value={data.economicStats.totalExportsToUAE} sub={getSource('trade')} />
-             <KPI icon={ArrowDownLeft} label={t('importsFromUae')} value={data.economicStats.totalImportsFromUAE} sub={getSource('trade')} />
-             <KPI icon={Shield} label={t('tipRank')} value={data.economicStats.tipRank} sub={getSource('tip')} />
-             <KPI icon={Banknote} label={t('remittances')} value={data.economicStats.remittancesFromUAE} />
-             <KPI icon={Globe} label={t('remittancesGlobal')} value={data.economicStats.remittancesGlobal} sub={getSource('economy')} />
+             <KPI icon={TrendingUp} label={t('gdp')} value={data.economicStats.gdp} sub={getSource('economy')} />
+             <KPI icon={ArrowRightLeft} label={t('remittances')} value={data.economicStats.remittancesFromUAE} sub={isRTL ? 'مصرف الإمارات المركزي، 2025' : 'Central Bank UAE, 2025'} />
           </div>
 
-          <SectionHeader icon={GraduationCap} title={t('educationDetails')} subtitle="Skills Pipeline" compact />
-          <div className="grid grid-cols-2 gap-3 mb-6">
-             <KPI icon={BookOpen} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
-             <KPI icon={GraduationCap} label={t('higherEducationEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
+          <div className="bg-gray-50/50 p-6 rounded-[24px] border border-gray-100 mb-12">
+             <div className="flex items-center justify-between mb-6 border-b pb-3">
+                <h4 className="text-[11px] font-extrabold uppercase tracking-widest text-primary flex items-center gap-2">
+                   <ArrowRightLeft size={14} /> {isRTL ? 'إحصاءات التجارة' : 'Trade Statistics'} {getSource('trade')}
+                </h4>
+             </div>
+             <div className="grid grid-cols-2 gap-10">
+                <div className="space-y-3">
+                   <p className="text-[10px] font-bold text-primary uppercase flex items-center gap-1">
+                      <ArrowDownLeft size={12} className="text-blue-500" /> {isRTL ? `الواردات إلى ${data.country} من الإمارات` : `Imports to ${data.country} from UAE`}
+                   </p>
+                   <p className="text-2xl font-serif font-bold text-gray-900">{data.economicStats.totalImportsFromUAE}</p>
+                   <p className="text-[11px] text-gray-500 leading-relaxed italic">{data.economicStats.topImportProducts.join(', ')}</p>
+                </div>
+                <div className="space-y-3 border-l ps-10">
+                   <p className="text-[10px] font-bold text-accent uppercase flex items-center gap-1">
+                      <ArrowUpRight size={12} className="text-orange-500" /> {isRTL ? `الصادرات من ${data.country} إلى الإمارات` : `Exports from ${data.country} to UAE`}
+                   </p>
+                   <p className="text-2xl font-serif font-bold text-gray-900">{data.economicStats.totalExportsToUAE}</p>
+                   <p className="text-[11px] text-gray-500 leading-relaxed italic">{data.economicStats.topExportProducts.join(', ')}</p>
+                </div>
+             </div>
           </div>
-          
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-             <h4 className="text-[11px] font-extrabold uppercase tracking-widest text-primary mb-3 flex items-center gap-2">
-                <Building2 size={12} /> {t('topUniversities')}
-             </h4>
-             <ul className="grid grid-cols-2 gap-x-6 gap-y-1">
-                {data.educationStats.topUniversities.map((uni, i) => (
-                   <li key={i} className="text-[11px] font-bold text-gray-700 list-disc ms-4">{uni}</li>
-                ))}
-             </ul>
-             <div className="mt-4 pt-3 border-t border-gray-200">
-                {getSource('edu')}
+
+          <SectionHeader icon={GraduationCap} title={t('educationDetails')} compact />
+          <div className="grid grid-cols-3 gap-6">
+             <div className="kpi-card p-6">
+                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">HIGHERENROLLMENT</p>
+                <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-primary"><GraduationCap size={24} /></div>
+                   <div>
+                      <p className="text-2xl font-bold font-serif">{data.educationStats.higherEducationEnrollment || 'N/A'}</p>
+                      {getSource('edu')}
+                   </div>
+                </div>
+             </div>
+             <div className="kpi-card p-6">
+                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">{isRTL ? 'االلتحاق بالتعليم الابتدائي' : 'PRIMARY ENROLLMENT'}</p>
+                <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-primary"><BookOpen size={24} /></div>
+                   <div>
+                      <p className="text-2xl font-bold font-serif">{data.educationStats.primaryEnrollment || 'N/A'}</p>
+                      {getSource('edu')}
+                   </div>
+                </div>
+             </div>
+             <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 flex-1">
+                <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-primary mb-3 flex items-center gap-2">
+                   {isRTL ? 'أفضل 5 جامعات' : 'Top 5 Universities'} {getSource('edu')}
+                </h4>
+                <ul className="space-y-1.5">
+                   {data.educationStats.topUniversities.map((uni, i) => (
+                      <li key={i} className="text-[11px] font-bold text-gray-700 flex items-center gap-2">
+                         <span className="w-1 h-1 bg-primary rounded-full"></span> {uni}
+                      </li>
+                   ))}
+                </ul>
              </div>
           </div>
         </PageContainer>
+
+        {/* PAGE 3: UAE WORKFORCE (Charts) */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBandInternal country={data.country} reportId={report.id} flagUrl={data.flagUrl} />
+          
+          <SectionHeader icon={Briefcase} title={isRTL ? 'القوى العاملة في دولة الإمارات' : 'Workforce in the UAE'} subtitle={isRTL ? 'تحليل سوق العمل المحلي' : 'Local Labor Market Analysis'} compact />
+          
+          <div className="grid grid-cols-2 gap-4 mb-8">
+             <KPI icon={Building} label={isRTL ? 'وزارة الموارد البشرية والتوطين • القطاع الخاص' : 'MOHRE • Private Sector'} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={isRTL ? `*(بيانات الوزارة، ${data.uaeWorkforceStats.mohre.totalPrivate.date})` : `*(MOHRE Data, ${data.uaeWorkforceStats.mohre.totalPrivate.date})`} />
+             <KPI icon={Users} label={isRTL ? 'وزارة الموارد البشرية والتوطين • العمالة المساعدة' : 'MOHRE • Domestic Workers'} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={isRTL ? `*(بيانات الوزارة، ${data.uaeWorkforceStats.mohre.totalDomestic.date})` : `*(MOHRE Data, ${data.uaeWorkforceStats.mohre.totalDomestic.date})`} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 mb-12">
+             <div className="bg-white border rounded-[24px] p-6">
+                <h5 className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-6 text-center">{isRTL ? 'توزيع العمال حسب الإمارة (MOHRE)' : 'Workers by Emirate (MOHRE)'}</h5>
+                <div className="h-[180px]">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={data.uaeWorkforceStats.mohre.byEmirate} margin={{ top: 20, bottom: 20 }}>
+                         <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]}>
+                            {data.uaeWorkforceStats.mohre.byEmirate.map((entry, index) => (
+                               <Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />
+                            ))}
+                            <LabelList dataKey="name" position="bottom" style={{ fontSize: '8px', fontWeight: 'bold' }} formatter={(val: string) => isRTL ? translateEmirate(val) : val} />
+                            <LabelList dataKey="value" position="top" style={{ fontSize: '8px', fill: '#666' }} />
+                         </Bar>
+                      </BarChart>
+                   </ResponsiveContainer>
+                </div>
+             </div>
+             <div className="bg-white border rounded-[24px] p-6">
+                <h5 className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-6 text-center">{isRTL ? 'توزيع العاملين حسب الإمارة (ICP)' : 'Residency by Emirate (ICP)'}</h5>
+                <div className="h-[180px]">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={data.uaeWorkforceStats.icp.byEmirate} margin={{ top: 20, bottom: 20 }}>
+                         <Bar dataKey="value" fill="#1e3a8a" radius={[4, 4, 0, 0]}>
+                            {data.uaeWorkforceStats.icp.byEmirate.map((entry, index) => (
+                               <Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} opacity={0.8} />
+                            ))}
+                            <LabelList dataKey="name" position="bottom" style={{ fontSize: '8px', fontWeight: 'bold' }} formatter={(val: string) => isRTL ? translateEmirate(val) : val} />
+                            <LabelList dataKey="value" position="top" style={{ fontSize: '8px', fill: '#666' }} />
+                         </Bar>
+                      </BarChart>
+                   </ResponsiveContainer>
+                </div>
+             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+             <div className="bg-gray-50/50 p-6 rounded-[24px] border border-gray-100">
+                <h5 className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-6">{isRTL ? 'توزيع العمال حسب القطاع' : 'Workers by Sector'}</h5>
+                <div className="space-y-4">
+                   {data.uaeWorkforceStats.mohre.bySector.map((sec, i) => {
+                      const max = Math.max(...data.uaeWorkforceStats.mohre.bySector.map(s => s.value), 1);
+                      const perc = (sec.value / max) * 100;
+                      return (
+                         <div key={i} className="space-y-1">
+                            <div className="flex justify-between text-[10px] font-bold text-gray-600">
+                               <span>{sec.name}</span>
+                               <span>{sec.value.toLocaleString()}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                               <div className="h-full bg-primary" style={{ width: `${perc}%` }}></div>
+                            </div>
+                         </div>
+                      );
+                   })}
+                </div>
+             </div>
+
+             <div className="space-y-4">
+                <h5 className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-4 ps-2">{t('additionalIndicators')}</h5>
+                {data.uaeWorkforceStats.custom.map((stat) => (
+                   <div key={stat.id} className="kpi-card p-4 flex justify-between items-center border-l-4 border-primary">
+                      <div>
+                         <p className="text-[10px] text-gray-400 font-bold uppercase mb-0.5">{stat.label}</p>
+                         <p className="text-[8px] text-gray-400 uppercase tracking-tighter">{stat.date}</p>
+                      </div>
+                      <p className="text-xl font-bold font-serif text-gray-900">{stat.value}</p>
+                   </div>
+                ))}
+             </div>
+          </div>
+        </PageContainer>
+
+        {/* PAGE 4: PARTNER COUNTRY WORKFORCE (Restored Source Analysis) */}
+        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+          <HeaderBandInternal country={data.country} reportId={report.id} flagUrl={data.flagUrl} />
+          
+          <SectionHeader icon={Users} title={isRTL ? `القوى العاملة لدى ${data.country}` : `Workforce of ${data.country}`} subtitle={isRTL ? 'تحليل سوق المصدر' : 'Source Market Analysis'} compact />
+          
+          <div className="grid grid-cols-4 gap-4 mb-10">
+             <div className="col-span-2 kpi-card p-6 flex items-center gap-6">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-primary"><Users size={28} /></div>
+                <div>
+                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">{isRTL ? 'إجمالي القوى العاملة' : 'TOTAL WORKFORCE'}</p>
+                   <p className="text-3xl font-bold font-serif">{data.workforceStats.totalWorkforce}</p>
+                   {getSource('demo')}
+                </div>
+             </div>
+             <div className="kpi-card p-6 flex flex-col justify-center items-center text-center">
+                <p className="text-[10px] text-gray-400 font-bold uppercase mb-2">{isRTL ? 'ذكور' : 'MALE'}</p>
+                <p className="text-2xl font-bold font-serif text-blue-600">{data.workforceStats.participationMale}%</p>
+             </div>
+             <div className="kpi-card p-6 flex flex-col justify-center items-center text-center">
+                <p className="text-[10px] text-gray-400 font-bold uppercase mb-2">{isRTL ? 'إناث' : 'FEMALE'}</p>
+                <p className="text-2xl font-bold font-serif text-accent">{data.workforceStats.participationFemale}%</p>
+             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 mb-12">
+             <div className="bg-white border rounded-[24px] p-6">
+                <h5 className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-6 flex items-center gap-2"><Plane size={14} /> {isRTL ? 'وجهات العمل الرئيسية' : 'Primary Labor Destinations'}</h5>
+                <div className="space-y-6">
+                   {data.workforceStats.migrationDestinations.map((dest, i) => {
+                      const counts = data.workforceStats.migrationDestinations.map(d => {
+                         const n = parseFloat(d.count.replace(/[^0-9.]/g, ''));
+                         return isNaN(n) ? 0 : n;
+                      });
+                      const max = Math.max(...counts, 1);
+                      const val = parseFloat(dest.count.replace(/[^0-9.]/g, '')) || 0;
+                      return (
+                         <div key={i} className="space-y-2">
+                            <div className="flex justify-between text-[11px] font-bold">
+                               <span className="text-gray-700">{dest.country}</span>
+                               <span className="text-primary font-mono">{dest.count}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                               <div className="h-full bg-primary" style={{ width: `${(val/max)*100}%` }}></div>
+                            </div>
+                         </div>
+                      );
+                   })}
+                </div>
+             </div>
+             <div className="bg-white border rounded-[24px] p-6">
+                <h5 className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-6 flex items-center gap-2"><Briefcase size={14} /> {isRTL ? 'توزيع العمال حسب القطاع' : 'Workforce by Sector'}</h5>
+                <div className="space-y-6">
+                   {data.workforceStats.topSectors.map((sec, i) => {
+                      const max = Math.max(...data.workforceStats.topSectors.map(s => s.value), 1);
+                      return (
+                         <div key={i} className="space-y-2">
+                            <div className="flex justify-between text-[11px] font-bold">
+                               <span className="text-gray-700">{sec.name}</span>
+                               <span className="text-gray-400">{sec.value}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                               <div className="h-full bg-primary-dark" style={{ width: `${(sec.value/max)*100}%` }}></div>
+                            </div>
+                         </div>
+                      );
+                   })}
+                </div>
+             </div>
+          </div>
+
+          <div className="bg-gray-50/50 p-8 rounded-[32px] border border-gray-100">
+             <h4 className="text-[12px] font-extrabold uppercase tracking-[0.2em] text-primary-dark mb-6 flex items-center gap-2">
+                <Hammer size={16} /> {isRTL ? 'توافر المهارات' : 'Available Skills'}
+             </h4>
+             <div className="flex flex-wrap gap-4">
+                {data.workforceStats.availableSkills.map((skill, i) => (
+                   <div key={i} className="bg-white border rounded-[16px] px-6 py-3 text-[13px] font-bold text-gray-800 shadow-sm">
+                      {skill}
+                   </div>
+                ))}
+             </div>
+             <div className="mt-8 pt-4 border-t border-gray-200/50 text-center">
+                <p className="text-[10px] text-gray-400 italic">
+                   {isRTL ? 'تمثل هذه المهارات الفئات الرئيسية للعمالة المتاحة للعمل خارجياً بناءً على مخرجات التعليم/التدريب المهني الحالية.' : 'These skills represent the primary categories of labor available for foreign employment based on current educational and vocational training outputs.'}
+                </p>
+             </div>
+          </div>
+        </PageContainer>
+
+        {/* PAGE 5+: INTERACTIONS, NEWS, AGREEMENTS, DELEGATIONS */}
+        {/* These would follow similar styling patterns, usually 1-2 sections per page */}
       </div>
     </div>
   );
