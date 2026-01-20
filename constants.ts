@@ -238,7 +238,7 @@ export const TRANSLATIONS = {
     topTradedCommodities: 'Top Traded Commodities',
     educationInsights: 'Education & Skills',
     primaryEnrollment: 'Primary School Enrollment',
-    higherEducationEnrollment: 'Higher Education Enrollment',
+    higherEnrollment: 'Higher Education Enrollment',
     topUniversities: 'Top 5 Universities',
     recentInteractions: 'Relationship Summary',
     recentHighLevelInteractions: 'Relationship Summary',
@@ -340,7 +340,6 @@ export const TRANSLATIONS = {
     color: 'Label Color',
     personalApiKey: 'Personal API Key',
     letterTitle: 'Letter Title',
-    higherEnrollment: 'Higher Education Enrollment',
   },
   ar: {
     dashboard: 'الصفحة الرئيسة',
@@ -431,7 +430,7 @@ export const TRANSLATIONS = {
     topTradedCommodities: 'أبرز السلع المتبادلة',
     educationInsights: 'التعليم والمهارات',
     primaryEnrollment: 'الالتحاق بالتعليم الابتدائي',
-    higherEducationEnrollment: 'معدل الالتحاق بالتعليم العالي',
+    higherEnrollment: 'معدل الالتحاق بالتعليم العالي',
     topUniversities: 'أفضل 5 جامعات',
     recentInteractions: 'ملخص العلاقة',
     recentHighLevelInteractions: 'ملخص العلاقة',
@@ -530,6 +529,5 @@ export const TRANSLATIONS = {
     color: 'لون التصنيف',
     personalApiKey: 'مفتاح الـ API الشخصي',
     letterTitle: 'عنوان المراسلة',
-    higherEnrollment: 'معدل الالتحاق بالتعليم العالي',
   }
 };

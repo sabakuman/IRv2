@@ -478,152 +478,154 @@ export default function Wizard() {
           </div>
         );
       case 2:
+        return (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+             <div className="grid grid-cols-2 gap-6">
+                <Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. 500 USD" />
+                <Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. 150 USD" />
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Input label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} />
+                <Input label={t('maleParticipation')} type="number" value={data.workforceStats.participationMale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationMale: Number(e.target.value)}})} />
+                <Input label={t('femaleParticipation')} type="number" value={data.workforceStats.participationFemale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationFemale: Number(e.target.value)}})} />
+             </div>
+             <div>
+               <label className="text-sm font-semibold mb-2 block">{t('migrationDestinations')}</label>
+               {data.workforceStats.migrationDestinations.map((dest, i) => (
+                 <div key={i} className="flex gap-2 mb-2"><Input value={dest.country} placeholder="Country" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><Input value={dest.count} placeholder="Count" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].count = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: data.workforceStats.migrationDestinations.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
+               ))}
+               <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: [...data.workforceStats.migrationDestinations, { country: '', count: '' }]}})}>+ Add Destination</Button>
+             </div>
+             <div>
+               <label className="text-sm font-semibold mb-2 block">{t('sectorDistribution')}</label>
+               {data.workforceStats.topSectors.map((sec, i) => (
+                 <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
+               ))}
+               <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
+             </div>
+             {/* Prominent Available Skills Tag Editor */}
+             <div className="pt-6 border-t bg-gray-50 dark:bg-gray-800/20 p-4 rounded-xl">
+                <label className="text-sm font-bold text-primary dark:text-primary-light mb-3 block uppercase tracking-tight">{t('availableSkills')}</label>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {data.workforceStats.availableSkills.map((skill, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5 bg-primary/10 text-primary dark:text-primary-light border border-primary/20 px-3 py-1.5 rounded-lg text-xs font-bold uppercase shadow-sm">
+                      {skill}
+                      <button onClick={() => {
+                        const list = data.workforceStats.availableSkills.filter((_, i) => i !== idx);
+                        setData({...data, workforceStats: {...data.workforceStats, availableSkills: list}});
+                      }} className="hover:text-red-500 transition-colors bg-white/20 rounded-full p-0.5">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {data.workforceStats.availableSkills.length === 0 && (
+                    <p className="text-xs text-gray-400 italic">No skills added yet.</p>
+                  )}
+                </div>
+                <div className="flex gap-2 max-w-md">
+                   <Input 
+                    id="skill-input"
+                    placeholder="Add skill (e.g. Healthcare, Engineering)..." 
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        const input = e.target as HTMLInputElement;
+                        if (input.value.trim()) {
+                          setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, input.value.trim()]}});
+                          input.value = '';
+                        }
+                      }
+                    }}
+                   />
+                   <Button size="sm" onClick={() => {
+                     const input = document.getElementById('skill-input') as HTMLInputElement;
+                     if (input.value.trim()) {
+                       setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, input.value.trim()]}});
+                       input.value = '';
+                     }
+                   }}>Add</Button>
+                </div>
+             </div>
+          </div>
+        );
       case 3:
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-             {currentStep === 2 ? (
-               <>
-                 <div className="grid grid-cols-2 gap-6">
-                    <Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. 500 USD" />
-                    <Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. 150 USD" />
-                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Input label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} />
-                    <Input label={t('maleParticipation')} type="number" value={data.workforceStats.participationMale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationMale: Number(e.target.value)}})} />
-                    <Input label={t('femaleParticipation')} type="number" value={data.workforceStats.participationFemale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationFemale: Number(e.target.value)}})} />
-                 </div>
-                 <div>
-                   <label className="text-sm font-semibold mb-2 block">{t('migrationDestinations')}</label>
-                   {data.workforceStats.migrationDestinations.map((dest, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={dest.country} placeholder="Country" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><Input value={dest.count} placeholder="Count" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].count = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: data.workforceStats.migrationDestinations.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
-                   ))}
-                   <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: [...data.workforceStats.migrationDestinations, { country: '', count: '' }]}})}>+ Add Destination</Button>
-                 </div>
-                 <div>
-                   <label className="text-sm font-semibold mb-2 block">{t('sectorDistribution')}</label>
-                   {data.workforceStats.topSectors.map((sec, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
-                   ))}
-                   <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
-                 </div>
-                 {/* Fixed: Added Skill Editor here */}
-                 <div className="pt-6 border-t">
-                    <label className="text-sm font-semibold mb-3 block">{t('availableSkills')}</label>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {data.workforceStats.availableSkills.map((skill, idx) => (
-                        <div key={idx} className="flex items-center gap-1 bg-primary/5 text-primary border border-primary/20 px-2 py-1 rounded text-xs font-bold uppercase">
-                          {skill}
-                          <button onClick={() => {
-                            const list = data.workforceStats.availableSkills.filter((_, i) => i !== idx);
-                            setData({...data, workforceStats: {...data.workforceStats, availableSkills: list}});
-                          }} className="hover:text-red-500 transition-colors">
-                            <X size={12} />
-                          </button>
-                        </div>
-                      ))}
+             <div className="grid grid-cols-2 gap-6"><Input label={t('inflation')} value={data.economicStats.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} /><Input label={t('gdp')} value={data.economicStats.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} /><Input label={t('exportsToUae')} value={data.economicStats.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} /><Input label={t('importsFromUae')} value={data.economicStats.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} /></div>
+             
+             <div className="grid grid-cols-2 gap-6 pt-4 border-t">
+                <Input label={t('tipRank')} value={data.economicStats.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} />
+                <Input label={t('remittances')} value={data.economicStats.remittancesFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesFromUAE: e.target.value}})} />
+             </div>
+
+             <div className="pt-4 border-t">
+                <h5 className="font-bold text-sm mb-3">{t('topExports')}</h5>
+                {data.economicStats.topExportProducts.map((p, i) => (
+                  <div key={i} className="flex gap-2 mb-2">
+                    <Input value={p} onChange={e => { const list = [...data.economicStats.topExportProducts]; list[i] = e.target.value; setData({...data, economicStats: {...data.economicStats, topExportProducts: list}}); }} />
+                    <button onClick={() => setData({...data, economicStats: {...data.economicStats, topExportProducts: data.economicStats.topExportProducts.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button>
+                  </div>
+                ))}
+                <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topExportProducts: [...data.economicStats.topExportProducts, '']}})}>+ Add Export Product</Button>
+             </div>
+
+             <div className="pt-4">
+                <h5 className="font-bold text-sm mb-3">{t('topImports')}</h5>
+                {data.economicStats.topImportProducts.map((p, i) => (
+                  <div key={i} className="flex gap-2 mb-2">
+                    <Input value={p} onChange={e => { const list = [...data.economicStats.topImportProducts]; list[i] = e.target.value; setData({...data, economicStats: {...data.economicStats, topImportProducts: list}}); }} />
+                    <button onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: data.economicStats.topImportProducts.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button>
+                  </div>
+                ))}
+                {/* Fixed incorrect access to educationStats.topImportProducts to economicStats */}
+                <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: [...data.economicStats.topImportProducts, '']}})}>+ Add Import Product</Button>
+             </div>
+
+             {/* Use higherEnrollment key explicitly */}
+             <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} /></div>
+             
+             <div className="pt-4 border-t">
+                <h5 className="font-bold text-sm mb-3">{t('topUniversities')} (Max 5)</h5>
+                <div className="space-y-3">
+                  {data.educationStats.topUniversities.map((uni, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <span className="text-xs font-bold text-gray-400 w-4">{idx + 1}.</span>
+                      <Input 
+                        value={uni} 
+                        onChange={e => {
+                          const list = [...data.educationStats.topUniversities];
+                          list[idx] = e.target.value;
+                          setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
+                        }} 
+                        placeholder="Enter university name..."
+                      />
+                      <button 
+                        onClick={() => {
+                          const list = data.educationStats.topUniversities.filter((_, i) => i !== idx);
+                          setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
+                        }} 
+                        className="text-red-400 hover:text-red-600 transition-colors"
+                      >
+                        <X size={18} />
+                      </button>
                     </div>
-                    <div className="flex gap-2 max-w-md">
-                       <Input 
-                        id="skill-input"
-                        placeholder="Add a new skill (e.g. Nursing)" 
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            const input = e.target as HTMLInputElement;
-                            if (input.value.trim()) {
-                              setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, input.value.trim()]}});
-                              input.value = '';
-                            }
-                          }
-                        }}
-                       />
-                       <Button size="sm" onClick={() => {
-                         const input = document.getElementById('skill-input') as HTMLInputElement;
-                         if (input.value.trim()) {
-                           setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, input.value.trim()]}});
-                           input.value = '';
-                         }
-                       }}>Add</Button>
-                    </div>
-                 </div>
-               </>
-             ) : (
-               <>
-                 <div className="grid grid-cols-2 gap-6"><Input label={t('inflation')} value={data.economicStats.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} /><Input label={t('gdp')} value={data.economicStats.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} /><Input label={t('exportsToUae')} value={data.economicStats.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} /><Input label={t('importsFromUae')} value={data.economicStats.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} /></div>
-                 
-                 <div className="grid grid-cols-2 gap-6 pt-4 border-t">
-                    <Input label={t('tipRank')} value={data.economicStats.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} />
-                    <Input label={t('remittances')} value={data.economicStats.remittancesFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesFromUAE: e.target.value}})} />
-                 </div>
+                  ))}
+                  {data.educationStats.topUniversities.length < 5 && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setData({...data, educationStats: {...data.educationStats, topUniversities: [...data.educationStats.topUniversities, '']}})}
+                    >
+                      <Plus size={14} /> Add University
+                    </Button>
+                  )}
+                </div>
+             </div>
 
-                 <div className="pt-4 border-t">
-                    <h5 className="font-bold text-sm mb-3">{t('topExports')}</h5>
-                    {data.economicStats.topExportProducts.map((p, i) => (
-                      <div key={i} className="flex gap-2 mb-2">
-                        <Input value={p} onChange={e => { const list = [...data.economicStats.topExportProducts]; list[i] = e.target.value; setData({...data, economicStats: {...data.economicStats, topExportProducts: list}}); }} />
-                        <button onClick={() => setData({...data, economicStats: {...data.economicStats, topExportProducts: data.economicStats.topExportProducts.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button>
-                      </div>
-                    ))}
-                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topExportProducts: [...data.economicStats.topExportProducts, '']}})}>+ Add Export Product</Button>
-                 </div>
-
-                 <div className="pt-4">
-                    <h5 className="font-bold text-sm mb-3">{t('topImports')}</h5>
-                    {data.economicStats.topImportProducts.map((p, i) => (
-                      <div key={i} className="flex gap-2 mb-2">
-                        <Input value={p} onChange={e => { const list = [...data.economicStats.topImportProducts]; list[i] = e.target.value; setData({...data, economicStats: {...data.economicStats, topImportProducts: list}}); }} />
-                        <button onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: data.economicStats.topImportProducts.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button>
-                      </div>
-                    ))}
-                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: [...data.economicStats.topImportProducts, '']}})}>+ Add Import Product</Button>
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} /></div>
-                 
-                 <div className="pt-4 border-t">
-                    <h5 className="font-bold text-sm mb-3">{t('topUniversities')} (Max 5)</h5>
-                    <div className="space-y-3">
-                      {data.educationStats.topUniversities.map((uni, idx) => (
-                        <div key={idx} className="flex gap-2 items-center">
-                          <span className="text-xs font-bold text-gray-400 w-4">{idx + 1}.</span>
-                          <Input 
-                            value={uni} 
-                            onChange={e => {
-                              const list = [...data.educationStats.topUniversities];
-                              list[idx] = e.target.value;
-                              setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
-                            }} 
-                            placeholder="Enter university name..."
-                          />
-                          <button 
-                            onClick={() => {
-                              const list = data.educationStats.topUniversities.filter((_, i) => i !== idx);
-                              setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
-                            }} 
-                            className="text-red-400 hover:text-red-600 transition-colors"
-                          >
-                            <X size={18} />
-                          </button>
-                        </div>
-                      ))}
-                      {data.educationStats.topUniversities.length < 5 && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => setData({...data, educationStats: {...data.educationStats, topUniversities: [...data.educationStats.topUniversities, '']}})}
-                        >
-                          <Plus size={14} /> Add University
-                        </Button>
-                      )}
-                    </div>
-                 </div>
-
-                 <div className="pt-4 border-t">
-                    <h5 className="font-bold text-sm mb-3">Custom Trade/Economic Indicators</h5>
-                    {data.economicStats.customStats.map((stat, i) => (<div key={stat.id} className="flex gap-4 mb-2 items-end"><Input label="Indicator" value={stat.label} onChange={e => { const list = [...data.economicStats.customStats]; list[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><Input label="Value" value={stat.value} onChange={e => { const list = [...data.economicStats.customStats]; list[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><button onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: data.economicStats.customStats.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button></div>))}
-                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: [...data.economicStats.customStats, { id: uuidv4(), label: '', value: '' }]}})}>+ Add Indicator</Button>
-                 </div>
-               </>
-             )}
+             <div className="pt-4 border-t">
+                <h5 className="font-bold text-sm mb-3">Custom Trade/Economic Indicators</h5>
+                {data.economicStats.customStats.map((stat, i) => (<div key={stat.id} className="flex gap-4 mb-2 items-end"><Input label="Indicator" value={stat.label} onChange={e => { const list = [...data.economicStats.customStats]; list[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><Input label="Value" value={stat.value} onChange={e => { const list = [...data.economicStats.customStats]; list[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><button onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: data.economicStats.customStats.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button></div>))}
+                <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: [...data.economicStats.customStats, { id: uuidv4(), label: '', value: '' }]}})}>+ Add Indicator</Button>
+             </div>
           </div>
         );
       case 4:
