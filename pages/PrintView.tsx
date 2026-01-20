@@ -3,10 +3,10 @@ import { MockService } from '../services/mockService';
 import { Report } from '../types';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { 
-  Globe, Users, TrendingUp, Building, Building2,
-  Handshake, Landmark, Plane, Banknote, 
-  Printer, X, AlertTriangle, ShieldAlert,
-  GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
+  Globe, Users, TrendingUp, Building, 
+  Landmark, Plane, Banknote, 
+  AlertTriangle, ShieldAlert,
+  GraduationCap, Briefcase, FileText, Activity,
   ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer,
   ExternalLink, MapPin
 } from 'lucide-react';
@@ -36,31 +36,6 @@ const translateEmirate = (name: string): string => {
     'Fujairah': 'الفجيرة',
   };
   return translations[name] || name;
-};
-
-const renderRichText = (text: string, sizeClass: string = "text-[12px]") => {
-  if (!text) return null;
-  let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  const lines = processed.split('\n');
-  const result: React.ReactNode[] = [];
-  let inList = false;
-  let listItems: string[] = [];
-  lines.forEach((line, i) => {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('- ')) {
-      if (!inList) { inList = true; listItems = []; }
-      listItems.push(trimmed.substring(2));
-    } else {
-      if (inList) {
-        result.push(<ul key={`list-${i}`} className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
-        inList = false;
-      }
-      if (trimmed) { result.push(<p key={i} className="mb-1 block" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
-    }
-  });
-  if (inList) { result.push(<ul key="list-final" className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
-  return <div className={`rich-text-content ${sizeClass} leading-[1.5] overflow-visible`}>{result.length > 0 ? result : text}</div>;
 };
 
 const SourceLink = ({ label, type }: { label: string, type: string }) => {
@@ -128,7 +103,6 @@ export default function PrintView() {
 
   const { data } = report;
   const isRTL = language === 'ar';
-  
   const reportYear = data.reportDate ? new Date(data.reportDate).getFullYear() : 2026;
 
   const getSource = (type: string) => {
@@ -161,9 +135,9 @@ export default function PrintView() {
     </div>
   );
 
-  const HeaderBandInternal = ({ country, reportId, title, flagUrl }: any) => {
+  const HeaderBandInternal = ({ country, reportId, flagUrl }: any) => {
     const getFlagCode = (c: string) => {
-      const lower = c.toLowerCase();
+      const lower = (c || '').toLowerCase();
       if (lower.includes('india')) return 'in';
       if (lower.includes('philippines')) return 'ph';
       if (lower.includes('pakistan')) return 'pk';
@@ -228,6 +202,7 @@ export default function PrintView() {
                       <img 
                         src={data.flagUrl || `https://flagcdn.com/w160/${data.country.toLowerCase().includes('bang') ? 'bd' : 'in'}.png`} 
                         className="w-full h-full object-cover rounded-lg" 
+                        alt="Country Flag"
                       />
                    </div>
                 </div>
@@ -314,10 +289,10 @@ export default function PrintView() {
              </div>
           </div>
 
-          <SectionHeader icon={GraduationCap} title={t('educationDetails')} subtitle={isRTL ? 'التعليم والمهارات' : 'Education & Skills'} compact />
+          <SectionHeader icon={GraduationCap} title={t('educationDetails')} compact />
           <div className="grid grid-cols-3 gap-6">
              <div className="kpi-card p-6">
-                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">{t('higherEducationEnrollment')}</p>
+                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">{isRTL ? 'االلتحاق بالتعليم العالي' : 'HIGHER ENROLLMENT'}</p>
                 <div className="flex items-center gap-4">
                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-primary"><GraduationCap size={24} /></div>
                    <div>
@@ -327,7 +302,7 @@ export default function PrintView() {
                 </div>
              </div>
              <div className="kpi-card p-6">
-                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">{t('primaryEnrollment')}</p>
+                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">{isRTL ? 'االلتحاق بالتعليم الابتدائي' : 'PRIMARY ENROLLMENT'}</p>
                 <div className="flex items-center gap-4">
                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-primary"><BookOpen size={24} /></div>
                    <div>
@@ -341,7 +316,7 @@ export default function PrintView() {
                    {isRTL ? 'أفضل 5 جامعات' : 'Top 5 Universities'} {getSource('edu')}
                 </h4>
                 <ul className="space-y-1.5">
-                   {data.educationStats.topUniversities.map((uni, i) => (
+                   {data.educationStats.topUniversities.slice(0, 5).map((uni, i) => (
                       <li key={i} className="text-[11px] font-bold text-gray-700 flex items-center gap-2">
                          <span className="w-1 h-1 bg-primary rounded-full"></span> {uni}
                       </li>
@@ -351,7 +326,7 @@ export default function PrintView() {
           </div>
         </PageContainer>
 
-        {/* PAGE 3: UAE WORKFORCE (Charts) */}
+        {/* PAGE 3: UAE WORKFORCE */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBandInternal country={data.country} reportId={report.id} flagUrl={data.flagUrl} />
           
@@ -421,15 +396,17 @@ export default function PrintView() {
 
              <div className="space-y-4">
                 <h5 className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-4 ps-2">{t('additionalIndicators')}</h5>
-                {data.uaeWorkforceStats.custom.map((stat) => (
-                   <div key={stat.id} className="kpi-card p-4 flex justify-between items-center border-l-4 border-primary">
-                      <div>
-                         <p className="text-[10px] text-gray-400 font-bold uppercase mb-0.5">{stat.label}</p>
-                         <p className="text-[8px] text-gray-400 uppercase tracking-tighter">{stat.date}</p>
+                <div className="space-y-2">
+                   {data.uaeWorkforceStats.custom.map((stat) => (
+                      <div key={stat.id} className="kpi-card p-4 flex justify-between items-center border-l-4 border-primary">
+                         <div>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase mb-0.5">{stat.label}</p>
+                            <p className="text-[8px] text-gray-400 uppercase tracking-tighter">{stat.date}</p>
+                         </div>
+                         <p className="text-xl font-bold font-serif text-gray-900">{stat.value}</p>
                       </div>
-                      <p className="text-xl font-bold font-serif text-gray-900">{stat.value}</p>
-                   </div>
-                ))}
+                   ))}
+                </div>
              </div>
           </div>
         </PageContainer>
@@ -516,8 +493,15 @@ export default function PrintView() {
                    </div>
                 ))}
              </div>
+             <div className="mt-8 pt-4 border-t border-gray-200/50 text-center">
+                <p className="text-[10px] text-gray-400 italic">
+                   {isRTL ? 'تمثل هذه المهارات الفئات الرئيسية للعمالة المتاحة للعمل خارجياً بناءً على مخرجات التعليم/التدريب المهني الحالية.' : 'These skills represent the primary categories of labor available for foreign employment based on current educational and vocational training outputs.'}
+                </p>
+             </div>
           </div>
         </PageContainer>
+
+        {/* ADDITIONAL SECTIONS FOR AGREEMENTS, NEWS, INTERACTIONS WOULD FOLLOW */}
       </div>
     </div>
   );

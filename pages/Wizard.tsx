@@ -13,52 +13,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 
-const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
-  const insertText = (tag: string) => {
-    const textarea = document.getElementById(`rt-${label}`) as HTMLTextAreaElement;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const before = text.substring(0, start);
-    const terrestrial = text.substring(end, text.length);
-    const selected = text.substring(start, end);
-
-    let replacement = "";
-    if (tag === 'bold') replacement = `**${selected || 'text'}**`;
-    else if (tag === 'italic') replacement = `*${selected || 'text'}*`;
-    else if (tag === 'bullet') replacement = `\n- ${selected || 'item'}`;
-
-    onChange(before + replacement + terrestrial);
-    
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + 2, start + 2 + (selected.length || 4));
-    }, 0);
-  };
-
-  return (
-    <div className="flex flex-col gap-1.5 w-full">
-      {label && <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300">{label}</label>}
-      <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden flex flex-col focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
-        <div className="flex gap-1 p-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
-           <button type="button" onClick={() => insertText('bold')} className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300" title="Bold"><Bold size={16} /></button>
-           <button type="button" onClick={() => insertText('italic')} className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300" title="Italic"><Italic size={16} /></button>
-           <button type="button" onClick={() => insertText('bullet')} className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300" title="Bullet List"><List size={16} /></button>
-        </div>
-        <textarea 
-          id={`rt-${label}`}
-          className="w-full p-3 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none min-h-[120px] resize-y text-sm leading-relaxed" 
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      </div>
-    </div>
-  );
-};
-
 export default function Wizard() {
   const getParamId = () => {
     const hash = window.location.hash;
@@ -204,7 +158,7 @@ export default function Wizard() {
     setIsFetchingNews(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `Find 3 most recent news articles regarding bilateral labor, economic, or diplomatic relations between UAE and ${data.country}.
+      const prompt = `Find 3 most recent news articles regarding bilateral labor, economic, or diplomatic relations between UAE and ${data.country}. 
       For each item, provide a title, the news source name, the approximate date, and a brief 2-sentence summary.
       Format the output as a JSON array of objects.`;
 
@@ -473,7 +427,7 @@ export default function Wizard() {
                     onChange={e => setTempSkill(e.target.value)} 
                     onKeyPress={e => e.key === 'Enter' && addSkill()}
                    />
-                   <Button variant="outline" onClick={addSkill}><Plus size={18} /></Button>
+                   <button onClick={addSkill} className="p-2 border rounded hover:bg-gray-100 dark:hover:bg-gray-800"><Plus size={18} /></button>
                 </div>
              </div>
           </div>
@@ -520,7 +474,7 @@ export default function Wizard() {
                           onChange={e => setTempUni(e.target.value)} 
                           onKeyPress={e => e.key === 'Enter' && addUniversity()}
                         />
-                        <Button variant="outline" onClick={addUniversity}><Plus size={18} /></Button>
+                        <button onClick={addUniversity} className="p-2 border rounded hover:bg-gray-100 dark:hover:bg-gray-800"><Plus size={18} /></button>
                      </div>
                    </div>
                 </div>
@@ -673,40 +627,31 @@ export default function Wizard() {
           </div>
         );
       case 6: // Delegation
-        const addDel = (side: 'uae' | 'partner') => {
-          const list = [...data.delegations[side], { id: uuidv4(), name: '', title: '', imageUrl: '', bio: '' }];
-          setData({...data, delegations: {...data.delegations, [side]: list}});
-        };
-        const removeDel = (side: 'uae' | 'partner', idx: number) => {
-          const list = data.delegations[side].filter((_, i) => i !== idx);
-          setData({...data, delegations: {...data.delegations, [side]: list}});
-        };
-        const updateDel = (side: 'uae' | 'partner', idx: number, field: string, val: string) => {
-          const list = [...data.delegations[side]];
-          (list[idx] as any)[field] = val;
-          setData({...data, delegations: {...data.delegations, [side]: list}});
-        };
         return (
           <div className="space-y-8">
              <div className="space-y-4">
                 <div className="flex justify-between items-center border-b pb-2">
                    <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2"><Flag size={20} /> {t('uaeDelegation')}</h3>
-                   <Button size="sm" variant="outline" onClick={() => addDel('uae')}><Plus size={16} /> Add UAE Delegate</Button>
+                   <Button size="sm" variant="outline" onClick={() => setData({...data, delegations: {...data.delegations, uae: [...data.delegations.uae, { id: uuidv4(), name: '', title: '', imageUrl: '', bio: '' }]}})}><Plus size={16} /> Add Delegate</Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    {data.delegations.uae.map((del, i) => (
                       <Card key={del.id} className="p-4 relative">
-                         <button onClick={() => removeDel('uae', i)} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                         <button onClick={() => setData({...data, delegations: {...data.delegations, uae: data.delegations.uae.filter((_, idx) => idx !== i)}})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
                          <div className="flex gap-4">
                             <div className="w-16 h-16 rounded-full bg-gray-100 border overflow-hidden shrink-0 cursor-pointer" onClick={() => {
                                const url = prompt("Enter image URL:", del.imageUrl);
-                               if (url) updateDel('uae', i, 'imageUrl', url);
+                               if (url) {
+                                  const list = [...data.delegations.uae];
+                                  list[i].imageUrl = url;
+                                  setData({...data, delegations: {...data.delegations, uae: list}});
+                               }
                             }}>
                                {del.imageUrl ? <img src={del.imageUrl} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-3 text-gray-300" />}
                             </div>
                             <div className="flex-1 space-y-2">
-                               <Input label="Name" value={del.name} onChange={e => updateDel('uae', i, 'name', e.target.value)} />
-                               <Input label="Title" value={del.title} onChange={e => updateDel('uae', i, 'title', e.target.value)} />
+                               <Input label="Name" value={del.name} onChange={e => { const list = [...data.delegations.uae]; list[i].name = e.target.value; setData({...data, delegations: {...data.delegations, uae: list}}); }} />
+                               <Input label="Title" value={del.title} onChange={e => { const list = [...data.delegations.uae]; list[i].title = e.target.value; setData({...data, delegations: {...data.delegations, uae: list}}); }} />
                             </div>
                          </div>
                       </Card>
@@ -716,22 +661,26 @@ export default function Wizard() {
              <div className="space-y-4 pt-6 border-t dark:border-gray-800">
                 <div className="flex justify-between items-center border-b pb-2">
                    <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2"><MapPin size={20} /> {t('partnerDelegation')}</h3>
-                   <Button size="sm" variant="outline" onClick={() => addDel('partner')}><Plus size={16} /> Add Partner Delegate</Button>
+                   <Button size="sm" variant="outline" onClick={() => setData({...data, delegations: {...data.delegations, partner: [...data.delegations.partner, { id: uuidv4(), name: '', title: '', imageUrl: '', bio: '' }]}})}><Plus size={16} /> Add Delegate</Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    {data.delegations.partner.map((del, i) => (
                       <Card key={del.id} className="p-4 relative">
-                         <button onClick={() => removeDel('partner', i)} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                         <button onClick={() => setData({...data, delegations: {...data.delegations, partner: data.delegations.partner.filter((_, idx) => idx !== i)}})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
                          <div className="flex gap-4">
                             <div className="w-16 h-16 rounded-full bg-gray-100 border overflow-hidden shrink-0 cursor-pointer" onClick={() => {
                                const url = prompt("Enter image URL:", del.imageUrl);
-                               if (url) updateDel('partner', i, 'imageUrl', url);
+                               if (url) {
+                                  const list = [...data.delegations.partner];
+                                  list[i].imageUrl = url;
+                                  setData({...data, delegations: {...data.delegations, partner: list}});
+                               }
                             }}>
                                {del.imageUrl ? <img src={del.imageUrl} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-3 text-gray-300" />}
                             </div>
                             <div className="flex-1 space-y-2">
-                               <Input label="Name" value={del.name} onChange={e => updateDel('partner', i, 'name', e.target.value)} />
-                               <Input label="Title" value={del.title} onChange={e => updateDel('partner', i, 'title', e.target.value)} />
+                               <Input label="Name" value={del.name} onChange={e => { const list = [...data.delegations.partner]; list[i].name = e.target.value; setData({...data, delegations: {...data.delegations, partner: list}}); }} />
+                               <Input label="Title" value={del.title} onChange={e => { const list = [...data.delegations.partner]; list[i].title = e.target.value; setData({...data, delegations: {...data.delegations, partner: list}}); }} />
                             </div>
                          </div>
                       </Card>

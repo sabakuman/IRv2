@@ -274,6 +274,8 @@ export const TRANSLATIONS = {
     availableSkills: 'Available Skills',
     economyDetails: 'Economic Details',
     educationDetails: 'Education Details',
+    openLabel: 'Open',
+    closedLabel: 'Closed',
   },
   ar: {
     dashboard: 'لوحة القيادة',
@@ -400,5 +402,7 @@ export const TRANSLATIONS = {
     availableSkills: 'المهارات المتاحة',
     economyDetails: 'تفاصيل الاقتصاد',
     educationDetails: 'تفاصيل التعليم والمهارات',
+    openLabel: 'مفتوح',
+    closedLabel: 'مغلق',
   }
 };
