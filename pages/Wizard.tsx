@@ -489,7 +489,36 @@ export default function Wizard() {
              <div>
                 <h5 className="font-bold text-sm mb-3">{t('workersBySector')}</h5>
                 {data.uaeWorkforceStats.mohre.bySector.map((sec, idx) => (
-                  <div key={idx} className="flex gap-4 mb-2"><Input value={sec.name} className="flex-1" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].name = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><Input value={sec.value} type="number" className="w-32" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><button onClick={() => { const list = data.uaeWorkforceStats.mohre.bySector.filter((_, i) => i !== idx); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} className="text-red-400"><X size={16} /></button></div>
+                  <div key={idx} className="flex gap-4 mb-2">
+                    <Input value={sec.name} className="flex-1" onChange={e => { 
+                      const list = [...data.uaeWorkforceStats.mohre.bySector]; 
+                      list[idx].name = e.target.value; 
+                      setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); 
+                    }} />
+                    <Input value={sec.value} type="number" className="w-32" onChange={e => { 
+                      const list = [...data.uaeWorkforceStats.mohre.bySector]; 
+                      list[idx].value = Number(e.target.value); 
+                      setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); 
+                    }} />
+                    <button 
+                      onClick={() => { 
+                        const list = data.uaeWorkforceStats.mohre.bySector.filter((_, i) => i !== idx); 
+                        setData({
+                          ...data,
+                          uaeWorkforceStats: {
+                            ...data.uaeWorkforceStats,
+                            mohre: {
+                              ...data.uaeWorkforceStats.mohre,
+                              bySector: list
+                            }
+                          }
+                        }); 
+                      }} 
+                      className="text-red-400"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
                 ))}
                 <Button size="sm" variant="outline" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: [...data.uaeWorkforceStats.mohre.bySector, { name: '', value: 0 }]}}})}>+ Add Sector</Button>
              </div>
