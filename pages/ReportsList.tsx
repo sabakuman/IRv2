@@ -42,7 +42,10 @@ export default function ReportsList() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (user?.role !== 'admin') return;
+    if (user?.role !== 'admin') {
+       alert("Unauthorized: Only administrators can delete reports.");
+       return;
+    }
     if (window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
       setDeletingId(id);
       try {
@@ -84,7 +87,7 @@ export default function ReportsList() {
             {t('reports')}
           </h1>
           <p className="text-muted-foreground mt-1 dark:text-gray-400">
-            {t('reportsDescription')}
+            {t('reportsDescription') || 'Access and manage all generated labour market intelligence reports.'}
           </p>
         </div>
         <Button onClick={() => navigate('/wizard')}>
@@ -122,18 +125,17 @@ export default function ReportsList() {
             <thead className="bg-secondary/50 dark:bg-gray-700/50 border-b dark:border-gray-700">
               <tr>
                 <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('country')}</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colReportTitle')}</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colCreatedBy')}</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colLastModified')}</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colStatus')}</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">{t('colActions')}</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Report Title</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Created By</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Last Modified</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Status</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y dark:divide-gray-700">
               {filteredReports.map((report) => {
                 const isOwner = user?.id === report.userId;
                 const isAdmin = user?.role === 'admin';
-                const canEdit = true; // All users can edit
                 const canDelete = isAdmin;
                 const isDeleting = deletingId === report.id;
                 

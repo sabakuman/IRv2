@@ -9,6 +9,26 @@ import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 
+// Utility to clean JSON from AI response
+const cleanJson = (text: string) => {
+  // Remove markdown code blocks if present
+  let cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+  // Find the first [ or { and the last ] or }
+  const startIdx = Math.min(
+    cleaned.indexOf('[') === -1 ? Infinity : cleaned.indexOf('['),
+    cleaned.indexOf('{') === -1 ? Infinity : cleaned.indexOf('{')
+  );
+  const endIdx = Math.max(
+    cleaned.lastIndexOf(']'),
+    cleaned.lastIndexOf('}')
+  );
+  
+  if (startIdx !== Infinity && endIdx !== -1) {
+    return cleaned.substring(startIdx, endIdx + 1);
+  }
+  return cleaned;
+};
+
 // Custom Textarea with Rich Text Toolbar
 const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
   const insertText = (tag: string) => {
@@ -183,7 +203,8 @@ export default function Wizard() {
       });
       
       if (response.text) {
-        const aiData = JSON.parse(response.text);
+        const cleanedText = cleanJson(response.text);
+        const aiData = JSON.parse(cleanedText);
         setData(prev => ({ 
           ...prev, 
           ...aiData,
@@ -195,7 +216,6 @@ export default function Wizard() {
             totalImportsFromUAE: aiData.economicStats_totalImportsFromUAE || prev.economicStats.totalImportsFromUAE,
             topExportProducts: aiData.topExportProducts || prev.economicStats.topExportProducts,
             topImportProducts: aiData.topImportProducts || prev.economicStats.topImportProducts,
-            // Fixed typo: changed aiStatus to aiData
             tipRank: aiData.tipRank || prev.economicStats.tipRank,
             remittancesFromUAE: aiData.remittancesFromUAE || prev.economicStats.remittancesFromUAE,
           },
@@ -248,7 +268,8 @@ export default function Wizard() {
       });
 
       if (response.text) {
-        const agrs = JSON.parse(response.text);
+        const cleanedText = cleanJson(response.text);
+        const agrs = JSON.parse(cleanedText);
         setData(prev => ({ ...prev, bilateralAgreements: agrs }));
       }
     } catch (e) {
@@ -260,55 +281,72 @@ export default function Wizard() {
   };
 
   const handleFetchNews = async () => {
-     if (!data.country) return;
+     if (!data.country) {
+       alert("Please enter a country name first.");
+       return;
+     }
      
      setIsFetchingNews(true);
+     console.log(`[AI News] Initiating fetch for: ${data.country}, language: ${language}`);
+     
      const apiKey = user?.apiKey || process.env.API_KEY;
-     if (!apiKey) { setIsFetchingNews(false); return; }
+     if (!apiKey) { 
+       console.error("[AI News] No API key available.");
+       alert("No API Key found. Please add a Personal API Key in Settings.");
+       setIsFetchingNews(false); 
+       return; 
+     }
 
      try {
        const ai = new GoogleGenAI({ apiKey });
        const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
-       const prompt = `Find 3 recent official news items or press releases (from 2023-2025) concerning bilateral workforce cooperation, diplomatic visits, or labour market agreements between the UAE and ${data.country}. Return as a JSON array. Each object must have: title, source, date, and summary. All text must be in ${targetLanguage}.`;
+       const prompt = `Find 3 recent official news items or press releases (from 2023-2025) regarding workforce cooperation, diplomatic labor visits, or new labor market agreements between the UAE and ${data.country}. 
        
+       MANDATORY: Return strictly as a JSON array. 
+       Format: [{"title": "...", "source": "...", "date": "...", "summary": "..."}]
+       Language: ${targetLanguage}.
+       Return ONLY the JSON.`;
+       
+       console.log("[AI News] Prompt:", prompt);
+
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: prompt,
           config: { 
-            tools: [{ googleSearch: {} }],
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  source: { type: Type.STRING },
-                  date: { type: Type.STRING },
-                  summary: { type: Type.STRING }
-                }
-              }
-            }
+            tools: [{ googleSearch: {} }]
           },
        });
        
+       console.log("[AI News] Raw Response:", response);
+       
        if (response.text) {
-         const newsItems = JSON.parse(response.text);
-         const formattedNews: NewsItem[] = newsItems.map((n: any) => ({
-            id: uuidv4(),
-            title: n.title || '',
-            source: n.source || '',
-            date: n.date || '',
-            summary: n.summary || ''
-         }));
-         setData(prev => ({ 
-           ...prev, 
-           relatedNews: [...prev.relatedNews, ...formattedNews] 
-         }));
+         const jsonStr = cleanJson(response.text);
+         console.log("[AI News] Cleaned JSON:", jsonStr);
+         
+         const newsItems = JSON.parse(jsonStr);
+         
+         if (Array.isArray(newsItems)) {
+           const formattedNews: NewsItem[] = newsItems.map((n: any) => ({
+              id: uuidv4(),
+              title: n.title || 'Untitled News',
+              source: n.source || n.date || 'Official Source',
+              date: n.date || '',
+              summary: n.summary || 'Summary not available.'
+           }));
+           
+           setData(prev => ({ 
+             ...prev, 
+             relatedNews: [...prev.relatedNews, ...formattedNews] 
+           }));
+         } else {
+           throw new Error("Invalid format received.");
+         }
+       } else {
+         throw new Error("Empty response from AI.");
        }
      } catch (error: any) { 
-       console.error("AI News Fetch Error:", error);
-       alert("Failed to fetch news. Please check your API key.");
+       console.error("[AI News] Error:", error);
+       alert(`News Fetch Failed: ${error.message || "Unknown error"}. Check console for details.`);
      } finally { 
        setIsFetchingNews(false); 
      }
@@ -451,7 +489,7 @@ export default function Wizard() {
              <div>
                 <h5 className="font-bold text-sm mb-3">{t('workersBySector')}</h5>
                 {data.uaeWorkforceStats.mohre.bySector.map((sec, idx) => (
-                  <div key={idx} className="flex gap-4 mb-2"><Input value={sec.name} className="flex-1" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].name = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><Input value={sec.value} type="number" className="w-32" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><button onClick={() => { const list = data.uaeWorkforceStats.mohre.bySector.filter((_, i) => i !== idx); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} className="text-red-400"><X size={16} /></button></div>
+                  <div key={idx} className="flex gap-4 mb-2"><Input value={sec.name} className="flex-1" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].name = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><Input value={sec.value} type="number" className="w-32" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><button onClick={() => { const list = data.uaeWorkforceStats.mohre.bySector.filter((_, i) => i !== idx); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} className="text-red-400"><X size={16} /></button></div>
                 ))}
                 <Button size="sm" variant="outline" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: [...data.uaeWorkforceStats.mohre.bySector, { name: '', value: 0 }]}}})}>+ Add Sector</Button>
              </div>
@@ -494,7 +532,7 @@ export default function Wizard() {
                  <div>
                    <label className="text-sm font-semibold mb-2 block">{t('sectorDistribution')}</label>
                    {data.workforceStats.topSectors.map((sec, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
+                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
                  </div>
@@ -530,7 +568,7 @@ export default function Wizard() {
                     <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: [...data.economicStats.topImportProducts, '']}})}>+ Add Import Product</Button>
                  </div>
 
-                 <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.economicStats.primaryEnrollment} onChange={e => setData({...data, economicStats: {...data.economicStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.economicStats.higherEducationEnrollment} onChange={e => setData({...data, economicStats: {...data.economicStats, higherEducationEnrollment: e.target.value}})} /></div>
+                 <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} /></div>
                  
                  <div className="pt-4 border-t">
                     <h5 className="font-bold text-sm mb-3">{t('topUniversities')} (Max 5)</h5>

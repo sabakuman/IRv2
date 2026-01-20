@@ -152,7 +152,8 @@ app.post('/api/login', (req, res) => {
 });
 
 app.get('/api/users', (req, res) => {
-  db.all("SELECT * FROM users", [], (err, rows) => {
+  // Ensure we select all columns to avoid missing metadata in UI
+  db.all("SELECT id, email, fullName, role, avatarUrl, apiKey FROM users ORDER BY fullName ASC", [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
@@ -204,8 +205,9 @@ app.post('/api/reports', (req, res) => {
 
 app.delete('/api/reports/:id', (req, res) => {
   const userRole = req.headers['x-user-role'];
+  // Tightened security: Strictly enforce admin role for deletion
   if (userRole !== 'admin') {
-    return res.status(403).json({ error: 'Permission denied. Only admins can delete reports.' });
+    return res.status(403).json({ error: 'Permission denied. Only administrators can delete reports.' });
   }
   db.run("DELETE FROM reports WHERE id = ?", [req.params.id], (err) => {
     if (err) return res.status(500).json({ error: err.message });

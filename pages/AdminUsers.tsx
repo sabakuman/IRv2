@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { UserProfile, UserRole } from '../types';
 import { Button, Card, Badge, Input } from '../components/ui/LayoutComponents';
-import { Trash2, UserPlus, ShieldAlert, User, Mail, X, Key, RefreshCcw, ShieldCheck } from 'lucide-react';
+import { Trash2, UserPlus, ShieldAlert, User, Mail, X, Key, RefreshCcw, ShieldCheck, HelpCircle } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminUsers() {
@@ -63,7 +63,7 @@ export default function AdminUsers() {
       return;
     }
     const newRole = user.role === 'admin' ? 'user' : 'admin';
-    if (window.confirm(`Are you sure you want to change ${user.fullName}'s role to ${newRole}?`)) {
+    if (window.confirm(`Are you sure you want to change ${user.fullName || user.email}'s role to ${newRole}?`)) {
       try {
         await MockService.updateUserRole(user.id, newRole);
         await fetchUsers();
@@ -110,9 +110,16 @@ export default function AdminUsers() {
           <Card key={user.id} className="relative group overflow-hidden border-border dark:bg-secondary flex flex-col h-full">
              <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                   <img src={user.avatarUrl} alt={user.fullName} className="w-12 h-12 rounded-full border border-gray-200" />
+                   <img 
+                    src={user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || 'U')}`} 
+                    alt={user.fullName} 
+                    className="w-12 h-12 rounded-full border border-gray-200" 
+                   />
                    <div>
-                      <h3 className="font-bold text-gray-900 dark:text-white">{user.fullName}</h3>
+                      <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                        {user.fullName || <span className="text-gray-400 italic text-sm">Unnamed User</span>}
+                        {!user.fullName && <HelpCircle size={14} className="text-amber-500" title="Missing profile metadata" />}
+                      </h3>
                       <Badge color={user.role === 'admin' ? 'blue' : 'green'}>{user.role}</Badge>
                    </div>
                 </div>
@@ -134,7 +141,7 @@ export default function AdminUsers() {
                 </div>
                 <div className="flex items-center gap-2">
                    <ShieldAlert size={14} className="opacity-70" />
-                   ID: <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">{user.id}</span>
+                   ID: <span className="font-mono text-[10px] bg-gray-100 dark:bg-gray-800 px-1 rounded truncate max-w-[150px]" title={user.id}>{user.id}</span>
                 </div>
              </div>
 
@@ -155,6 +162,13 @@ export default function AdminUsers() {
           </Card>
         ))}
       </div>
+
+      {loading && users.length === 0 && (
+        <div className="py-20 text-center text-gray-400">
+           <RefreshCcw className="animate-spin mx-auto mb-2" />
+           Loading user directory...
+        </div>
+      )}
 
       {/* Add User Modal */}
       {isModalOpen && (
