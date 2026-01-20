@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { MockService } from '../services/mockService';
 import { Report, LetterLog } from '../types';
 import { Card, Button } from '../components/ui/LayoutComponents';
-import { FileText, Plus, Activity, Edit3, ArrowRight, Save, X, Calendar, Mail, FileCheck } from 'lucide-react';
+import { FileText, Plus, Activity, Edit3, ArrowRight, Save, X, Calendar, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function Dashboard() {
@@ -55,16 +54,13 @@ export default function Dashboard() {
     setIsEditingAnnouncement(false);
   };
 
-  const draftCount = reports.filter(r => r.status === 'draft').length;
   const completedCount = reports.filter(r => r.status === 'completed').length;
-
   const totalLetters = letters.length;
   const closedLetters = letters.filter(l => l.status === 'closed').length;
   const openLetters = totalLetters - closedLetters;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-serif font-bold text-primary-dark dark:text-white">
@@ -85,7 +81,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Cards Row 1 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-l-4 border-l-primary hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/reports')}>
           <div className="flex justify-between items-center">
@@ -99,7 +94,6 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* Letter Log Summary Card */}
         <Card className="border-l-4 border-l-blue-400 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/letters')}>
            <div className="flex justify-between items-start">
              <div>
@@ -140,7 +134,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Recent Reports & Welcome Message */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
          <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -174,7 +167,6 @@ export default function Dashboard() {
             </div>
          </div>
 
-         {/* Welcome Message Section (Admin editable) */}
          <Card className="flex flex-col border-primary/20 bg-gray-50 dark:bg-secondary/40">
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
                <h2 className="text-xl font-serif font-bold text-primary dark:text-primary-light flex items-center gap-2">

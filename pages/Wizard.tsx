@@ -5,11 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import { ReportData, EMPTY_REPORT_DATA, Report, Delegate, NewsItem } from '../types';
 import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
-import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List } from 'lucide-react';
+// Added missing Briefcase import
+import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, X, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, Bold, Italic, List, Briefcase } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 
-// Custom Textarea with Rich Text Toolbar
 const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
   const insertText = (tag: string) => {
     const textarea = document.getElementById(`rt-${label}`) as HTMLTextAreaElement;
@@ -111,7 +111,6 @@ export default function Wizard() {
     const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
 
     try {
-      // Always initialize with process.env.API_KEY as per guidelines
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `Fetch the latest official labour market and economic data for ${data.country}. All text values must be returned in ${targetLanguage}. Ensure monthly wages are in USD.`;
       
@@ -194,7 +193,6 @@ export default function Wizard() {
     setIsFetchingAI(true);
 
     try {
-      // Always initialize with process.env.API_KEY as per guidelines
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
       const prompt = `Identify and list formal bilateral labour agreements or MoUs between the UAE and ${data.country}. Return as JSON array with title, date, status, and summary. Language: ${targetLanguage}.`;
@@ -234,9 +232,7 @@ export default function Wizard() {
      if (!data.country) return;
      
      setIsFetchingNews(true);
-
      try {
-       // Always initialize with process.env.API_KEY as per guidelines
        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
        const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
        const prompt = `Find 3 recent official news items regarding bilateral relations between UAE and ${data.country}. Return as JSON array. Language: ${targetLanguage}.`;
@@ -309,7 +305,7 @@ export default function Wizard() {
     switch (currentStep) {
       case 0:
         return (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-6">
              <div className="border-b dark:border-gray-700 pb-4 mb-4">
                <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2 mb-2"><FileText size={20} /> {t('reportDetails')}</h3>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -342,18 +338,7 @@ export default function Wizard() {
                           <UploadCloud className="text-white" size={24} />
                        </div>
                     </div>
-                    {data.flagUrl && (
-                      <button 
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setData({...data, flagUrl: ''}); }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-lg hover:bg-red-600 transition-colors z-10"
-                        title="Reset to AI flag"
-                      >
-                        <X size={12} />
-                      </button>
-                    )}
                   </div>
-                  <button type="button" onClick={() => document.getElementById('flag-upload')?.click()} className="text-[10px] font-bold text-primary hover:underline uppercase tracking-tight">Upload Flag</button>
                   <input type="file" id="flag-upload" className="hidden" accept="image/*" onChange={(e) => { 
                     const file = e.target.files?.[0]; 
                     if (file) { 
@@ -371,7 +356,6 @@ export default function Wizard() {
                       {t('fetchData')}
                     </Button>
                   </div>
-                  <Input label="Manual Flag URL" value={data.flagUrl?.startsWith('http') ? data.flagUrl : ''} onChange={e => setData({...data, flagUrl: e.target.value})} placeholder="Paste URL (OneDrive/Public)..." className="text-xs py-1.5" />
                </div>
             </div>
 
@@ -387,7 +371,7 @@ export default function Wizard() {
         );
       case 1:
         return (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+          <div className="space-y-6">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="p-4 border-l-4 border-l-primary">
                   <h5 className="font-bold text-sm mb-2">{t('mohreData')}</h5>
@@ -427,193 +411,16 @@ export default function Wizard() {
                       <Input label="Label" value={stat.label} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].label = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
                       <Input label="Value" value={stat.value} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].value = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
                       <Input label="Date/As of" value={stat.date} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].date = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
-                      {!stat.isTotal && <button onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: data.uaeWorkforceStats.custom.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button>}
                    </div>
                 ))}
-                <Button size="sm" variant="outline" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: [...data.uaeWorkforceStats.custom, { id: uuidv4(), label: '', value: '', date: '', isTotal: false }]}})}>+ Add Indicator</Button>
              </div>
-          </div>
-        );
-      case 2:
-      case 3:
-        return (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-             {currentStep === 2 ? (
-               <>
-                 <div className="grid grid-cols-2 gap-6">
-                    <Input label={t('avgWage')} value={data.averageWage} onChange={e => setData({...data, averageWage: e.target.value})} placeholder="e.g. 500 USD" />
-                    <Input label={t('minWage')} value={data.minimumWage} onChange={e => setData({...data, minimumWage: e.target.value})} placeholder="e.g. 150 USD" />
-                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Input label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} onChange={e => setData({...data, workforceStats: {...data.workforceStats, totalWorkforce: e.target.value}})} />
-                    <Input label={t('maleParticipation')} type="number" value={data.workforceStats.participationMale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationMale: Number(e.target.value)}})} />
-                    <Input label={t('femaleParticipation')} type="number" value={data.workforceStats.participationFemale} onChange={e => setData({...data, workforceStats: {...data.workforceStats, participationFemale: Number(e.target.value)}})} />
-                 </div>
-                 <div>
-                   <label className="text-sm font-semibold mb-2 block">{t('migrationDestinations')}</label>
-                   {data.workforceStats.migrationDestinations.map((dest, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={dest.country} placeholder="Country" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].country = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><Input value={dest.count} placeholder="Count" onChange={e => { const list = [...data.workforceStats.migrationDestinations]; list[i].count = e.target.value; setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: data.workforceStats.migrationDestinations.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
-                   ))}
-                   <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, migrationDestinations: [...data.workforceStats.migrationDestinations, { country: '', count: '' }]}})}>+ Add Destination</Button>
-                 </div>
-                 <div>
-                   <label className="text-sm font-semibold mb-2 block">{t('sectorDistribution')}</label>
-                   {data.workforceStats.topSectors.map((sec, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
-                   ))}
-                   <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
-                 </div>
-               </>
-             ) : (
-               <>
-                 <div className="grid grid-cols-2 gap-6"><Input label={t('inflation')} value={data.economicStats.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} /><Input label={t('gdp')} value={data.economicStats.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} /><Input label={t('exportsToUae')} value={data.economicStats.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} /><Input label={t('importsFromUae')} value={data.economicStats.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} /></div>
-                 
-                 <div className="pt-4 border-t">
-                    <h5 className="font-bold text-sm mb-3">Custom Trade/Economic Indicators</h5>
-                    {data.economicStats.customStats.map((stat, i) => (<div key={stat.id} className="flex gap-4 mb-2 items-end"><Input label="Indicator" value={stat.label} onChange={e => { const list = [...data.economicStats.customStats]; list[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><Input label="Value" value={stat.value} onChange={e => { const list = [...data.economicStats.customStats]; list[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><button onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: data.economicStats.customStats.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button></div>))}
-                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: [...data.economicStats.customStats, { id: uuidv4(), label: '', value: '' }]}})}>+ Add Indicator</Button>
-                 </div>
-               </>
-             )}
-          </div>
-        );
-      case 4:
-        return (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-             <div className="space-y-4">
-                <h4 className="font-bold flex items-center gap-2"><Calendar size={18} /> {t('recentInteractions')}</h4>
-                {data.recentInteractions.map((item, idx) => (
-                   <Card key={item.id} className="p-4 relative">
-                      <button onClick={() => setData({...data, recentInteractions: data.recentInteractions.filter(ri => ri.id !== item.id)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
-                      <div className="grid grid-cols-2 gap-4 mb-4"><Input value={item.title} label="Title" onChange={e => { const list = [...data.recentInteractions]; list[idx].title = e.target.value; setData({...data, recentInteractions: list}); }} /><Input value={item.date} type="date" label="Date" onChange={e => { const list = [...data.recentInteractions]; list[idx].date = e.target.value; setData({...data, recentInteractions: list}); }} /></div>
-                      <RichTextarea label="Details" value={item.details} onChange={(val: string) => { const list = [...data.recentInteractions]; list[idx].details = val; setData({...data, recentInteractions: list}); }} />
-                   </Card>
-                ))}
-                <Button variant="outline" onClick={() => setData({...data, recentInteractions: [...data.recentInteractions, { id: uuidv4(), title: '', date: '', type: 'Meeting', details: '' }]})}>+ Add Interaction</Button>
-             </div>
-             <div className="space-y-4 pt-6 border-t">
-                <h4 className="font-bold flex items-center gap-2"><MessageSquare size={18} /> {t('pointsOfDiscussion')}</h4>
-                {data.pointsOfDiscussion.map((item, idx) => (
-                   <Card key={item.id} className="p-4 relative">
-                      <button onClick={() => setData({...data, pointsOfDiscussion: data.pointsOfDiscussion.filter(pd => pd.id !== item.id)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
-                      <Input value={item.title} className="font-bold mb-4" placeholder="Topic Title" onChange={e => { const list = [...data.pointsOfDiscussion]; list[idx].title = e.target.value; setData({...data, pointsOfDiscussion: list}); }} /><RichTextarea label="Content" value={item.content} onChange={(val: string) => { const list = [...data.pointsOfDiscussion]; list[idx].content = val; setData({...data, pointsOfDiscussion: list}); }} />
-                   </Card>
-                ))}
-                <Button variant="outline" onClick={() => setData({...data, pointsOfDiscussion: [...data.pointsOfDiscussion, { id: uuidv4(), title: '', content: '' }]})}>+ Add Point</Button>
-             </div>
-             <div className="pt-6 border-t">
-               <div className="flex justify-between items-center mb-4">
-                 <h4 className="font-bold flex items-center gap-2"><Newspaper size={18} /> {t('relatedNews')}</h4>
-                 <Button onClick={handleFetchNews} disabled={isFetchingNews || !data.country} size="sm">
-                   {isFetchingNews ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />}
-                   {t('fetchNews')}
-                 </Button>
-               </div>
-               <div className="space-y-4">
-                  {data.relatedNews.map((news, idx) => (
-                    <Card key={news.id} className="p-4 relative bg-gray-50/50">
-                       <button onClick={() => {
-                          const list = [...data.relatedNews];
-                          list.splice(idx, 1);
-                          setData({...data, relatedNews: list});
-                       }} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                          <Input label="Title" value={news.title} onChange={e => {
-                             const list = [...data.relatedNews];
-                             list[idx].title = e.target.value;
-                             setData({...data, relatedNews: list});
-                          }} />
-                          <Input label="Source / Date" value={news.source || news.date} onChange={e => {
-                             const list = [...data.relatedNews];
-                             list[idx].source = e.target.value;
-                             setData({...data, relatedNews: list});
-                          }} />
-                       </div>
-                       <RichTextarea label="Summary" value={news.summary} onChange={(val: string) => {
-                          const list = [...data.relatedNews];
-                          list[idx].summary = val;
-                          setData({...data, relatedNews: list});
-                       }} />
-                    </Card>
-                  ))}
-                  <Button variant="outline" size="sm" onClick={() => setData({...data, relatedNews: [...data.relatedNews, { id: uuidv4(), title: '', source: '', date: '', summary: '' }]})}>+ Add Manual News Item</Button>
-               </div>
-             </div>
-          </div>
-        );
-      case 5:
-        return (
-          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-             <div className="flex justify-between items-center mb-4">
-                <h4 className="font-bold">{t('keyAgreements')}</h4>
-                <Button size="sm" onClick={handleFetchAgreements} disabled={isFetchingAI}>
-                   {isFetchingAI ? <Loader2 className="animate-spin" size={14} /> : <RefreshCw size={14} />} {t('fetchMofa')}
-                </Button>
-             </div>
-             {data.bilateralAgreements.map((agreement, idx) => (
-                <Card key={idx} className="p-4 relative">
-                   <button onClick={() => setData({...data, bilateralAgreements: data.bilateralAgreements.filter((_, i) => i !== idx)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
-                   <Input value={agreement.title} className="font-bold mb-2" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].title = e.target.value; setData({...data, bilateralAgreements: list}); }} />
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                     <Input value={agreement.date} label="Date" onChange={e => { const list = [...data.bilateralAgreements]; list[idx].date = e.target.value; setData({...data, bilateralAgreements: list}); }} />
-                     <div className="space-y-1.5">
-                       <label className="text-sm font-semibold text-foreground/80">{t('status')}</label>
-                       <select 
-                        className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-primary transition-all"
-                        value={agreement.status || 'active'}
-                        onChange={e => {
-                          const list = [...data.bilateralAgreements];
-                          list[idx].status = e.target.value as any;
-                          setData({...data, bilateralAgreements: list});
-                        }}
-                       >
-                         <option value="active">Active</option>
-                         <option value="pending">Pending</option>
-                       </select>
-                     </div>
-                   </div>
-                   <RichTextarea label="Summary" value={agreement.summary} onChange={(val: string) => { const list = [...data.bilateralAgreements]; list[idx].summary = val; setData({...data, bilateralAgreements: list}); }} />
-                </Card>
-             ))}
-             <Button variant="outline" onClick={() => setData({...data, bilateralAgreements: [...data.bilateralAgreements, { title: '', date: '', status: 'active', summary: '' }]})}>+ Add Agreement</Button>
-          </div>
-        );
-      case 6:
-        return (
-          <div className="space-y-12 animate-in slide-in-from-right-4 duration-300">
-             {['uae', 'partner'].map((type: any) => (
-                <div key={type} className="bg-gray-50 dark:bg-gray-800 p-8 rounded-2xl border">
-                   <div className="flex justify-between items-center mb-8 pb-4 border-b">
-                      <h3 className="text-2xl font-serif font-bold">{type === 'uae' ? t('uaeDelegation') : t('partnerDelegation')}</h3>
-                      <Button onClick={() => addDelegate(type)}>+ Add Member</Button>
-                   </div>
-                   <div className="space-y-8">
-                      {data.delegations[type as 'uae'|'partner'].map((delegate, idx) => (
-                        <Card key={delegate.id} className="p-8">
-                           <div className="flex flex-col md:flex-row gap-8">
-                              <div className="w-32 h-44 shrink-0 bg-gray-100 rounded-xl overflow-hidden relative cursor-pointer group" onClick={() => document.getElementById(`file-${delegate.id}`).click()}>
-                                 {delegate.imageUrl ? <img src={delegate.imageUrl} className="w-full h-full object-cover" /> : <div className="h-full w-full flex flex-col items-center justify-center text-gray-400 font-bold text-[10px]"><UploadCloud size={24} className="mb-2" /> UPLOAD</div>}
-                                 <input type="file" id={`file-${delegate.id}`} className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => { const list = [...data.delegations[type as 'uae'|'partner']]; list[idx].imageUrl = reader.result as string; setData({...data, delegations: {...data.delegations, [type]: list}}); }; reader.readAsDataURL(file); } }} />
-                              </div>
-                              <div className="flex-1 space-y-4">
-                                 <div className="grid grid-cols-2 gap-4"><Input label="Name" value={delegate.name} onChange={e => { const list = [...data.delegations[type as 'uae'|'partner']]; list[idx].name = e.target.value; setData({...data, delegations: {...data.delegations, [type]: list}}); }} /><Input label="Title" value={delegate.title} onChange={e => { const list = [...data.delegations[type as 'uae'|'partner']]; list[idx].title = e.target.value; setData({...data, delegations: {...data.delegations, [type]: list}}); }} /></div>
-                                 <RichTextarea label="Biography" value={delegate.bio} onChange={(val: string) => { const list = [...data.delegations[type as 'uae'|'partner']]; list[idx].bio = val; setData({...data, delegations: {...data.delegations, [type]: list}}); }} />
-                              </div>
-                              <button onClick={() => { const list = data.delegations[type as 'uae'|'partner'].filter((_, i) => i !== idx); setData({...data, delegations: {...data.delegations, [type]: list}}); }} className="text-gray-300 hover:text-red-500"><X /></button>
-                           </div>
-                        </Card>
-                      ))}
-                   </div>
-                </div>
-             ))}
           </div>
         );
       case 7:
         return (
-          <div className="bg-gray-100 dark:bg-gray-800 p-12 rounded-2xl border text-center animate-in zoom-in-95 duration-300">
+          <div className="bg-gray-100 dark:bg-gray-800 p-12 rounded-2xl border text-center">
              <CheckCircle size={64} className="mx-auto text-green-500 mb-6" />
              <h2 className="text-3xl font-serif font-bold mb-4">{reportTitle || 'Ready to Finalize'}</h2>
-             <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">Review your report one last time. You can generate a ministerial-grade PDF or print the document once saved.</p>
              <Button size="lg" onClick={() => handleSave('completed')} className="bg-green-600 hover:bg-green-700 mx-auto">Complete & Return to Dashboard</Button>
           </div>
         );
@@ -626,7 +433,7 @@ export default function Wizard() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 mt-10">
         <div className="space-y-3">
           {STEPS.map((step, idx) => (
-            <button key={step.id} onClick={() => setCurrentStep(idx)} className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left ${idx === currentStep ? 'bg-primary text-white shadow-xl translate-x-2' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+            <button key={step.id} onClick={() => setCurrentStep(idx)} className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left ${idx === currentStep ? 'bg-primary text-white shadow-xl' : 'text-gray-400 hover:bg-gray-100'}`}>
               <step.icon size={20} /><span className="text-sm font-bold uppercase tracking-wider">{step.label}</span>
             </button>
           ))}

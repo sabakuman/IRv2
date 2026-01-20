@@ -1,4 +1,3 @@
-
 import { Report, AuditLog, UserProfile, LetterLog, LetterLogNote } from '../types';
 
 const API_URL = '/api';

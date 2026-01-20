@@ -1,4 +1,3 @@
-
 import { Report, AuditLog, EMPTY_REPORT_DATA } from './types';
 
 export const FLAGS: Record<string, string> = {
@@ -260,7 +259,6 @@ export const TRANSLATIONS = {
     addNote: 'Add Note',
     deleteLetter: 'Delete Letter',
     personalApiKey: 'Personal Gemini API Key',
-    // Added missing translation keys
     ministry: 'Ministry of Human Resources & Emiratisation',
     loginTitle: 'Secure Access Portal',
     loginSubtitle: 'Bilateral Relations Management System',
@@ -383,7 +381,6 @@ export const TRANSLATIONS = {
     addNote: 'إضافة ملاحظة',
     deleteLetter: 'حذف المراسلة',
     personalApiKey: 'مفتاح Gemini API الشخصي',
-    // Added missing translation keys for Arabic
     ministry: 'وزارة الموارد البشرية والتوطين',
     loginTitle: 'بوابة الدخول الآمن',
     loginSubtitle: 'نظام إدارة العلاقات الثنائية',

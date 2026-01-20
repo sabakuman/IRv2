@@ -1,4 +1,3 @@
-
 export type Language = 'en' | 'ar';
 export type ReportStatus = 'draft' | 'completed';
 export type UserRole = 'admin' | 'user';
