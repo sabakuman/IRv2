@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ReportData, EMPTY_REPORT_DATA, Report, Delegate, NewsItem } from '../types';
 import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
-import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 
@@ -267,38 +267,42 @@ export default function Wizard() {
      try {
        const ai = new GoogleGenAI({ apiKey });
        const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
-       const prompt = `Find 3 recent official news items or press releases (from 2023-2025) concerning bilateral workforce cooperation, diplomatic visits, or labour market agreements between the UAE and ${data.country}. Return as a JSON array. Each object must have: title, source, date, and summary. All text must be in ${targetLanguage}.`;
+       const prompt = `Find 3 most recent official news items or press releases (from 2024-2025) concerning bilateral workforce cooperation, diplomatic visits, or labour market agreements between the UAE and ${data.country}. 
+       Respond ONLY with a valid JSON array of objects. Each object MUST have: "title", "source", "date", "summary", and "url" (the direct link to the news source). 
+       All text must be in ${targetLanguage}.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: prompt,
           config: { 
-            tools: [{ googleSearch: {} }],
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  source: { type: Type.STRING },
-                  date: { type: Type.STRING },
-                  summary: { type: Type.STRING }
-                }
-              }
-            }
+            tools: [{ googleSearch: {} }]
           },
        });
        
        if (response.text) {
-         const newsItems = JSON.parse(response.text);
+         // Clean output of markdown backticks if any
+         const cleanedText = response.text.replace(/```json|```/g, '').trim();
+         const newsItems = JSON.parse(cleanedText);
+         
          const formattedNews: NewsItem[] = newsItems.map((n: any) => ({
             id: uuidv4(),
             title: n.title || '',
             source: n.source || '',
             date: n.date || '',
-            summary: n.summary || ''
+            summary: n.summary || '',
+            url: n.url || ''
          }));
+
+         // Extract grounding URLs as a backup/mandatory listing
+         const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+         if (groundingChunks) {
+            groundingChunks.forEach((chunk: any, idx: number) => {
+               if (chunk.web?.uri && formattedNews[idx % formattedNews.length]) {
+                  formattedNews[idx % formattedNews.length].url = chunk.web.uri;
+               }
+            });
+         }
+
          setData(prev => ({ 
            ...prev, 
            relatedNews: [...prev.relatedNews, ...formattedNews] 
@@ -306,7 +310,7 @@ export default function Wizard() {
        }
      } catch (error: any) { 
        console.error("AI News Fetch Error:", error);
-       alert("Failed to fetch news. Please check your API key.");
+       alert("Failed to fetch news. This may be due to search grounding availability or API configuration.");
      } finally { 
        setIsFetchingNews(false); 
      }
@@ -496,6 +500,46 @@ export default function Wizard() {
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
                  </div>
+                 {/* Available Skills Tag Editor */}
+                 <div className="pt-4 border-t">
+                    <label className="text-sm font-semibold mb-2 block">{t('availableSkills')}</label>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {data.workforceStats.availableSkills.map((skill, i) => (
+                        <span key={i} className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-primary/20">
+                          {skill}
+                          <button onClick={() => {
+                            const list = data.workforceStats.availableSkills.filter((_, idx) => idx !== i);
+                            setData({...data, workforceStats: {...data.workforceStats, availableSkills: list}});
+                          }} className="text-primary/60 hover:text-red-500"><X size={14} /></button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 max-w-sm">
+                      <Input 
+                        id="new-skill-input"
+                        placeholder="Type skill and press Enter..." 
+                        className="flex-1 h-9 py-1 text-xs" 
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            const input = e.target as HTMLInputElement;
+                            const val = input.value.trim();
+                            if (val) {
+                              setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, val]}});
+                              input.value = '';
+                            }
+                          }
+                        }}
+                      />
+                      <Button size="sm" variant="outline" onClick={() => {
+                        const input = document.getElementById('new-skill-input') as HTMLInputElement;
+                        const val = input.value.trim();
+                        if (val) {
+                          setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, val]}});
+                          input.value = '';
+                        }
+                      }}><Plus size={16} /></Button>
+                    </div>
+                 </div>
                </>
              ) : (
                <>
@@ -623,11 +667,18 @@ export default function Wizard() {
                              list[idx].title = e.target.value;
                              setData({...data, relatedNews: list});
                           }} />
-                          <Input label="Source / Date" value={news.source || news.date} onChange={e => {
-                             const list = [...data.relatedNews];
-                             list[idx].source = e.target.value;
-                             setData({...data, relatedNews: list});
-                          }} />
+                          <div className="flex flex-col gap-1.5">
+                            <Input label="Source / Date" value={news.source || news.date} onChange={e => {
+                              const list = [...data.relatedNews];
+                              list[idx].source = e.target.value;
+                              setData({...data, relatedNews: list});
+                            }} />
+                            {news.url && (
+                              <a href={news.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary flex items-center gap-1 hover:underline font-bold px-1">
+                                <ExternalLink size={10} /> View Source Document
+                              </a>
+                            )}
+                          </div>
                        </div>
                        <RichTextarea label="Summary" value={news.summary} onChange={(val: string) => {
                           const list = [...data.relatedNews];
@@ -636,7 +687,7 @@ export default function Wizard() {
                        }} />
                     </Card>
                   ))}
-                  <Button variant="outline" size="sm" onClick={() => setData({...data, relatedNews: [...data.relatedNews, { id: uuidv4(), title: '', source: '', date: '', summary: '' }]})}>+ Add Manual News Item</Button>
+                  <Button variant="outline" size="sm" onClick={() => setData({...data, relatedNews: [...data.relatedNews, { id: uuidv4(), title: '', source: '', date: '', summary: '', url: '' }]})}>+ Add Manual News Item</Button>
                </div>
              </div>
           </div>

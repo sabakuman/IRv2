@@ -340,6 +340,7 @@ export const TRANSLATIONS = {
     color: 'Label Color',
     personalApiKey: 'Personal API Key',
     letterTitle: 'Letter Title',
+    higherEnrollment: 'Higher Education Enrollment',
   },
   ar: {
     dashboard: 'الصفحة الرئيسة',
@@ -430,7 +431,7 @@ export const TRANSLATIONS = {
     topTradedCommodities: 'أبرز السلع المتبادلة',
     educationInsights: 'التعليم والمهارات',
     primaryEnrollment: 'الالتحاق بالتعليم الابتدائي',
-    higherEducationEnrollment: 'الالتحاق بالتعليم العالي',
+    higherEducationEnrollment: 'معدل الالتحاق بالتعليم العالي',
     topUniversities: 'أفضل 5 جامعات',
     recentInteractions: 'ملخص العلاقة',
     recentHighLevelInteractions: 'ملخص العلاقة',
@@ -529,5 +530,6 @@ export const TRANSLATIONS = {
     color: 'لون التصنيف',
     personalApiKey: 'مفتاح الـ API الشخصي',
     letterTitle: 'عنوان المراسلة',
+    higherEnrollment: 'معدل الالتحاق بالتعليم العالي',
   }
 };

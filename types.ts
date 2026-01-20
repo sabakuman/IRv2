@@ -77,6 +77,7 @@ export interface NewsItem {
   source: string;
   date: string;
   summary: string;
+  url?: string; // Added for grounding support
 }
 
 export interface UaeWorkforceData {
