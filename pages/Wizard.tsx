@@ -267,9 +267,10 @@ export default function Wizard() {
      try {
        const ai = new GoogleGenAI({ apiKey });
        const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
-       const prompt = `Find 3 most recent official news items or press releases (from 2024-2025) concerning bilateral workforce cooperation, diplomatic visits, or labour market agreements between the UAE and ${data.country}. 
-       Respond ONLY with a valid JSON array of objects. Each object MUST have: "title", "source", "date", "summary", and "url" (the direct link to the news source). 
-       All text must be in ${targetLanguage}.`;
+       const prompt = `Find exactly 3 most recent official news items or press releases (from 2024-2025) concerning bilateral workforce cooperation, diplomatic visits, or labour market agreements between the UAE and ${data.country}. 
+       Return ONLY a valid JSON array of objects. 
+       Format: [{"title": "...", "source": "...", "date": "...", "summary": "...", "url": "..."}] 
+       All text MUST be in ${targetLanguage}.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
@@ -280,28 +281,33 @@ export default function Wizard() {
        });
        
        if (response.text) {
-         // Clean output of markdown backticks if any
-         const cleanedText = response.text.replace(/```json|```/g, '').trim();
+         // Cleaning potential markdown wrappers
+         let cleanedText = response.text.trim();
+         if (cleanedText.startsWith('```')) {
+            cleanedText = cleanedText.replace(/^```(json)?\n?/, '').replace(/\n?```$/, '');
+         }
+         
          const newsItems = JSON.parse(cleanedText);
          
-         const formattedNews: NewsItem[] = newsItems.map((n: any) => ({
-            id: uuidv4(),
-            title: n.title || '',
-            source: n.source || '',
-            date: n.date || '',
-            summary: n.summary || '',
-            url: n.url || ''
-         }));
-
-         // Extract grounding URLs as a backup/mandatory listing
+         // Extract grounding URLs for reliability
          const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-         if (groundingChunks) {
-            groundingChunks.forEach((chunk: any, idx: number) => {
-               if (chunk.web?.uri && formattedNews[idx % formattedNews.length]) {
-                  formattedNews[idx % formattedNews.length].url = chunk.web.uri;
-               }
-            });
-         }
+         
+         const formattedNews: NewsItem[] = newsItems.map((n: any, idx: number) => {
+            let finalUrl = n.url || '';
+            // If model didn't provide URL in JSON but we have grounding metadata, use it
+            if (!finalUrl && groundingChunks && groundingChunks[idx]?.web?.uri) {
+               finalUrl = groundingChunks[idx].web.uri;
+            }
+            
+            return {
+               id: uuidv4(),
+               title: n.title || '',
+               source: n.source || '',
+               date: n.date || '',
+               summary: n.summary || '',
+               url: finalUrl
+            };
+         });
 
          setData(prev => ({ 
            ...prev, 
@@ -310,7 +316,7 @@ export default function Wizard() {
        }
      } catch (error: any) { 
        console.error("AI News Fetch Error:", error);
-       alert("Failed to fetch news. This may be due to search grounding availability or API configuration.");
+       alert("AI News Search failed. This might be due to a specific security policy or a temporary grounding failure. Please try again.");
      } finally { 
        setIsFetchingNews(false); 
      }
@@ -500,44 +506,43 @@ export default function Wizard() {
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
                  </div>
-                 {/* Available Skills Tag Editor */}
-                 <div className="pt-4 border-t">
-                    <label className="text-sm font-semibold mb-2 block">{t('availableSkills')}</label>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {data.workforceStats.availableSkills.map((skill, i) => (
-                        <span key={i} className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-primary/20">
+                 {/* Fixed: Added Skill Editor here */}
+                 <div className="pt-6 border-t">
+                    <label className="text-sm font-semibold mb-3 block">{t('availableSkills')}</label>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {data.workforceStats.availableSkills.map((skill, idx) => (
+                        <div key={idx} className="flex items-center gap-1 bg-primary/5 text-primary border border-primary/20 px-2 py-1 rounded text-xs font-bold uppercase">
                           {skill}
                           <button onClick={() => {
-                            const list = data.workforceStats.availableSkills.filter((_, idx) => idx !== i);
+                            const list = data.workforceStats.availableSkills.filter((_, i) => i !== idx);
                             setData({...data, workforceStats: {...data.workforceStats, availableSkills: list}});
-                          }} className="text-primary/60 hover:text-red-500"><X size={14} /></button>
-                        </span>
+                          }} className="hover:text-red-500 transition-colors">
+                            <X size={12} />
+                          </button>
+                        </div>
                       ))}
                     </div>
-                    <div className="flex gap-2 max-w-sm">
-                      <Input 
-                        id="new-skill-input"
-                        placeholder="Type skill and press Enter..." 
-                        className="flex-1 h-9 py-1 text-xs" 
+                    <div className="flex gap-2 max-w-md">
+                       <Input 
+                        id="skill-input"
+                        placeholder="Add a new skill (e.g. Nursing)" 
                         onKeyPress={(e) => {
                           if (e.key === 'Enter') {
                             const input = e.target as HTMLInputElement;
-                            const val = input.value.trim();
-                            if (val) {
-                              setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, val]}});
+                            if (input.value.trim()) {
+                              setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, input.value.trim()]}});
                               input.value = '';
                             }
                           }
                         }}
-                      />
-                      <Button size="sm" variant="outline" onClick={() => {
-                        const input = document.getElementById('new-skill-input') as HTMLInputElement;
-                        const val = input.value.trim();
-                        if (val) {
-                          setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, val]}});
-                          input.value = '';
-                        }
-                      }}><Plus size={16} /></Button>
+                       />
+                       <Button size="sm" onClick={() => {
+                         const input = document.getElementById('skill-input') as HTMLInputElement;
+                         if (input.value.trim()) {
+                           setData({...data, workforceStats: {...data.workforceStats, availableSkills: [...data.workforceStats.availableSkills, input.value.trim()]}});
+                           input.value = '';
+                         }
+                       }}>Add</Button>
                     </div>
                  </div>
                </>
