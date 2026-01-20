@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
@@ -26,7 +25,6 @@ const formatDate = (dateStr: string) => {
   return `${d}/${m}/${y}`;
 };
 
-// Added helper to translate emirate names for charts
 const translateEmirate = (name: string): string => {
   const translations: Record<string, string> = {
     'Abu Dhabi': 'أبوظبي',
@@ -197,18 +195,15 @@ export default function PrintView() {
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
       <div id="report-content" className="overflow-visible report-root">
         
-        {/* PAGE 1: COVER PAGE (Restored to High Fidelity) */}
+        {/* PAGE 1: COVER PAGE */}
         <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
-          {/* Logo Strip */}
           <div className="absolute top-16 right-20 flex items-center gap-4">
              <span className="text-[14px] font-bold text-primary tracking-[0.2em]">UAE • MOHRE</span>
              <img src="https://flagcdn.com/w160/ae.png" className="h-8 w-auto border shadow-sm" alt="UAE Flag" />
           </div>
 
-          {/* Side Accent Line */}
           <div className="absolute top-44 bottom-44 right-20 w-[6px] bg-[#F59E0B] rounded-full"></div>
 
-          {/* Cover Content */}
           <div className={`flex-1 flex flex-col justify-center px-28 relative z-10 ${isRTL ? 'text-right' : 'text-left'}`}>
              <h1 className="text-[54px] font-serif font-extrabold text-[#111827] leading-[1.2] mb-6">
                 {isRTL ? (
@@ -227,7 +222,6 @@ export default function PrintView() {
                 {isRTL ? 'نظرة استراتيجية عامة' : 'General Strategic Overview'}
              </p>
 
-             {/* Cover Card */}
              <div className="bg-gray-50/80 backdrop-blur-sm rounded-[32px] p-12 border border-gray-100 max-w-2xl relative shadow-sm">
                 <div className="absolute -top-10 right-10 flex flex-col items-center">
                    <div className="w-24 h-24 rounded-2xl bg-white shadow-xl border border-gray-100 p-2 flex items-center justify-center overflow-hidden">
@@ -268,11 +262,10 @@ export default function PrintView() {
              </div>
           </div>
           
-          {/* Bottom Bar */}
           <div className="h-4 bg-primary-dark w-full mt-auto"></div>
         </div>
 
-        {/* PAGE 2: DEMOGRAPHICS & ECONOMY (Restored Layout) */}
+        {/* PAGE 2: DEMOGRAPHICS & ECONOMY */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBandInternal country={data.country} reportId={report.id} flagUrl={data.flagUrl} />
           
@@ -321,10 +314,10 @@ export default function PrintView() {
              </div>
           </div>
 
-          <SectionHeader icon={GraduationCap} title={t('educationDetails')} compact />
+          <SectionHeader icon={GraduationCap} title={t('educationDetails')} subtitle={isRTL ? 'التعليم والمهارات' : 'Education & Skills'} compact />
           <div className="grid grid-cols-3 gap-6">
              <div className="kpi-card p-6">
-                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">HIGHERENROLLMENT</p>
+                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">{t('higherEducationEnrollment')}</p>
                 <div className="flex items-center gap-4">
                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-primary"><GraduationCap size={24} /></div>
                    <div>
@@ -334,7 +327,7 @@ export default function PrintView() {
                 </div>
              </div>
              <div className="kpi-card p-6">
-                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">{isRTL ? 'االلتحاق بالتعليم الابتدائي' : 'PRIMARY ENROLLMENT'}</p>
+                <p className="kpi-label uppercase text-[10px] text-gray-400 font-bold mb-4">{t('primaryEnrollment')}</p>
                 <div className="flex items-center gap-4">
                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-primary"><BookOpen size={24} /></div>
                    <div>
@@ -441,7 +434,7 @@ export default function PrintView() {
           </div>
         </PageContainer>
 
-        {/* PAGE 4: PARTNER COUNTRY WORKFORCE (Restored Source Analysis) */}
+        {/* PAGE 4: PARTNER COUNTRY WORKFORCE */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBandInternal country={data.country} reportId={report.id} flagUrl={data.flagUrl} />
           
@@ -523,16 +516,8 @@ export default function PrintView() {
                    </div>
                 ))}
              </div>
-             <div className="mt-8 pt-4 border-t border-gray-200/50 text-center">
-                <p className="text-[10px] text-gray-400 italic">
-                   {isRTL ? 'تمثل هذه المهارات الفئات الرئيسية للعمالة المتاحة للعمل خارجياً بناءً على مخرجات التعليم/التدريب المهني الحالية.' : 'These skills represent the primary categories of labor available for foreign employment based on current educational and vocational training outputs.'}
-                </p>
-             </div>
           </div>
         </PageContainer>
-
-        {/* PAGE 5+: INTERACTIONS, NEWS, AGREEMENTS, DELEGATIONS */}
-        {/* These would follow similar styling patterns, usually 1-2 sections per page */}
       </div>
     </div>
   );

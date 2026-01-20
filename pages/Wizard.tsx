@@ -195,8 +195,6 @@ export default function Wizard() {
     }
   };
 
-  // Added handleFetchNews to fix the "Cannot find name 'handleFetchNews'" error.
-  // This uses Gemini API with Google Search grounding to fetch relevant recent news.
   const handleFetchNews = async () => {
     if (!data.country) {
       alert("Please enter a country name first.");
@@ -206,10 +204,8 @@ export default function Wizard() {
     setIsFetchingNews(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      // We request news articles with Google Search grounding for real-time accuracy.
       const prompt = `Find 3 most recent news articles regarding bilateral labor, economic, or diplomatic relations between UAE and ${data.country}.
       For each item, provide a title, the news source name, the approximate date, and a brief 2-sentence summary.
-      Include the website name and URL in the 'source' field if available.
       Format the output as a JSON array of objects.`;
 
       const response: GenerateContentResponse = await ai.models.generateContent({
@@ -248,7 +244,6 @@ export default function Wizard() {
       }
     } catch (error: any) {
       console.error("News Fetch Error:", error);
-      alert("Failed to fetch news. Please try again or enter details manually.");
     } finally {
       setIsFetchingNews(false);
     }
@@ -344,7 +339,6 @@ export default function Wizard() {
                             if (l.includes('philippines')) return 'https://flagcdn.com/w160/ph.png';
                             if (l.includes('pakistan')) return 'https://flagcdn.com/w160/pk.png';
                             if (l.includes('bangladesh')) return 'https://flagcdn.com/w160/bd.png';
-                            if (l.includes('vietnam')) return 'https://flagcdn.com/w160/vn.png';
                             return 'https://flagcdn.com/w160/ae.png';
                           };
                           const src = data.flagUrl || getAIUrl(data.country);
@@ -487,7 +481,6 @@ export default function Wizard() {
       case 3: // Economy & Education
         return (
           <div className="space-y-8">
-             {/* Economic Indicators */}
              <div className="space-y-6">
                 <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2 border-b pb-2"><Briefcase size={20} /> {t('economyDetails')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -500,7 +493,6 @@ export default function Wizard() {
                 </div>
              </div>
 
-             {/* Education Details */}
              <div className="space-y-6 pt-6 border-t dark:border-gray-800">
                 <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2 border-b pb-2"><GraduationCap size={20} /> {t('educationDetails')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -538,7 +530,6 @@ export default function Wizard() {
       case 4: // Interactions & News
         return (
           <div className="space-y-8">
-             {/* Interactions */}
              <div className="space-y-6">
                 <div className="flex justify-between items-center border-b pb-2">
                    <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2"><MessageSquare size={20} /> {t('recentInteractions')}</h3>
@@ -580,10 +571,244 @@ export default function Wizard() {
                 </div>
              </div>
 
-             {/* Related News */}
              <div className="space-y-6 pt-6 border-t dark:border-gray-800">
                 <div className="flex justify-between items-center border-b pb-2">
                    <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2"><Newspaper size={20} /> {t('relatedNews')}</h3>
                    <div className="flex gap-2">
                       <Button size="sm" variant="ghost" onClick={handleFetchNews} disabled={isFetchingNews}>
                         {isFetchingNews ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />} {t('fetchNews')}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setData({...data, relatedNews: [...data.relatedNews, { id: uuidv4(), title: '', source: '', date: '', summary: '' }]})}><Plus size={16} /> Add Item</Button>
+                   </div>
+                </div>
+                <div className="space-y-4">
+                   {data.relatedNews.map((news, i) => (
+                      <Card key={news.id} className="p-4 relative group">
+                         <button onClick={() => setData({...data, relatedNews: data.relatedNews.filter((_, idx) => idx !== i)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <Input label="Title" value={news.title} onChange={e => {
+                               const list = [...data.relatedNews];
+                               list[i].title = e.target.value;
+                               setData({...data, relatedNews: list});
+                            }} />
+                            <Input label="Source" value={news.source} onChange={e => {
+                               const list = [...data.relatedNews];
+                               list[i].source = e.target.value;
+                               setData({...data, relatedNews: list});
+                            }} />
+                            <Input label="Date" value={news.date} onChange={e => {
+                               const list = [...data.relatedNews];
+                               list[i].date = e.target.value;
+                               setData({...data, relatedNews: list});
+                            }} />
+                         </div>
+                         <textarea 
+                          className="w-full p-3 rounded-lg border text-sm dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
+                          placeholder="Article summary..."
+                          value={news.summary}
+                          onChange={e => {
+                             const list = [...data.relatedNews];
+                             list[i].summary = e.target.value;
+                             setData({...data, relatedNews: list});
+                          }}
+                         />
+                      </Card>
+                   ))}
+                </div>
+             </div>
+          </div>
+        );
+      case 5: // Agreements
+        return (
+          <div className="space-y-6">
+             <div className="flex justify-between items-center border-b pb-2">
+                <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2"><FileText size={20} /> {t('sectionAgreements')}</h3>
+                <Button size="sm" variant="outline" onClick={() => setData({...data, bilateralAgreements: [...data.bilateralAgreements, { title: '', date: '', status: 'active', summary: '' }]})}><Plus size={16} /> Add Agreement</Button>
+             </div>
+             <div className="space-y-4">
+                {data.bilateralAgreements.map((agr, i) => (
+                   <Card key={i} className="p-4 relative">
+                      <button onClick={() => setData({...data, bilateralAgreements: data.bilateralAgreements.filter((_, idx) => idx !== i)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                         <Input label="Title" value={agr.title} onChange={e => {
+                            const list = [...data.bilateralAgreements];
+                            list[i].title = e.target.value;
+                            setData({...data, bilateralAgreements: list});
+                         }} />
+                         <Input label="Date" value={agr.date} onChange={e => {
+                            const list = [...data.bilateralAgreements];
+                            list[i].date = e.target.value;
+                            setData({...data, bilateralAgreements: list});
+                         }} />
+                         <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-foreground/80">{t('status')}</label>
+                            <select 
+                              className="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                              value={agr.status}
+                              onChange={e => {
+                                 const list = [...data.bilateralAgreements];
+                                 list[i].status = e.target.value as any;
+                                 setData({...data, bilateralAgreements: list});
+                              }}
+                            >
+                               <option value="active">Active</option>
+                               <option value="pending">Pending</option>
+                               <option value="custom">Custom</option>
+                            </select>
+                         </div>
+                      </div>
+                      <textarea 
+                        className="w-full p-3 rounded-lg border text-sm dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
+                        placeholder="Agreement summary..."
+                        value={agr.summary}
+                        onChange={e => {
+                           const list = [...data.bilateralAgreements];
+                           list[i].summary = e.target.value;
+                           setData({...data, bilateralAgreements: list});
+                        }}
+                      />
+                   </Card>
+                ))}
+             </div>
+          </div>
+        );
+      case 6: // Delegation
+        const addDel = (side: 'uae' | 'partner') => {
+          const list = [...data.delegations[side], { id: uuidv4(), name: '', title: '', imageUrl: '', bio: '' }];
+          setData({...data, delegations: {...data.delegations, [side]: list}});
+        };
+        const removeDel = (side: 'uae' | 'partner', idx: number) => {
+          const list = data.delegations[side].filter((_, i) => i !== idx);
+          setData({...data, delegations: {...data.delegations, [side]: list}});
+        };
+        const updateDel = (side: 'uae' | 'partner', idx: number, field: string, val: string) => {
+          const list = [...data.delegations[side]];
+          (list[idx] as any)[field] = val;
+          setData({...data, delegations: {...data.delegations, [side]: list}});
+        };
+        return (
+          <div className="space-y-8">
+             <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                   <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2"><Flag size={20} /> {t('uaeDelegation')}</h3>
+                   <Button size="sm" variant="outline" onClick={() => addDel('uae')}><Plus size={16} /> Add UAE Delegate</Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {data.delegations.uae.map((del, i) => (
+                      <Card key={del.id} className="p-4 relative">
+                         <button onClick={() => removeDel('uae', i)} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                         <div className="flex gap-4">
+                            <div className="w-16 h-16 rounded-full bg-gray-100 border overflow-hidden shrink-0 cursor-pointer" onClick={() => {
+                               const url = prompt("Enter image URL:", del.imageUrl);
+                               if (url) updateDel('uae', i, 'imageUrl', url);
+                            }}>
+                               {del.imageUrl ? <img src={del.imageUrl} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-3 text-gray-300" />}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                               <Input label="Name" value={del.name} onChange={e => updateDel('uae', i, 'name', e.target.value)} />
+                               <Input label="Title" value={del.title} onChange={e => updateDel('uae', i, 'title', e.target.value)} />
+                            </div>
+                         </div>
+                      </Card>
+                   ))}
+                </div>
+             </div>
+             <div className="space-y-4 pt-6 border-t dark:border-gray-800">
+                <div className="flex justify-between items-center border-b pb-2">
+                   <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2"><MapPin size={20} /> {t('partnerDelegation')}</h3>
+                   <Button size="sm" variant="outline" onClick={() => addDel('partner')}><Plus size={16} /> Add Partner Delegate</Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {data.delegations.partner.map((del, i) => (
+                      <Card key={del.id} className="p-4 relative">
+                         <button onClick={() => removeDel('partner', i)} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                         <div className="flex gap-4">
+                            <div className="w-16 h-16 rounded-full bg-gray-100 border overflow-hidden shrink-0 cursor-pointer" onClick={() => {
+                               const url = prompt("Enter image URL:", del.imageUrl);
+                               if (url) updateDel('partner', i, 'imageUrl', url);
+                            }}>
+                               {del.imageUrl ? <img src={del.imageUrl} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-3 text-gray-300" />}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                               <Input label="Name" value={del.name} onChange={e => updateDel('partner', i, 'name', e.target.value)} />
+                               <Input label="Title" value={del.title} onChange={e => updateDel('partner', i, 'title', e.target.value)} />
+                            </div>
+                         </div>
+                      </Card>
+                   ))}
+                </div>
+             </div>
+          </div>
+        );
+      case 7: // Final Preview
+        return (
+          <div className="bg-gray-100 dark:bg-gray-800 p-12 rounded-2xl border text-center flex flex-col items-center justify-center space-y-6">
+             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 animate-in zoom-in duration-500">
+                <CheckCircle size={48} />
+             </div>
+             <div>
+                <h2 className="text-3xl font-serif font-bold mb-4 dark:text-white">{reportTitle || 'Ready to Finalize'}</h2>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                   All sections have been reviewed. You can now finalize the report to mark it as completed and available for official export.
+                </p>
+             </div>
+             <div className="flex gap-4">
+                <Button size="lg" onClick={() => handleSave('completed')} className="bg-green-600 hover:bg-green-700 shadow-xl px-12">
+                   Complete & Finalize
+                </Button>
+             </div>
+          </div>
+        );
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto pb-20 px-4 md:px-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 mt-10">
+        <div className="space-y-2 sticky top-24 h-fit">
+          {STEPS.map((step, idx) => (
+            <button 
+              key={step.id} 
+              onClick={() => setCurrentStep(idx)} 
+              className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left group ${idx === currentStep ? 'bg-primary text-white shadow-xl ring-2 ring-primary/20' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-600'}`}
+            >
+              <div className={`p-2 rounded-lg transition-colors ${idx === currentStep ? 'bg-white/20' : 'bg-gray-50 group-hover:bg-gray-200 dark:bg-gray-800'}`}>
+                <step.icon size={18} className={idx === currentStep ? 'text-white' : 'text-gray-400'} />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-widest">{step.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="lg:col-span-3 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+          <Card className="min-h-[600px] p-8 shadow-2xl relative overflow-hidden flex flex-col border-none dark:bg-secondary">
+            <div className="flex-1 overflow-visible">
+               {renderStep()}
+            </div>
+          </Card>
+
+          <div className="flex justify-between items-center pt-6 px-2">
+            <Button variant="ghost" onClick={() => setCurrentStep(Math.max(0, currentStep - 1))} disabled={currentStep === 0}>
+               <ArrowLeft size={18} /> {t('back')}
+            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => handleSave('draft')}>
+                 <Save size={18} /> {t('save')}
+              </Button>
+              {currentStep < STEPS.length - 1 ? (
+                <Button onClick={() => setCurrentStep(currentStep + 1)} className="px-10">
+                   {t('next')} <ArrowRight size={18} />
+                </Button>
+              ) : (
+                <Button onClick={() => handleSave('completed')} className="bg-green-600 hover:bg-green-700 px-10">
+                   {t('finish')} <CheckCircle size={18} />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
