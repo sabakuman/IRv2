@@ -177,7 +177,7 @@ export default function PrintView() {
     </div>
   );
 
-  const HeaderBand = ({ country, reportId, title, flagUrl }: any) => {
+  const HeaderBandInternal = ({ country, reportId, title, flagUrl }: any) => {
     const getFlagCode = (c: string) => {
       const lower = c.toLowerCase();
       if (lower.includes('india')) return 'in';
@@ -189,12 +189,12 @@ export default function PrintView() {
     const flagSrc = flagUrl || `https://flagcdn.com/w320/${getFlagCode(country)}.png`;
     return (
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
           <div className="h-8 w-px bg-gray-200" />
-          <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
-            <p className="text-sm font-bold text-primary-dark uppercase">{country}</p>
+          <div className="flex flex-col">
+            <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500 leading-tight">{title}</p>
+            <p className="text-sm font-bold text-primary-dark uppercase leading-tight">{country}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -235,15 +235,9 @@ export default function PrintView() {
   const maxMigrationDest = Math.max(...data.workforceStats.migrationDestinations.map(d => parseFloat(d.count) || 0), 1);
   const maxPartnerSector = Math.max(...data.workforceStats.topSectors.map(s => s.value), 1);
 
-  /**
-   * REFINED STATUS BADGE LOGIC
-   * Strictly matches the requested rules: Green for Active, Yellow for Pending/Custom.
-   */
   const getAgreementStatusDisplay = (agr: any) => {
-    // Force lowercase for strict checking
     const status = String(agr.status || 'active').toLowerCase();
     
-    // Rule: active badge text and color (GREEN)
     if (status === 'active' || status.includes('ساري') || (status.includes('active') && !status.includes('in'))) {
       return { 
         label: isRTL ? 'ساري' : 'Active', 
@@ -251,7 +245,6 @@ export default function PrintView() {
       };
     }
     
-    // Rule: pending badge text and color (YELLOW)
     if (status === 'pending' || status.includes('تنفيذ') || status.includes('pending')) {
       return { 
         label: isRTL ? 'قيد التنفيذ' : 'Pending', 
@@ -259,7 +252,6 @@ export default function PrintView() {
       };
     }
     
-    // Rule: custom status (YELLOW)
     if (status === 'custom' || agr.customStatusText) {
       return { 
         label: agr.customStatusText || (isRTL ? 'مخصص' : 'Custom'), 
@@ -267,7 +259,6 @@ export default function PrintView() {
       };
     }
 
-    // Default fallback (Green for active is the safest default per logic)
     return { label: isRTL ? 'ساري' : 'Active', class: 'bg-green-100 text-green-800 border-green-200' };
   };
 
@@ -327,7 +318,7 @@ export default function PrintView() {
 
         {/* PAGE 2: PROFILE & ECONOMY */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <HeaderBandInternal country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact />
           <div className="grid grid-cols-4 gap-3 mb-4">
             <KPI icon={Landmark} label={t('capital')} value={data.capital} />
@@ -373,7 +364,7 @@ export default function PrintView() {
 
         {/* PAGE 3: UAE WORKFORCE */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <HeaderBandInternal country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Building} title={t('sectionUaeWorkforce')} subtitle={t('domesticAnalysis')} />
           <div className="grid grid-cols-2 gap-4 mb-3">
             <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre')} labelClassName="text-xs font-bold" />
@@ -453,7 +444,7 @@ export default function PrintView() {
 
         {/* PAGE 4: PARTNER WORKFORCE */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <HeaderBandInternal country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Users} title={`${t('workforceOf')} ${data.country}`} subtitle={t('sourceMarketAnalysis')} />
           <div className="grid grid-cols-4 gap-4 mb-6">
             <KPI icon={Users} label={t('totalWorkforce')} value={data.totalWorkforce || data.workforceStats.totalWorkforce} sub={getSource('demo')} />
@@ -513,7 +504,7 @@ export default function PrintView() {
         {/* REMAINING PAGES: INTERACTIONS, POINTS, AGREEMENTS, DELEGATIONS */}
         {interactionChunks.map((chunk, cIdx) => (
           <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <HeaderBandInternal country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={Handshake} title={`${t('relationshipSummary')}${interactionChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} />
             <div className="flex flex-col gap-2 mt-2">
               {chunk.map((item, idx) => (
@@ -538,7 +529,7 @@ export default function PrintView() {
 
           return (
             <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-              <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+              <HeaderBandInternal country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
               <SectionHeader icon={MessageSquare} title={pageTitle} />
               <div className="flex flex-col gap-2 mt-2">
                 {chunk.map((point, idx) => (
@@ -557,7 +548,7 @@ export default function PrintView() {
 
         {agreementChunks.length > 0 ? agreementChunks.map((chunk, pIdx) => (
           <PageContainer key={`agr-${pIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <HeaderBandInternal country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={FileText} title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${pIdx + 1})` : ''}`} />
             <div className="space-y-3 mt-4">
               {chunk.map((agreement, idx) => {
@@ -574,14 +565,14 @@ export default function PrintView() {
           </PageContainer>
         )) : (
           <PageContainer footer={<DefaultFooter />}>
-            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <HeaderBandInternal country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={FileText} title={t('sectionAgreements')} />
             <div className="text-center py-40 text-gray-300 border-2 border-dashed rounded-3xl opacity-50"><p className="font-bold uppercase tracking-widest">{t('noAgreements')}</p></div>
           </PageContainer>
         )}
 
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+          <HeaderBandInternal country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Users} title={t('sectionDelegation')} />
           <div className="grid grid-cols-1 gap-8 mt-4">
             <div className="avoid-break">
