@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ShieldAlert } from "lucide-react";
 
@@ -128,7 +129,8 @@ export const KPI = ({
   icon: any;
   label: string;
   value: string | number;
-  sub?: string;
+  // Fix: changed from string to React.ReactNode to allow JSX elements returned by getSource
+  sub?: React.ReactNode;
   chip?: string;
   tone?: "ok" | "warn" | "info" | "restrict";
   labelClassName?: string;

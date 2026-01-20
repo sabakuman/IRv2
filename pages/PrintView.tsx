@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
@@ -455,7 +456,8 @@ export default function PrintView() {
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Users} title={`${t('workforceOf')} ${data.country}`} subtitle={t('sourceMarketAnalysis')} />
           <div className="grid grid-cols-4 gap-4 mb-6">
-            <KPI icon={Users} label={t('totalWorkforce')} value={data.totalWorkforce || data.workforceStats.totalWorkforce} sub={getSource('demo')} />
+            {/* Fix: corrected value to access property within workforceStats */}
+            <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
             <div className="col-span-2 kpi-card flex items-center justify-around py-4 shadow-sm">
                 <div className="text-center"><p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('maleParticipation')}</p><p className="text-2xl font-serif font-bold text-blue-600 leading-none">{data.workforceStats.participationMale}%</p></div>
                 <div className="h-8 w-px bg-gray-200"></div>

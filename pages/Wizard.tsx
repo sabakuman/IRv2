@@ -506,7 +506,7 @@ export default function Wizard() {
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
                  </div>
-                 {/* Fixed: Added Skill Editor here */}
+                 {/* Fixed: Made Available Skills editable with a tag-like interface */}
                  <div className="pt-6 border-t">
                     <label className="text-sm font-semibold mb-3 block">{t('availableSkills')}</label>
                     <div className="flex flex-wrap gap-2 mb-4">
@@ -574,6 +574,7 @@ export default function Wizard() {
                         <button onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: data.economicStats.topImportProducts.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button>
                       </div>
                     ))}
+                    {/* Fixed typo: changed educationStats to economicStats */}
                     <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: [...data.economicStats.topImportProducts, '']}})}>+ Add Import Product</Button>
                  </div>
 
