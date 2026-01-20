@@ -188,13 +188,6 @@ export default function PrintView() {
     );
   };
 
-  const sortedMohreEmirates = [...data.uaeWorkforceStats.mohre.byEmirate].sort((a, b) => b.value - a.value);
-  const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
-  const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
-
-  const maxMigrationDest = Math.max(...data.workforceStats.migrationDestinations.map(d => parseFloat(d.count) || 0), 1);
-  const maxPartnerSector = Math.max(...data.workforceStats.topSectors.map(s => s.value), 1);
-
   return (
     <div className="bg-gray-100 min-h-screen pb-12 print:pb-0 print:bg-white" dir={dir}>
       <div id="report-content" className="overflow-visible report-root">
@@ -211,35 +204,76 @@ export default function PrintView() {
                 </div>
                 <div className="grid grid-cols-2 gap-8">
                     <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Reference</p><p className="font-mono text-base text-gray-800">{report.id}</p></div>
-                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Date</p><p className="font-mono text-base text-gray-800">{data.reportDate}</p></div>
+                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Date</p><p className="font-mono text-base text-gray-800">{formatDate(data.reportDate || '')}</p></div>
                 </div>
               </div>
           </div>
           <div className="h-3 bg-primary w-full"></div>
         </div>
 
-        {/* PAGE 2: PROFILE */}
+        {/* PAGE 2: PROFILE & PARTNER WORKFORCE */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBandInternal country={data.country} reportId={report.id} title="Relations Overview" flagUrl={data.flagUrl} />
+          
           <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle="Key Demographics" compact />
-          <div className="grid grid-cols-4 gap-3 mb-4">
+          <div className="grid grid-cols-4 gap-3 mb-6">
             <KPI icon={Landmark} label={t('capital')} value={data.capital} />
             <KPI icon={Users} label={t('population')} value={data.population} sub={getSource('demo')} />
             <KPI icon={Banknote} label={t('currency')} value={data.currency} />
             <KPI icon={Building} label={t('hdi')} value={data.hdi} sub={getSource('demo')} />
           </div>
+
+          <SectionHeader icon={Users} title={t('sectionWorkforce')} subtitle="Partner Workforce Context" compact />
+          <div className="grid grid-cols-3 gap-3 mb-6">
+             <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
+             <KPI icon={Briefcase} label={t('avgWage')} value={data.averageWage} />
+             <KPI icon={Briefcase} label={t('minWage')} value={data.minimumWage} />
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+             <h4 className="text-[11px] font-extrabold uppercase tracking-widest text-primary mb-3 flex items-center gap-2">
+                <Hammer size={12} /> {t('availableSkills')}
+             </h4>
+             <div className="flex flex-wrap gap-1.5">
+                {data.workforceStats.availableSkills.map((skill, i) => (
+                  <span key={i} className="kpi-chip chip-info px-2 py-0.5 rounded-lg font-bold text-[9px] uppercase tracking-wider">{skill}</span>
+                ))}
+             </div>
+          </div>
         </PageContainer>
 
-        {/* PAGE 3: WORKFORCE */}
+        {/* PAGE 3: ECONOMY & EDUCATION */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBandInternal country={data.country} reportId={report.id} title="Workforce Analysis" flagUrl={data.flagUrl} />
-          <SectionHeader icon={Building} title={t('sectionUaeWorkforce')} subtitle="Domestic Analysis" />
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <KPI icon={Briefcase} label="MOHRE Private" value={data.uaeWorkforceStats.mohre.totalPrivate.value} />
-            <KPI icon={Users} label="MOHRE Domestic" value={data.uaeWorkforceStats.mohre.totalDomestic.value} />
+          <HeaderBandInternal country={data.country} reportId={report.id} title="Economy & Skills" flagUrl={data.flagUrl} />
+          
+          <SectionHeader icon={TrendingUp} title={t('sectionEconomy')} subtitle="Economic Indicators" compact />
+          <div className="grid grid-cols-3 gap-3 mb-6">
+             <KPI icon={Activity} label={t('inflation')} value={data.economicStats.inflation} sub={getSource('economy')} />
+             <KPI icon={Plane} label={t('exportsToUae')} value={data.economicStats.totalExportsToUAE} sub={getSource('trade')} />
+             <KPI icon={ArrowDownLeft} label={t('importsFromUae')} value={data.economicStats.totalImportsFromUAE} sub={getSource('trade')} />
+             <KPI icon={Shield} label={t('tipRank')} value={data.economicStats.tipRank} sub={getSource('tip')} />
+             <KPI icon={Banknote} label={t('remittances')} value={data.economicStats.remittancesFromUAE} />
+             <KPI icon={Globe} label={t('remittancesGlobal')} value={data.economicStats.remittancesGlobal} sub={getSource('economy')} />
           </div>
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
+
+          <SectionHeader icon={GraduationCap} title={t('educationDetails')} subtitle="Skills Pipeline" compact />
+          <div className="grid grid-cols-2 gap-3 mb-6">
+             <KPI icon={BookOpen} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
+             <KPI icon={GraduationCap} label={t('higherEducationEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+             <h4 className="text-[11px] font-extrabold uppercase tracking-widest text-primary mb-3 flex items-center gap-2">
+                <Building2 size={12} /> {t('topUniversities')}
+             </h4>
+             <ul className="grid grid-cols-2 gap-x-6 gap-y-1">
+                {data.educationStats.topUniversities.map((uni, i) => (
+                   <li key={i} className="text-[11px] font-bold text-gray-700 list-disc ms-4">{uni}</li>
+                ))}
+             </ul>
+             <div className="mt-4 pt-3 border-t border-gray-200">
+                {getSource('edu')}
+             </div>
           </div>
         </PageContainer>
       </div>
