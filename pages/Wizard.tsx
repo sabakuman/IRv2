@@ -19,7 +19,7 @@ const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
     const end = textarea.selectionEnd;
     const text = textarea.value;
     const before = text.substring(0, start);
-    const after = text.substring(end, text.length);
+    const terrestrial = text.substring(end, text.length);
     const selected = text.substring(start, end);
 
     let replacement = "";
@@ -27,7 +27,7 @@ const RichTextarea = ({ label, value, onChange, placeholder }: any) => {
     else if (tag === 'italic') replacement = `*${selected || 'text'}*`;
     else if (tag === 'bullet') replacement = `\n- ${selected || 'item'}`;
 
-    onChange(before + replacement + after);
+    onChange(before + replacement + terrestrial);
     
     setTimeout(() => {
       textarea.focus();
@@ -195,7 +195,6 @@ export default function Wizard() {
             totalImportsFromUAE: aiData.economicStats_totalImportsFromUAE || prev.economicStats.totalImportsFromUAE,
             topExportProducts: aiData.topExportProducts || prev.economicStats.topExportProducts,
             topImportProducts: aiData.topImportProducts || prev.economicStats.topImportProducts,
-            // Fixed typo: changed aiStatus to aiData
             tipRank: aiData.tipRank || prev.economicStats.tipRank,
             remittancesFromUAE: aiData.remittancesFromUAE || prev.economicStats.remittancesFromUAE,
           },
@@ -494,7 +493,7 @@ export default function Wizard() {
                  <div>
                    <label className="text-sm font-semibold mb-2 block">{t('sectorDistribution')}</label>
                    {data.workforceStats.topSectors.map((sec, i) => (
-                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
+                     <div key={i} className="flex gap-2 mb-2"><Input value={sec.name} placeholder="Sector" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].name = e.target.value; setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><Input value={sec.value} type="number" placeholder="Value" onChange={e => { const list = [...data.workforceStats.topSectors]; list[i].value = Number(e.target.value); setData({...data, workforceStats: {...data.workforceStats, topSectors: list}}); }} /><button onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: data.workforceStats.topSectors.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button></div>
                    ))}
                    <Button size="sm" variant="outline" onClick={() => setData({...data, workforceStats: {...data.workforceStats, topSectors: [...data.workforceStats.topSectors, { name: '', value: 0 }]}})}>+ Add Sector</Button>
                  </div>
@@ -530,7 +529,7 @@ export default function Wizard() {
                     <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: [...data.economicStats.topImportProducts, '']}})}>+ Add Import Product</Button>
                  </div>
 
-                 <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.economicStats.primaryEnrollment} onChange={e => setData({...data, economicStats: {...data.economicStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.economicStats.higherEducationEnrollment} onChange={e => setData({...data, economicStats: {...data.economicStats, higherEducationEnrollment: e.target.value}})} /></div>
+                 <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} /></div>
                  
                  <div className="pt-4 border-t">
                     <h5 className="font-bold text-sm mb-3">{t('topUniversities')} (Max 5)</h5>
@@ -594,7 +593,7 @@ export default function Wizard() {
                 <Button variant="outline" onClick={() => setData({...data, recentInteractions: [...data.recentInteractions, { id: uuidv4(), title: '', date: '', type: 'Meeting', details: '' }]})}>+ Add Interaction</Button>
              </div>
              <div className="space-y-4 pt-6 border-t">
-                <h4 className="font-bold flex items-center gap-2"><MessageSquare size={18} /> {t('pointsDiscussion')}</h4>
+                <h4 className="font-bold flex items-center gap-2"><MessageSquare size={18} /> {t('pointsOfDiscussion')}</h4>
                 {data.pointsOfDiscussion.map((item, idx) => (
                    <Card key={item.id} className="p-4 relative">
                       <button onClick={() => setData({...data, pointsOfDiscussion: data.pointsOfDiscussion.filter(pd => pd.id !== item.id)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>

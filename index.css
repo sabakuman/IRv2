@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -144,7 +145,8 @@
   /* Scoped report readability improvements */
   .report-root .kpi-label {
     font-weight: 600 !important;
-    display: inline-block !important;
+    display: block !important; /* Fixed: Changed from inline-block to block */
+    width: 100% !important;   /* Fixed: Ensure full width to stack values */
     transform: scale(1.03);
     transform-origin: right center;
     white-space: nowrap !important;
@@ -153,11 +155,11 @@
   }
 
   .kpi-value {
-    @apply text-lg font-serif font-bold text-gray-900 leading-tight;
+    @apply text-lg font-serif font-bold text-gray-900 leading-tight block; /* Added block */
   }
 
   .kpi-sub {
-    @apply text-[9px] text-gray-500 italic;
+    @apply text-[9px] text-gray-500 italic block; /* Added block */
   }
 
   .kpi-chip {
