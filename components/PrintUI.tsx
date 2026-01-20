@@ -15,8 +15,6 @@ export const PageContainer: React.FC<{
   className = ""
 }) => (
   <div className={`w-[210mm] h-[297mm] bg-white mx-auto flex flex-col page-break relative overflow-hidden ${className}`}>
-    {/* Optimized safe-zone: pb-28 (7rem / 112px) is used to balance 
-        content density and footer safety. */}
     <div className="px-12 pt-8 pb-28 flex-1 overflow-visible">{children}</div>
 
     {footer && (
@@ -129,7 +127,7 @@ export const KPI = ({
   icon: any;
   label: string;
   value: string | number;
-  sub?: React.ReactNode; // Changed from string to React.ReactNode
+  sub?: React.ReactNode; // Fix: Updated to React.ReactNode to allow JSX elements
   chip?: string;
   tone?: "ok" | "warn" | "info" | "restrict";
   labelClassName?: string;
@@ -140,12 +138,9 @@ export const KPI = ({
         <Icon size={16} className="text-primary" />
       </div>
 
-      <div className="flex-1 min-w-0 flex flex-col items-start">
-        {/* Row 1: Label and optional Chip */}
-        <div className="flex justify-between items-start mb-1 w-full">
-          <div className="flex-1 min-w-0">
-            <p className={`kpi-label leading-tight block w-full ${labelClassName || ''}`}>{label}</p>
-          </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start mb-1">
+          <p className={`kpi-label pr-1 leading-tight ${labelClassName || ''}`}>{label}</p>
           {chip && (
             <span
               className={`kpi-chip shrink-0 ml-1 ${
@@ -163,19 +158,11 @@ export const KPI = ({
           )}
         </div>
 
-        {/* Row 2: Value (Always forced below Row 1 by parent flex-col) */}
-        <div className="w-full">
-          <p className="kpi-value block break-words leading-tight text-sm font-sans text-gray-900" title={String(value)}>
-             {value || 'N/A'}
-          </p>
-        </div>
+        <p className="kpi-value truncate block leading-tight text-sm font-sans text-gray-900" title={String(value)}>
+           {value || 'N/A'}
+        </p>
         
-        {/* Row 3: Subtext */}
-        {sub && (
-          <div className="w-full mt-1">
-            <div className="kpi-sub block leading-tight">{sub}</div>
-          </div>
-        )}
+        {sub && <div className="kpi-sub mt-1 leading-tight">{sub}</div>}
       </div>
     </div>
   </div>

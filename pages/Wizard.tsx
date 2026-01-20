@@ -109,17 +109,11 @@ export default function Wizard() {
     
     setIsFetchingAI(true);
     const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
-    const apiKey = user?.apiKey || process.env.API_KEY;
-
-    if (!apiKey) {
-      alert("No API Key found. Please add a Personal API Key in Settings.");
-      setIsFetchingAI(false);
-      return;
-    }
 
     try {
-      const ai = new GoogleGenAI({ apiKey });
-      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Always provide monthly wages in USD ($) or AED (درهم) only - convert from local currency if necessary. Include Top 5 export products and Top 5 import products as individual string arrays. Also include 'tipRank' (Trafficking in Persons Rank, e.g. Tier 2) and 'remittancesFromUAE' (annual amount). List Top 5 Universities.`;
+      // Always initialize with process.env.API_KEY as per guidelines
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. All text values must be returned in ${targetLanguage}. Ensure monthly wages are in USD.`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -137,10 +131,6 @@ export default function Wizard() {
               hdi: { type: Type.STRING },
               averageWage: { type: Type.STRING },
               minimumWage: { type: Type.STRING },
-              crimeRate: { type: Type.STRING },
-              literacyRate: { type: Type.STRING },
-              governmentType: { type: Type.STRING },
-              workforceMinistry: { type: Type.STRING },
               totalWorkforce: { type: Type.STRING },
               participationMale: { type: Type.NUMBER },
               participationFemale: { type: Type.NUMBER },
@@ -168,15 +158,10 @@ export default function Wizard() {
                 type: Type.ARRAY,
                 items: { type: Type.STRING }
               },
-              topExportProducts: { type: Type.ARRAY, items: { type: Type.STRING } },
-              topImportProducts: { type: Type.ARRAY, items: { type: Type.STRING } },
               economicStats_inflation: { type: Type.STRING },
               economicStats_gdp: { type: Type.STRING },
               economicStats_totalExportsToUAE: { type: Type.STRING },
               economicStats_totalImportsFromUAE: { type: Type.STRING },
-              tipRank: { type: Type.STRING },
-              remittancesFromUAE: { type: Type.STRING },
-              topUniversities: { type: Type.ARRAY, items: { type: Type.STRING } }
             }
           }
         }
@@ -193,23 +178,12 @@ export default function Wizard() {
             gdp: aiData.economicStats_gdp || prev.economicStats.gdp,
             totalExportsToUAE: aiData.economicStats_totalExportsToUAE || prev.economicStats.totalExportsToUAE,
             totalImportsFromUAE: aiData.economicStats_totalImportsFromUAE || prev.economicStats.totalImportsFromUAE,
-            topExportProducts: aiData.topExportProducts || prev.economicStats.topExportProducts,
-            topImportProducts: aiData.topImportProducts || prev.economicStats.topImportProducts,
-            tipRank: aiData.tipRank || prev.economicStats.tipRank,
-            remittancesFromUAE: aiData.remittancesFromUAE || prev.economicStats.remittancesFromUAE,
-          },
-          educationStats: {
-            ...prev.educationStats,
-            topUniversities: aiData.topUniversities || prev.educationStats.topUniversities,
-            primaryEnrollment: aiData.primaryEnrollment || prev.educationStats.primaryEnrollment,
-            higherEducationEnrollment: aiData.higherEducationEnrollment || prev.educationStats.higherEducationEnrollment
           },
           workforceStats: { ...prev.workforceStats, ...aiData } 
         }));
       }
     } catch (error: any) { 
       console.error("AI Fetch Error:", error);
-      alert("Failed to fetch data via AI. Please ensure your connection is stable.");
     } finally { 
       setIsFetchingAI(false); 
     }
@@ -218,13 +192,12 @@ export default function Wizard() {
   const handleFetchAgreements = async () => {
     if (!data.country) return;
     setIsFetchingAI(true);
-    const apiKey = user?.apiKey || process.env.API_KEY;
-    if (!apiKey) return setIsFetchingAI(false);
 
     try {
-      const ai = new GoogleGenAI({ apiKey });
+      // Always initialize with process.env.API_KEY as per guidelines
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
-      const prompt = `Identify and list 5-10 formal bilateral labour agreements, MoUs, or protocols between the UAE (MOHRE/MOFA) and ${data.country}. Return as JSON array with title, date, status (active or pending), and summary. Language: ${targetLanguage}.`;
+      const prompt = `Identify and list formal bilateral labour agreements or MoUs between the UAE and ${data.country}. Return as JSON array with title, date, status, and summary. Language: ${targetLanguage}.`;
       
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -252,7 +225,6 @@ export default function Wizard() {
       }
     } catch (e) {
       console.error(e);
-      alert("Failed to fetch agreements.");
     } finally {
       setIsFetchingAI(false);
     }
@@ -262,13 +234,12 @@ export default function Wizard() {
      if (!data.country) return;
      
      setIsFetchingNews(true);
-     const apiKey = user?.apiKey || process.env.API_KEY;
-     if (!apiKey) { setIsFetchingNews(false); return; }
 
      try {
-       const ai = new GoogleGenAI({ apiKey });
+       // Always initialize with process.env.API_KEY as per guidelines
+       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
        const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
-       const prompt = `Find 3 recent official news items or press releases (from 2023-2025) concerning bilateral workforce cooperation, diplomatic visits, or labour market agreements between the UAE and ${data.country}. Return as a JSON array. Each object must have: title, source, date, and summary. All text must be in ${targetLanguage}.`;
+       const prompt = `Find 3 recent official news items regarding bilateral relations between UAE and ${data.country}. Return as JSON array. Language: ${targetLanguage}.`;
        
        const response: GenerateContentResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
@@ -307,7 +278,6 @@ export default function Wizard() {
        }
      } catch (error: any) { 
        console.error("AI News Fetch Error:", error);
-       alert("Failed to fetch news. Please check your API key.");
      } finally { 
        setIsFetchingNews(false); 
      }
@@ -412,10 +382,6 @@ export default function Wizard() {
               <Input label={t('currency')} value={data.currency} onChange={e => setData({...data, currency: e.target.value})} />
               <Input label={t('gdp')} value={data.gdp} onChange={e => setData({...data, gdp: e.target.value})} />
               <Input label={t('hdi')} value={data.hdi} onChange={e => setData({...data, hdi: e.target.value})} />
-              <Input label={t('crimeRate')} value={data.crimeRate} onChange={e => setData({...data, crimeRate: e.target.value})} />
-              <Input label={t('literacyRate')} value={data.literacyRate} onChange={e => setData({...data, literacyRate: e.target.value})} />
-              <Input label={t('governmentType')} value={data.governmentType} onChange={e => setData({...data, governmentType: e.target.value})} />
-              <Input label={t('workforceMinistry')} value={data.workforceMinistry} onChange={e => setData({...data, workforceMinistry: e.target.value})} />
             </div>
           </div>
         );
@@ -502,73 +468,6 @@ export default function Wizard() {
                <>
                  <div className="grid grid-cols-2 gap-6"><Input label={t('inflation')} value={data.economicStats.inflation} onChange={e => setData({...data, economicStats: {...data.economicStats, inflation: e.target.value}})} /><Input label={t('gdp')} value={data.economicStats.gdp} onChange={e => setData({...data, economicStats: {...data.economicStats, gdp: e.target.value}})} /><Input label={t('exportsToUae')} value={data.economicStats.totalExportsToUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalExportsToUAE: e.target.value}})} /><Input label={t('importsFromUae')} value={data.economicStats.totalImportsFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, totalImportsFromUAE: e.target.value}})} /></div>
                  
-                 <div className="grid grid-cols-2 gap-6 pt-4 border-t">
-                    <Input label={t('tipRank')} value={data.economicStats.tipRank} onChange={e => setData({...data, economicStats: {...data.economicStats, tipRank: e.target.value}})} />
-                    <Input label={t('remittances')} value={data.economicStats.remittancesFromUAE} onChange={e => setData({...data, economicStats: {...data.economicStats, remittancesFromUAE: e.target.value}})} />
-                 </div>
-
-                 <div className="pt-4 border-t">
-                    <h5 className="font-bold text-sm mb-3">{t('topExports')}</h5>
-                    {data.economicStats.topExportProducts.map((p, i) => (
-                      <div key={i} className="flex gap-2 mb-2">
-                        <Input value={p} onChange={e => { const list = [...data.economicStats.topExportProducts]; list[i] = e.target.value; setData({...data, economicStats: {...data.economicStats, topExportProducts: list}}); }} />
-                        <button onClick={() => setData({...data, economicStats: {...data.economicStats, topExportProducts: data.economicStats.topExportProducts.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button>
-                      </div>
-                    ))}
-                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topExportProducts: [...data.economicStats.topExportProducts, '']}})}>+ Add Export Product</Button>
-                 </div>
-
-                 <div className="pt-4">
-                    <h5 className="font-bold text-sm mb-3">{t('topImports')}</h5>
-                    {data.economicStats.topImportProducts.map((p, i) => (
-                      <div key={i} className="flex gap-2 mb-2">
-                        <Input value={p} onChange={e => { const list = [...data.economicStats.topImportProducts]; list[i] = e.target.value; setData({...data, economicStats: {...data.economicStats, topImportProducts: list}}); }} />
-                        <button onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: data.economicStats.topImportProducts.filter((_, idx) => idx !== i)}})} className="text-red-400"><X size={16} /></button>
-                      </div>
-                    ))}
-                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, topImportProducts: [...data.economicStats.topImportProducts, '']}})}>+ Add Import Product</Button>
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-6 pt-4 border-t"><Input label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, primaryEnrollment: e.target.value}})} /><Input label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} onChange={e => setData({...data, educationStats: {...data.educationStats, higherEducationEnrollment: e.target.value}})} /></div>
-                 
-                 <div className="pt-4 border-t">
-                    <h5 className="font-bold text-sm mb-3">{t('topUniversities')} (Max 5)</h5>
-                    <div className="space-y-3">
-                      {data.educationStats.topUniversities.map((uni, idx) => (
-                        <div key={idx} className="flex gap-2 items-center">
-                          <span className="text-xs font-bold text-gray-400 w-4">{idx + 1}.</span>
-                          <Input 
-                            value={uni} 
-                            onChange={e => {
-                              const list = [...data.educationStats.topUniversities];
-                              list[idx] = e.target.value;
-                              setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
-                            }} 
-                            placeholder="Enter university name..."
-                          />
-                          <button 
-                            onClick={() => {
-                              const list = data.educationStats.topUniversities.filter((_, i) => i !== idx);
-                              setData({...data, educationStats: {...data.educationStats, topUniversities: list}});
-                            }} 
-                            className="text-red-400 hover:text-red-600 transition-colors"
-                          >
-                            <X size={18} />
-                          </button>
-                        </div>
-                      ))}
-                      {data.educationStats.topUniversities.length < 5 && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => setData({...data, educationStats: {...data.educationStats, topUniversities: [...data.educationStats.topUniversities, '']}})}
-                        >
-                          <Plus size={14} /> Add University
-                        </Button>
-                      )}
-                    </div>
-                 </div>
-
                  <div className="pt-4 border-t">
                     <h5 className="font-bold text-sm mb-3">Custom Trade/Economic Indicators</h5>
                     {data.economicStats.customStats.map((stat, i) => (<div key={stat.id} className="flex gap-4 mb-2 items-end"><Input label="Indicator" value={stat.label} onChange={e => { const list = [...data.economicStats.customStats]; list[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><Input label="Value" value={stat.value} onChange={e => { const list = [...data.economicStats.customStats]; list[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><button onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: data.economicStats.customStats.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button></div>))}
@@ -660,33 +559,19 @@ export default function Wizard() {
                      <div className="space-y-1.5">
                        <label className="text-sm font-semibold text-foreground/80">{t('status')}</label>
                        <select 
-                         className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-primary transition-all"
-                         value={agreement.status || 'active'}
-                         onChange={e => {
-                           const list = [...data.bilateralAgreements];
-                           list[idx].status = e.target.value as any;
-                           setData({...data, bilateralAgreements: list});
-                         }}
+                        className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none focus:border-primary transition-all"
+                        value={agreement.status || 'active'}
+                        onChange={e => {
+                          const list = [...data.bilateralAgreements];
+                          list[idx].status = e.target.value as any;
+                          setData({...data, bilateralAgreements: list});
+                        }}
                        >
-                         <option value="active">{t('activeLabel')}</option>
-                         <option value="pending">{t('pendingLabel')}</option>
-                         <option value="custom">{t('customLabel')}</option>
+                         <option value="active">Active</option>
+                         <option value="pending">Pending</option>
                        </select>
                      </div>
                    </div>
-                   {agreement.status === 'custom' && (
-                     <Input 
-                        label={t('customStatusText')} 
-                        value={agreement.customStatusText || ''} 
-                        onChange={e => {
-                          const list = [...data.bilateralAgreements];
-                          list[idx].customStatusText = e.target.value;
-                          setData({...data, bilateralAgreements: list});
-                        }}
-                        className="mb-2"
-                        placeholder="e.g. Under Review"
-                     />
-                   )}
                    <RichTextarea label="Summary" value={agreement.summary} onChange={(val: string) => { const list = [...data.bilateralAgreements]; list[idx].summary = val; setData({...data, bilateralAgreements: list}); }} />
                 </Card>
              ))}
