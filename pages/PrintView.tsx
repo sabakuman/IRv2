@@ -190,7 +190,7 @@ export default function PrintView() {
     return (
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
         <div className="flex items-center gap-3">
-          <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
+          <img flagSrc={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
           <div className="h-8 w-px bg-gray-200" />
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
@@ -216,9 +216,12 @@ export default function PrintView() {
   const POINTS_CHUNK_SIZE = 3; // Discussion points are text-heavy, limit to 3 per page
   const AGR_CHUNK_SIZE = 6;
 
+  // --- SORT RELATIONSHIP SUMMARY (RECENT INTERACTIONS) BY DATE DESCENDING ---
+  const sortedInteractions = [...data.recentInteractions].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
   const interactionChunks = [];
-  for (let i = 0; i < data.recentInteractions.length; i += INT_CHUNK_SIZE) {
-    interactionChunks.push(data.recentInteractions.slice(i, i + INT_CHUNK_SIZE));
+  for (let i = 0; i < sortedInteractions.length; i += INT_CHUNK_SIZE) {
+    interactionChunks.push(sortedInteractions.slice(i, i + INT_CHUNK_SIZE));
   }
 
   const pointsChunks = [];
@@ -498,8 +501,9 @@ export default function PrintView() {
                         <div className="h-full bg-primary-dark rounded-full" style={{ width: `${(sec.value / maxPartnerSector) * 100}%` }} />
                       </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
           <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 shadow-sm">
