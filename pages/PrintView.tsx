@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
@@ -190,7 +189,7 @@ export default function PrintView() {
     return (
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
         <div className="flex items-center gap-3">
-          <img flagSrc={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
+          <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
           <div className="h-8 w-px bg-gray-200" />
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
@@ -216,7 +215,7 @@ export default function PrintView() {
   const POINTS_CHUNK_SIZE = 3; // Discussion points are text-heavy, limit to 3 per page
   const AGR_CHUNK_SIZE = 6;
 
-  // --- SORT RELATIONSHIP SUMMARY (RECENT INTERACTIONS) BY DATE DESCENDING ---
+  // --- SORT RELATIONSHIP SUMMARY (RECENT INTERACTIONS) BY DATE DESCENDING (NEWEST FIRST) ---
   const sortedInteractions = [...data.recentInteractions].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   const interactionChunks = [];
@@ -459,7 +458,6 @@ export default function PrintView() {
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Users} title={`${t('workforceOf')} ${data.country}`} subtitle={t('sourceMarketAnalysis')} />
           <div className="grid grid-cols-4 gap-4 mb-6">
-            {/* Fix: corrected value to access property within workforceStats */}
             <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
             <div className="col-span-2 kpi-card flex items-center justify-around py-4 shadow-sm">
                 <div className="text-center"><p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('maleParticipation')}</p><p className="text-2xl font-serif font-bold text-blue-600 leading-none">{data.workforceStats.participationMale}%</p></div>
@@ -501,9 +499,8 @@ export default function PrintView() {
                         <div className="h-full bg-primary-dark rounded-full" style={{ width: `${(sec.value / maxPartnerSector) * 100}%` }} />
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
             </div>
           </div>
           <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 shadow-sm">
