@@ -477,7 +477,7 @@ export const TRANSLATIONS = {
     type: 'النوع',
     details: 'التفاصيل',
     icpDisclaimer: 'تعكس بيانات ICP سجلات الإقامة، بينما تعكس بيانات MOHRE علاقات العمل المسجلة في القطاع الخاص.',
-    additionalIndicators: 'مؤشرات إاضافية',
+    additionalIndicators: 'مؤشرات إضافية',
     icpHeader: 'الهيئة الاتحادية للهوية والجنسية',
     icpSubheader: 'بيانات الهيئة الاتحادية للهوية والجنسية',
     workforceStats: 'إحصاءات القوى العاملة',
