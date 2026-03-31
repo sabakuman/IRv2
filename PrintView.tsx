@@ -119,10 +119,17 @@ export default function PrintView() {
   const isRTL = language === 'ar';
   
   // Dynamic Year Logic
-  const reportYear = data.reportDate ? new Date(data.reportDate).getFullYear() : 2025;
+  const reportDateObj = data.reportDate ? new Date(data.reportDate) : new Date();
+  const reportYear = reportDateObj.getFullYear();
+  const reportMonth = reportDateObj.getMonth();
   const prevYear = reportYear - 1;
-  const prevMonthAr = 'ديسمبر';
-  const prevMonthEn = 'December';
+
+  const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthsAr = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+  const defaultDateStr = language === 'ar' 
+    ? `${monthsAr[reportMonth]} ${reportYear}`
+    : `${monthsEn[reportMonth]} ${reportYear}`;
 
   const formatCompactNumber = (value: any) => {
     const num = Number(value);
@@ -130,14 +137,19 @@ export default function PrintView() {
     return new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(num);
   };
 
-  const formatAsOfDate = (dateStr: string) => {
+  const formatAsOfDate = (dateStr: string | undefined) => {
     if (!dateStr) return '';
+    
     // Handle YYYY-MM from month input
-    if (/^\d{4}-\d{2}$/.test(dateStr)) {
-      const [y, m] = dateStr.split('-');
-      const date = new Date(parseInt(y), parseInt(m) - 1);
-      // Use ar-AE-u-nu-latn to ensure Western digits in Arabic as per ministerial style
-      return date.toLocaleDateString(language === 'ar' ? 'ar-AE-u-nu-latn' : 'en-US', { month: 'long', year: 'numeric' });
+    const monthMatch = dateStr.match(/^(\d{4})-(\d{2})/);
+    if (monthMatch) {
+      const y = parseInt(monthMatch[1]);
+      const m = parseInt(monthMatch[2]);
+      
+      if (language === 'ar') {
+        return `${monthsAr[m - 1]} ${y}`;
+      }
+      return `${monthsEn[m - 1]} ${y}`;
     }
     return dateStr;
   };
@@ -152,7 +164,7 @@ export default function PrintView() {
         trade: `*(UN Comtrade, ${reportYear})`, 
         edu: `*(UNESCO, ${reportYear})`, 
         tip: `*(US TIP, ${prevYear})`,
-        mohre: `*(Ministry Data, ${formattedDate || (prevMonthEn + ' ' + prevYear)})`,
+        mohre: `*(Ministry Data, ${formattedDate || defaultDateStr})`,
         cbuae: `Central Bank of the UAE, ${prevYear}`
       },
       ar: { 
@@ -161,7 +173,7 @@ export default function PrintView() {
         trade: `*(كوم تريد، ${reportYear})`, 
         edu: `*(اليونسكو، ${reportYear})`, 
         tip: `*(تقرير الاتجار، ${prevYear})`,
-        mohre: `*(بيانات الوزارة، ${formattedDate || (prevMonthAr + ' ' + prevYear)})`,
+        mohre: `*(بيانات الوزارة، ${formattedDate || defaultDateStr})`,
         cbuae: `مصرف الإمارات المركزي، ${prevYear}`
       }
     };
