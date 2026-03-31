@@ -434,13 +434,27 @@ export default function Wizard() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="p-4 border-l-4 border-l-primary">
                   <h5 className="font-bold text-sm mb-2">{t('mohreData')}</h5>
-                  <div className="flex gap-2 mb-2">
-                    <Input label="Private Sector" value={data.uaeWorkforceStats.mohre.totalPrivate.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, value: e.target.value}}}})} />
-                    <Input label="As of" value={data.uaeWorkforceStats.mohre.totalPrivate.date} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, date: e.target.value}}}})} />
-                  </div>
-                  <div className="flex gap-2">
-                    <Input label="Domestic Workers" value={data.uaeWorkforceStats.mohre.totalDomestic.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, value: e.target.value}}}})} />
-                    <Input label="As of" value={data.uaeWorkforceStats.mohre.totalDomestic.date} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, date: e.target.value}}}})} />
+                  <div className="space-y-4">
+                    <div className="flex gap-4">
+                      <Input label="Private Sector" value={data.uaeWorkforceStats.mohre.totalPrivate.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, value: e.target.value}}}})} />
+                      <Input label="Domestic Workers" value={data.uaeWorkforceStats.mohre.totalDomestic.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, value: e.target.value}}}})} />
+                    </div>
+                    <Input 
+                      label="As of (MOHRE Data)" 
+                      type="month" 
+                      value={data.uaeWorkforceStats.mohre.totalPrivate.date || data.uaeWorkforceStats.mohre.totalDomestic.date} 
+                      onChange={e => setData({
+                        ...data, 
+                        uaeWorkforceStats: {
+                          ...data.uaeWorkforceStats, 
+                          mohre: {
+                            ...data.uaeWorkforceStats.mohre, 
+                            totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, date: e.target.value},
+                            totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, date: e.target.value}
+                          }
+                        }
+                      })} 
+                    />
                   </div>
                 </Card>
                 <Card className="p-4 border-l-4 border-l-accent"><h5 className="font-bold text-sm mb-2">{t('icpData')}</h5><p className="text-[10px] text-gray-500 mb-2 uppercase">{t('icpDisclaimer')}</p><div className="space-y-2">{data.uaeWorkforceStats.icp.byEmirate.map((em, i) => (<div key={i} className="flex items-center gap-2 text-xs font-bold"><span className="w-20">{em.name}</span><Input value={em.value} type="number" className="h-8 py-0" onChange={e => { const list = [...data.uaeWorkforceStats.icp.byEmirate]; list[i].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, icp: {...data.uaeWorkforceStats.icp, byEmirate: list}}}); }} /></div>))}</div></Card>
@@ -469,7 +483,7 @@ export default function Wizard() {
                    <div key={stat.id} className="flex gap-4 mb-3 items-end">
                       <Input label="Label" value={stat.label} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].label = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
                       <Input label="Value" value={stat.value} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].value = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
-                      <Input label="Date/As of" value={stat.date} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].date = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
+                      <Input label="Date/As of" type="month" value={stat.date} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].date = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
                       {!stat.isTotal && <button onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: data.uaeWorkforceStats.custom.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button>}
                    </div>
                 ))}

@@ -119,10 +119,17 @@ export default function PrintView() {
   const isRTL = language === 'ar';
   
   // Dynamic Year Logic
-  const reportYear = data.reportDate ? new Date(data.reportDate).getFullYear() : 2025;
+  const reportDateObj = data.reportDate ? new Date(data.reportDate) : new Date();
+  const reportYear = reportDateObj.getFullYear();
+  const reportMonth = reportDateObj.getMonth();
   const prevYear = reportYear - 1;
-  const prevMonthAr = 'ديسمبر';
-  const prevMonthEn = 'December';
+
+  const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthsAr = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+  const defaultDateStr = language === 'ar' 
+    ? `${monthsAr[reportMonth]} ${reportYear}`
+    : `${monthsEn[reportMonth]} ${reportYear}`;
 
   const formatCompactNumber = (value: any) => {
     const num = Number(value);
@@ -130,7 +137,26 @@ export default function PrintView() {
     return new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(num);
   };
 
-  const getSource = (type: string) => {
+  const formatAsOfDate = (dateStr: string | undefined) => {
+    if (!dateStr) return '';
+    
+    // Handle YYYY-MM from month input
+    const monthMatch = dateStr.match(/^(\d{4})-(\d{2})/);
+    if (monthMatch) {
+      const y = parseInt(monthMatch[1]);
+      const m = parseInt(monthMatch[2]);
+      
+      if (language === 'ar') {
+        return `${monthsAr[m - 1]} ${y}`;
+      }
+      return `${monthsEn[m - 1]} ${y}`;
+    }
+    return dateStr;
+  };
+
+  const getSource = (type: string, dateOverride?: string) => {
+    const formattedDate = formatAsOfDate(dateOverride);
+    
     const labels: Record<string, Record<string, string>> = {
       en: { 
         demo: `*(World Bank, ${reportYear})`, 
@@ -138,7 +164,7 @@ export default function PrintView() {
         trade: `*(UN Comtrade, ${reportYear})`, 
         edu: `*(UNESCO, ${reportYear})`, 
         tip: `*(US TIP, ${prevYear})`,
-        mohre: `*(Ministry Data, ${prevMonthEn} ${prevYear})`,
+        mohre: `*(Ministry Data, ${formattedDate || defaultDateStr})`,
         cbuae: `Central Bank of the UAE, ${prevYear}`
       },
       ar: { 
@@ -147,7 +173,7 @@ export default function PrintView() {
         trade: `*(كوم تريد، ${reportYear})`, 
         edu: `*(اليونسكو، ${reportYear})`, 
         tip: `*(تقرير الاتجار، ${prevYear})`,
-        mohre: `*(بيانات الوزارة، ${prevMonthAr} ${prevYear})`,
+        mohre: `*(بيانات الوزارة، ${formattedDate || defaultDateStr})`,
         cbuae: `مصرف الإمارات المركزي، ${prevYear}`
       }
     };
@@ -378,8 +404,8 @@ export default function PrintView() {
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
           <SectionHeader icon={Building} title={t('sectionUaeWorkforce')} subtitle={t('domesticAnalysis')} />
           <div className="grid grid-cols-2 gap-4 mb-3">
-            <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre')} labelClassName="text-xs font-bold" />
-            <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre')} tone="warn" labelClassName="text-xs font-bold" />
+            <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre', data.uaeWorkforceStats.mohre.totalPrivate.date)} labelClassName="text-xs font-bold" />
+            <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre', data.uaeWorkforceStats.mohre.totalDomestic.date)} tone="warn" labelClassName="text-xs font-bold" />
           </div>
           
           <div className="grid grid-cols-2 gap-4 mb-3">
@@ -419,7 +445,7 @@ export default function PrintView() {
             <div className="border border-gray-200 rounded-2xl p-4 flex flex-col bg-white shadow-sm">
                 <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
                   {isRTL ? `توزيع العمال حسب القطاع في ${data.country}` : `Workers distribution by sector in ${data.country}`}
-                  <span className="ms-2">{getSource('mohre')}</span>
+                  <span className="ms-2">{getSource('mohre', data.uaeWorkforceStats.mohre.totalPrivate.date)}</span>
                 </p>
                 <div className="space-y-1.5 flex-1 overflow-hidden">
                   {mohreSectors.slice(0, 10).map((s, i) => (
@@ -443,7 +469,7 @@ export default function PrintView() {
                       <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-2 last:border-0">
                         <div>
                             <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide leading-tight">{stat.label}</p>
-                            <p className="text-[8px] text-gray-400 font-sans">{stat.date}</p>
+                            <p className="text-[8px] text-gray-400 font-sans">{formatAsOfDate(stat.date)}</p>
                         </div>
                         <p className="text-lg font-serif font-bold text-gray-900">{stat.value}</p>
                       </div>
