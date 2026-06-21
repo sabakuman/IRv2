@@ -13,14 +13,19 @@ import AdminUsers from './pages/AdminUsers';
 import AdminLogs from './pages/AdminLogs';
 import Settings from './pages/Settings';
 import LetterLogList from './pages/LetterLogList';
+import MOUTracker from './pages/MOUTracker';
+import MOUDetail from './pages/MOUDetail';
+import MOUWizard from './pages/MOUWizard';
+import MOUPrintView from './pages/MOUPrintView';
+
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Route Guard Component
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
   if (isLoading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
   if (!user) {
-    window.location.hash = '/login';
-    return null;
+    return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
 };
@@ -30,50 +35,48 @@ const AdminRoute = ({ children }: { children?: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
   if (isLoading) return null;
   if (!user || user.role !== 'admin') {
-    window.location.hash = '/dashboard';
-    return null;
+    return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
 };
 
-// Fixed: Replaced missing HashRouter/Routes with manual state-based routing
-const Router = () => {
-  const [currentHash, setCurrentHash] = useState(window.location.hash);
-
-  useEffect(() => {
-    const handleHashChange = () => setCurrentHash(window.location.hash);
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  const hash = currentHash.replace('#', '') || '/';
-
-  // Extract ID if present (e.g., /wizard/r-101 or /print/r-101)
-  const parts = hash.split('/');
-  const routeBase = parts[1] || '';
-  const routeId = parts[2] || '';
-
-  if (hash === '/login') return <Login />;
-  if (routeBase === 'print') return <PrintView />;
-
+const AppRoutes = () => {
   return (
-    <ProtectedRoute>
-      <Layout>
-        {(() => {
-          if (hash === '/' || hash === '/dashboard') return <Dashboard />;
-          if (hash === '/reports') return <ReportsList />;
-          if (hash === '/letters') return <LetterLogList />;
-          if (routeBase === 'wizard') return <Wizard />;
-          if (hash === '/account') return <Settings />;
-          
-          if (hash === '/admin/users') return <AdminRoute><AdminUsers /></AdminRoute>;
-          if (hash === '/admin/logs') return <AdminRoute><AdminLogs /></AdminRoute>;
-
-          // Fallback
-          return <Dashboard />;
-        })()}
-      </Layout>
-    </ProtectedRoute>
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/print/:id" element={<PrintView />} />
+      <Route path="/mou/:id/print" element={<MOUPrintView />} />
+      
+      {/* Protected App Routes */}
+      <Route path="/" element={
+        <ProtectedRoute>
+          <Layout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="reports" element={<ReportsList />} />
+        <Route path="letters" element={<LetterLogList />} />
+        <Route path="mous" element={<MOUTracker />} />
+        <Route path="mou/new" element={<MOUWizard />} />
+        <Route path="mou/:id" element={<MOUDetail />} />
+        <Route path="mou/:id/edit" element={<MOUWizard />} />
+        <Route path="wizard" element={<Wizard />} />
+        <Route path="wizard/:id" element={<Wizard />} />
+        <Route path="account" element={<Settings />} />
+        
+        {/* Admin Routes */}
+        <Route path="admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+        <Route path="admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
+        
+        {/* Fallback for protected area */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Route>
+      
+      {/* Global Fallback */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   );
 };
 
@@ -82,7 +85,9 @@ export default function App() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <Router />
+          <HashRouter>
+            <AppRoutes />
+          </HashRouter>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>

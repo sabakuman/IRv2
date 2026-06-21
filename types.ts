@@ -84,6 +84,8 @@ export interface UaeWorkforceData {
   mohre: {
     totalPrivate: DateValue;
     totalDomestic: DateValue;
+    unemploymentInsuranceCoverage?: DateValue;
+    wpsWageTransferRate?: DateValue;
     byEmirate: LabelValue[]; // Abu Dhabi, Dubai, etc.
     bySector: LabelValue[];
   };
@@ -116,6 +118,8 @@ export interface ReportData {
   directFlight: boolean; // Yes/No
   uaeEmbassyLocation: string; // Location in that country
   foreignEmbassyLocation: string; // City in UAE
+  callingCode?: string;
+  timezone?: string;
   
   // New Demographics
   crimeRate?: string;
@@ -218,6 +222,8 @@ export const EMPTY_REPORT_DATA: ReportData = {
   gdp: '',
   hdi: '',
   directFlight: false,
+  callingCode: '',
+  timezone: '',
   uaeEmbassyLocation: '',
   foreignEmbassyLocation: '',
   crimeRate: '',
@@ -230,6 +236,8 @@ export const EMPTY_REPORT_DATA: ReportData = {
     mohre: {
       totalPrivate: { value: '', date: '' },
       totalDomestic: { value: '', date: '' },
+      unemploymentInsuranceCoverage: { value: '', date: '' },
+      wpsWageTransferRate: { value: '', date: '' },
       byEmirate: [
         { name: 'Abu Dhabi', value: 0 },
         { name: 'Dubai', value: 0 },

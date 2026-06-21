@@ -11,14 +11,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: true, 
-      port: 5173,
-      // Proxy API requests to the backend server during dev
-      proxy: {
-        '/api': {
-          target: 'http://localhost:4173',
-          changeOrigin: true,
-        }
-      }
+      port: 3000,
     },
     build: {
       outDir: 'dist',

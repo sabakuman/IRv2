@@ -8,7 +8,7 @@ import {
   Printer, X, AlertTriangle, ShieldAlert,
   GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
   ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer,
-  ExternalLink
+  ExternalLink, Clock, Phone
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
@@ -85,9 +85,20 @@ export default function PrintView() {
   };
   const id = getParamId();
 
-  const { t, language, dir } = useLanguage();
+  const { t, language, dir, setLanguage } = useLanguage();
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    // Check for lang query parameter - with HashRouter, it's in the hash
+    const hash = window.location.hash;
+    const queryIndex = hash.indexOf('?');
+    const params = new URLSearchParams(queryIndex !== -1 ? hash.substring(queryIndex) : '');
+    const langParam = params.get('lang');
+    if (langParam && (langParam === 'en' || langParam === 'ar') && langParam !== language) {
+      setLanguage(langParam as any);
+    }
+  }, [language, setLanguage]);
 
   useEffect(() => {
     if (id) {
@@ -366,6 +377,10 @@ export default function PrintView() {
             <KPI icon={BookOpen} label={t('literacyRate')} value={data.literacyRate || 'N/A'} sub={getSource('demo')} />
             <KPI icon={Building2} label={t('governmentType')} value={data.governmentType || 'N/A'} />
             <KPI icon={Briefcase} label={t('workforceMinistry')} value={data.workforceMinistry || 'N/A'} />
+            <KPI icon={MessageSquare} label={t('officialLanguage')} value={data.officialLanguage || 'N/A'} />
+            <KPI icon={Plane} label={t('directFlight')} value={data.directFlight ? (isRTL ? 'نعم' : 'Yes') : (isRTL ? 'لا' : 'No')} />
+            <KPI icon={Phone} label={t('callingCode')} value={data.callingCode || 'N/A'} />
+            <KPI icon={Clock} label={t('timezone')} value={data.timezone || 'N/A'} />
           </div>
           <SectionHeader icon={TrendingUp} title={t('economicLandscape')} subtitle={t('tradeEducation')} compact />
           <div className="grid grid-cols-4 gap-3 mb-4">
@@ -406,6 +421,10 @@ export default function PrintView() {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre', data.uaeWorkforceStats.mohre.totalPrivate.date)} labelClassName="text-xs font-bold" />
             <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre', data.uaeWorkforceStats.mohre.totalDomestic.date)} tone="warn" labelClassName="text-xs font-bold" />
+          </div>
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <KPI icon={Shield} label={t('unemploymentInsuranceCoverageRate')} value={data.uaeWorkforceStats.mohre.unemploymentInsuranceCoverage?.value || 'N/A'} sub={getSource('mohre', data.uaeWorkforceStats.mohre.unemploymentInsuranceCoverage?.date || data.uaeWorkforceStats.mohre.totalPrivate.date)} tone="ok" labelClassName="text-xs font-bold" />
+            <KPI icon={Banknote} label={t('wpsWageTransferRate')} value={data.uaeWorkforceStats.mohre.wpsWageTransferRate?.value || 'N/A'} sub={getSource('mohre', data.uaeWorkforceStats.mohre.wpsWageTransferRate?.date || data.uaeWorkforceStats.mohre.totalPrivate.date)} tone="ok" labelClassName="text-xs font-bold" />
           </div>
           
           <div className="grid grid-cols-2 gap-4 mb-3">
@@ -485,10 +504,21 @@ export default function PrintView() {
           <SectionHeader icon={Users} title={`${t('workforceOf')} ${data.country}`} subtitle={t('sourceMarketAnalysis')} />
           <div className="grid grid-cols-4 gap-4 mb-6">
             <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
-            <div className="col-span-2 kpi-card flex items-center justify-around py-4 shadow-sm">
-                <div className="text-center"><p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('maleParticipation')}</p><p className="text-2xl font-serif font-bold text-blue-600 leading-none">{data.workforceStats.participationMale}%</p></div>
-                <div className="h-8 w-px bg-gray-200"></div>
-                <div className="text-center"><p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('femaleParticipation')}</p><p className="text-2xl font-serif font-bold text-pink-600 leading-none">{data.workforceStats.participationFemale}%</p></div>
+            <div className="col-span-2 kpi-card flex flex-col items-center justify-center p-3 shadow-sm">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 border-b border-gray-100 pb-1.5 w-full justify-center">
+                  <span>{t('genderDistribution')}</span>
+                </p>
+                <div className="flex items-center justify-around w-full">
+                    <div className="text-center flex-1">
+                      <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('maleParticipation')}</p>
+                      <p className="text-2xl font-serif font-bold text-blue-600 leading-none">{data.workforceStats.participationMale}%</p>
+                    </div>
+                    <div className="h-8 w-px bg-gray-200"></div>
+                    <div className="text-center flex-1">
+                      <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('femaleParticipation')}</p>
+                      <p className="text-2xl font-serif font-bold text-pink-600 leading-none">{data.workforceStats.participationFemale}%</p>
+                    </div>
+                </div>
             </div>
             <KPI icon={Banknote} label={t('avgWage')} value={normalizeWageDisplay(data.averageWage)} tone="ok" sub={getSource('demo')} />
           </div>

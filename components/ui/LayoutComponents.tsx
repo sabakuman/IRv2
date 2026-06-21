@@ -38,11 +38,12 @@ export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { lab
   </div>
 );
 
-export const Badge: React.FC<{ children: React.ReactNode; color?: 'green' | 'blue' | 'yellow' }> = ({ children, color = 'blue' }) => {
+export const Badge: React.FC<{ children: React.ReactNode; color?: 'green' | 'blue' | 'yellow' | 'red' }> = ({ children, color = 'blue' }) => {
   const colors = {
     green: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800',
     blue: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
-    yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800'
+    yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
+    red: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
   };
   return (
     <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${colors[color]}`}>

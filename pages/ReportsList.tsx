@@ -1,20 +1,19 @@
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { MockService } from '../services/mockService';
 import { Report, UserProfile } from '../types';
+import { FLAGS } from '../constants';
 import { Card, Button, Badge } from '../components/ui/LayoutComponents';
 import { Search, Plus, Edit3, Trash2, Printer, FileText, Lock, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ReportsList() {
   const { user } = useAuth();
-  const { t } = useLanguage();
-  // Manual hash navigation
-  const navigate = (path: string) => {
-    window.location.hash = path.startsWith('/') ? path : `/${path}`;
-  };
+  const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +61,7 @@ export default function ReportsList() {
     const hashIndex = href.indexOf('#');
     let baseUrl = hashIndex !== -1 ? href.substring(0, hashIndex) : href;
     if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
-    const printUrl = `${baseUrl}/#/print/${id}`;
+    const printUrl = `${baseUrl}/#/print/${id}?lang=${language}`;
     window.open(printUrl, '_blank');
   };
 
@@ -137,7 +136,23 @@ export default function ReportsList() {
                 const canDelete = isAdmin;
                 const isDeleting = deletingId === report.id;
                 
-                const flagSrc = report.data.flagUrl || `https://flagcdn.com/w40/${report.data.country.toLowerCase().includes('philippines') ? 'ph' : report.data.country.toLowerCase().includes('india') ? 'in' : 'ae'}.png`;
+                const getFlagUrl = (countryName: string, flagUrl?: string) => {
+                  if (flagUrl) return flagUrl;
+                  const normalized = countryName.trim();
+                  if (FLAGS[normalized]) return FLAGS[normalized];
+                  
+                  // Common fallbacks
+                  const lower = normalized.toLowerCase();
+                  if (lower.includes('philippines')) return 'https://flagcdn.com/w160/ph.png';
+                  if (lower.includes('india')) return 'https://flagcdn.com/w160/in.png';
+                  if (lower.includes('pakistan')) return 'https://flagcdn.com/w160/pk.png';
+                  if (lower.includes('bangladesh')) return 'https://flagcdn.com/w160/bd.png';
+                  if (lower.includes('uae')) return 'https://flagcdn.com/w160/ae.png';
+                  
+                  return `https://flagcdn.com/w160/ae.png`; // default to UAE flag if unknown
+                };
+
+                const flagSrc = getFlagUrl(report.data.country, report.data.flagUrl);
 
                 return (
                   <tr key={report.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}>
