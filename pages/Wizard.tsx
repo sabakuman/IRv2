@@ -127,7 +127,7 @@ export default function Wizard() {
 
     try {
       const ai = new GoogleGenAI({ apiKey });
-      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Always provide monthly wages in USD ($) or AED (درهم) only - convert from local currency if necessary. Include Top 5 export products and Top 5 import products as individual string arrays. Also include 'tipRank' (Trafficking in Persons Rank, e.g. Tier 2) and 'remittancesFromUAE' (annual amount). List Top 5 Universities. Also fetch if there are 'directFlight' (boolean, true if direct flights from UAE exist, else false), 'callingCode' (international calling code, e.g., '+91' or '+63') and 'timezone' (default timezone name or offset from GMT, e.g., 'GMT+5:30').`;
+      const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Always provide monthly wages in USD ($) or AED (درهم) only - convert from local currency if necessary. Include Top 5 export products and Top 5 import products as individual string arrays. Also include 'tipRank' (Trafficking in Persons Rank, e.g. Tier 2) and 'remittancesFromUAE' (annual amount). List Top 5 Universities. Also fetch if there are 'directFlight' (boolean, true if direct flights from UAE exist, else false) and 'unemploymentRate' (latest official national unemployment rate of that country, e.g. '5.2%').`;
       
       const response: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -150,8 +150,7 @@ export default function Wizard() {
               governmentType: { type: Type.STRING },
               workforceMinistry: { type: Type.STRING },
               directFlight: { type: Type.BOOLEAN },
-              callingCode: { type: Type.STRING },
-              timezone: { type: Type.STRING },
+              unemploymentRate: { type: Type.STRING },
               totalWorkforce: { type: Type.STRING },
               participationMale: { type: Type.NUMBER },
               participationFemale: { type: Type.NUMBER },
@@ -454,14 +453,62 @@ export default function Wizard() {
                   <option value="false">{t('noDirect')}</option>
                 </select>
               </div>
-              <Input label={t('callingCode')} value={data.callingCode || ''} onChange={e => setData({...data, callingCode: e.target.value})} placeholder="e.g. +91" />
-              <Input label={t('timezone')} value={data.timezone || ''} onChange={e => setData({...data, timezone: e.target.value})} placeholder="e.g. GMT+5:30" />
+              <Input label={t('totalWorkersInUae')} value={data.totalWorkersInUae || ''} onChange={e => setData({...data, totalWorkersInUae: e.target.value})} placeholder="e.g. 150,000" />
+              <Input label={t('unemploymentRate')} value={data.unemploymentRate || ''} onChange={e => setData({...data, unemploymentRate: e.target.value})} placeholder="e.g. 5.2%" />
             </div>
           </div>
         );
       case 1:
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+              {/* Total Workforce Override Card */}
+              <Card className="p-4 border border-gray-200 bg-gray-50/50 dark:bg-gray-900/30">
+                <h5 className="font-bold text-sm mb-1 text-amber-600 flex items-center gap-2 font-sans">
+                  <Users size={16} />
+                  {language === 'ar' ? 'إجمالي القوى العاملة وجدولة التاريخ (تعديل يدوي)' : 'Total Workforce & Month/Year Dynamic Settings (Manual Override)'}
+                </h5>
+                <p className="text-xs text-gray-500 mb-3 leading-normal">
+                  {language === 'ar' 
+                    ? 'يمكنك ضبط إجمالي القوى العاملة بالدولة وكذلك تحديد الشهر والسنة اللذين يظهران بجانب عنوان قسم "القوى العاملة في دولة الإمارات".' 
+                    : 'You can define the total workforce and specify the month/year that will be featured on the "UAE Workforce" header.'}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Input 
+                      type="number" 
+                      label={language === 'ar' ? 'إجمالي العمالة اليدوي' : 'Manual Total Workers'} 
+                      placeholder={language === 'ar' ? 'مثال: 5500000' : 'e.g. 5500000'}
+                      value={data.uaeWorkforceStats.totalWorkersOverride || ''} 
+                      onChange={e => {
+                        const val = e.target.value === '' ? undefined : Number(e.target.value);
+                        setData({
+                          ...data, 
+                          uaeWorkforceStats: {
+                            ...data.uaeWorkforceStats, 
+                            totalWorkersOverride: val
+                          }
+                        });
+                      }} 
+                    />
+                  </div>
+                  <div>
+                    <Input 
+                      type="text" 
+                      label={language === 'ar' ? 'الشهر والسنة للتقرير (مثال: يونيو 2026)' : 'Month & Year of Report (e.g., June 2026)'} 
+                      placeholder={language === 'ar' ? 'اتركه فارغاً للتاريخ التلقائي' : 'Leave empty for auto current date'}
+                      value={data.reportMonthYear || ''} 
+                      onChange={e => {
+                        setData({
+                          ...data, 
+                          reportMonthYear: e.target.value
+                        });
+                      }} 
+                    />
+                  </div>
+                </div>
+              </Card>
+
+             {/* Main MOHRE / ICP Private/Domestic and Emirate Totals */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="p-4 border-l-4 border-l-primary">
                   <h5 className="font-bold text-sm mb-2">{t('mohreData')}</h5>
@@ -469,10 +516,6 @@ export default function Wizard() {
                     <div className="flex gap-4">
                       <Input label="Private Sector" value={data.uaeWorkforceStats.mohre.totalPrivate.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, value: e.target.value}}}})} />
                       <Input label="Domestic Workers" value={data.uaeWorkforceStats.mohre.totalDomestic.value} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, value: e.target.value}}}})} />
-                    </div>
-                    <div className="flex gap-4">
-                      <Input label={t('unemploymentInsuranceCoverageRate')} placeholder="e.g. 98%" value={data.uaeWorkforceStats.mohre.unemploymentInsuranceCoverage?.value || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, unemploymentInsuranceCoverage: { value: e.target.value, date: data.uaeWorkforceStats.mohre.unemploymentInsuranceCoverage?.date || '' }}}})} />
-                      <Input label={t('wpsWageTransferRate')} placeholder="e.g. 96%" value={data.uaeWorkforceStats.mohre.wpsWageTransferRate?.value || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, wpsWageTransferRate: { value: e.target.value, date: data.uaeWorkforceStats.mohre.wpsWageTransferRate?.date || '' }}}})} />
                     </div>
                     <Input 
                       label="As of (MOHRE Data)" 
@@ -485,24 +528,98 @@ export default function Wizard() {
                           mohre: {
                             ...data.uaeWorkforceStats.mohre, 
                             totalPrivate: {...data.uaeWorkforceStats.mohre.totalPrivate, date: e.target.value},
-                            totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, date: e.target.value},
-                            unemploymentInsuranceCoverage: {
-                              value: data.uaeWorkforceStats.mohre.unemploymentInsuranceCoverage?.value || '',
-                              date: e.target.value
-                            },
-                            wpsWageTransferRate: {
-                              value: data.uaeWorkforceStats.mohre.wpsWageTransferRate?.value || '',
-                              date: e.target.value
-                            }
+                            totalDomestic: {...data.uaeWorkforceStats.mohre.totalDomestic, date: e.target.value}
                           }
                         }
                       })} 
                     />
                   </div>
                 </Card>
-                <Card className="p-4 border-l-4 border-l-accent"><h5 className="font-bold text-sm mb-2">{t('icpData')}</h5><p className="text-[10px] text-gray-500 mb-2 uppercase">{t('icpDisclaimer')}</p><div className="space-y-2">{data.uaeWorkforceStats.icp.byEmirate.map((em, i) => (<div key={i} className="flex items-center gap-2 text-xs font-bold"><span className="w-20">{em.name}</span><Input value={em.value} type="number" className="h-8 py-0" onChange={e => { const list = [...data.uaeWorkforceStats.icp.byEmirate]; list[i].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, icp: {...data.uaeWorkforceStats.icp, byEmirate: list}}}); }} /></div>))}</div></Card>
+                <Card className="p-4 border-l-4 border-l-accent">
+                  <h5 className="font-bold text-sm mb-2">{t('icpData')}</h5>
+                  <p className="text-[10px] text-gray-500 mb-2 uppercase">{t('icpDisclaimer')}</p>
+                  <div className="space-y-2">
+                    {data.uaeWorkforceStats.icp.byEmirate.map((em, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs font-bold">
+                        <span className="w-20">{em.name}</span>
+                        <Input value={em.value} type="number" className="h-8 py-0" onChange={e => { const list = [...data.uaeWorkforceStats.icp.byEmirate]; list[i].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, icp: {...data.uaeWorkforceStats.icp, byEmirate: list}}}); }} />
+                      </div>
+                    ))}
+                  </div>
+                </Card>
              </div>
-             <div>
+
+             {/* Dynamic Unemployment Insurance and Worker Rights Systems */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                {/* Unemployment Insurance System */}
+                <Card className="p-4 bg-white dark:bg-gray-800 border space-y-4">
+                  <h5 className="font-bold text-xs text-primary uppercase tracking-wider">نظام التأمين ضد التعطل عن العمل (Unemployment Insurance)</h5>
+                  
+                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg space-y-3">
+                    <p className="text-[11px] font-bold text-gray-700 leading-tight">{t('unemploymentInsuranceCoverageRate')}</p>
+                    <div className="flex gap-4">
+                      <Input label="Number (عدد)" placeholder="e.g. 5,000,000" value={data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, insuranceUnemploymentCoveredNum: e.target.value}}})} />
+                      <Input label="Percentage (نسبة)" placeholder="e.g. 98%" value={data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, insuranceUnemploymentCoveredPct: e.target.value}}})} />
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg space-y-3">
+                    <p className="text-[11px] font-bold text-gray-700 leading-tight">{t('insuranceUnemploymentExposed')}</p>
+                    <div className="flex gap-4">
+                      <Input label="Number (عدد)" placeholder="e.g. 100,000" value={data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedNum || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, insuranceUnemploymentExposedNum: e.target.value}}})} />
+                      <Input label="Percentage (نسبة)" placeholder="e.g. 2%" value={data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedPct || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, insuranceUnemploymentExposedPct: e.target.value}}})} />
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Worker Rights Insurance System */}
+                <Card className="p-4 bg-white dark:bg-gray-800 border space-y-4">
+                  <h5 className="font-bold text-xs text-amber-600 uppercase tracking-wider font-sans">نظام التأمين على حقوق العمالة (Workers Rights Insurance)</h5>
+                  
+                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg space-y-3">
+                    <p className="text-[11px] font-bold text-gray-700 leading-tight">{t('insuranceRightsCovered')}</p>
+                    <div className="flex gap-4">
+                      <Input label="Number (عدد)" placeholder="e.g. 4,500,000" value={data.uaeWorkforceStats.mohre.insuranceRightsCoveredNum || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, insuranceRightsCoveredNum: e.target.value}}})} />
+                      <Input label="Percentage (نسبة)" placeholder="e.g. 90%" value={data.uaeWorkforceStats.mohre.insuranceRightsCoveredPct || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, insuranceRightsCoveredPct: e.target.value}}})} />
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg space-y-3">
+                    <p className="text-[11px] font-bold text-gray-700 leading-tight">{t('insuranceRightsExposed')}</p>
+                    <div className="flex gap-4">
+                      <Input label="Number (عدد)" placeholder="e.g. 500,000" value={data.uaeWorkforceStats.mohre.insuranceRightsExposedNum || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, insuranceRightsExposedNum: e.target.value}}})} />
+                      <Input label="Percentage (نسبة)" placeholder="e.g. 10%" value={data.uaeWorkforceStats.mohre.insuranceRightsExposedPct || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, insuranceRightsExposedPct: e.target.value}}})} />
+                    </div>
+                  </div>
+                </Card>
+             </div>
+
+             {/* WPS and other indicators */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                {/* WPS Group */}
+                <Card className="p-4 bg-white dark:bg-gray-800 border space-y-4">
+                  <h5 className="font-bold text-xs text-emerald-600 uppercase tracking-wider font-sans">نظام حماية الأجور (Wages Protection System)</h5>
+                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg space-y-3">
+                    <p className="text-[11px] font-bold text-gray-700 leading-normal">{t('wpsWageTransferRate')}</p>
+                    <div className="flex gap-4">
+                      <Input label="Number (عدد)" placeholder="e.g. 4,800,000" value={data.uaeWorkforceStats.mohre.wpsWageTransferNum || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, wpsWageTransferNum: e.target.value}}})} />
+                      <Input label="Percentage (نسبة)" placeholder="e.g. 96%" value={data.uaeWorkforceStats.mohre.wpsWageTransferPct || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, wpsWageTransferPct: e.target.value}}})} />
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Wage Median & Strikes Group */}
+                <Card className="p-4 bg-white dark:bg-gray-800 border space-y-4">
+                  <h5 className="font-bold text-xs text-amber-600 uppercase tracking-wider font-sans">مؤشرات إضافية (Other Indicators)</h5>
+                  <div className="space-y-4">
+                    <Input label={t('wageMedianComparison')} placeholder="e.g. $1,200" value={data.uaeWorkforceStats.mohre.wageMedianComparison || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, wageMedianComparison: e.target.value}}})} />
+                    <Input label={t('workersLaborStrikes')} placeholder="e.g. 0" value={data.uaeWorkforceStats.mohre.workersLaborStrikes || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, workersLaborStrikes: e.target.value}}})} />
+                  </div>
+                </Card>
+             </div>
+
+             {/* Workers by Emirate Forms */}
+             <div className="pt-4 border-t">
                 <h5 className="font-bold text-sm mb-3">{t('workersByEmirate')} (MOHRE)</h5>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {data.uaeWorkforceStats.mohre.byEmirate.map((em, idx) => (
@@ -513,24 +630,36 @@ export default function Wizard() {
                   ))}
                 </div>
              </div>
-             <div>
-                <h5 className="font-bold text-sm mb-3">{t('workersBySector')}</h5>
-                {data.uaeWorkforceStats.mohre.bySector.map((sec, idx) => (
-                  <div key={idx} className="flex gap-4 mb-2"><Input value={sec.name} className="flex-1" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].name = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><Input value={sec.value} type="number" className="w-32" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} /><button onClick={() => { const list = data.uaeWorkforceStats.mohre.bySector.filter((_, i) => i !== idx); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} className="text-red-400"><X size={16} /></button></div>
-                ))}
-                <Button size="sm" variant="outline" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: [...data.uaeWorkforceStats.mohre.bySector, { name: '', value: 0 }]}}})}>+ Add Sector</Button>
-             </div>
-             <div className="pt-6 border-t">
-                <h5 className="font-bold text-sm mb-3">{t('additionalIndicators')}</h5>
-                {data.uaeWorkforceStats.custom.map((stat, i) => (
-                   <div key={stat.id} className="flex gap-4 mb-3 items-end">
-                      <Input label="Label" value={stat.label} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].label = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
-                      <Input label="Value" value={stat.value} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].value = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
-                      <Input label="Date/As of" type="month" value={stat.date} onChange={e => { const list = [...data.uaeWorkforceStats.custom]; list[i].date = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: list}}); }} />
-                      {!stat.isTotal && <button onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: data.uaeWorkforceStats.custom.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button>}
+
+             {/* Sector Distribution: MOHRE AND ICP */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                <div>
+                   <h5 className="font-bold text-sm mb-3">{t('workersBySector')} (MOHRE)</h5>
+                   <div className="space-y-2">
+                     {data.uaeWorkforceStats.mohre.bySector.map((sec, idx) => (
+                       <div key={idx} className="flex gap-4 mb-2">
+                         <Input value={sec.name} className="flex-1" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].name = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} />
+                         <Input value={sec.value} type="number" className="w-32" onChange={e => { const list = [...data.uaeWorkforceStats.mohre.bySector]; list[idx].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} />
+                         <button onClick={() => { const list = data.uaeWorkforceStats.mohre.bySector.filter((_, i) => i !== idx); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: list}}}); }} className="text-red-400"><X size={16} /></button>
+                       </div>
+                     ))}
                    </div>
-                ))}
-                <Button size="sm" variant="outline" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, custom: [...data.uaeWorkforceStats.custom, { id: uuidv4(), label: '', value: '', date: '', isTotal: false }]}})}>+ Add Indicator</Button>
+                   <Button size="sm" variant="outline" className="mt-2" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, bySector: [...data.uaeWorkforceStats.mohre.bySector, { name: '', value: 0 }]}}})}>+ Add Sector (MOHRE)</Button>
+                </div>
+
+                <div>
+                   <h5 className="font-bold text-sm mb-3">توزيع العمال حسب القطاع في *(بيانات ICP)</h5>
+                   <div className="space-y-2">
+                     {(data.uaeWorkforceStats.icp.bySector || []).map((sec, idx) => (
+                       <div key={idx} className="flex gap-4 mb-2">
+                         <Input value={sec.name} className="flex-1" onChange={e => { const list = [...data.uaeWorkforceStats.icp.bySector]; list[idx].name = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, icp: {...data.uaeWorkforceStats.icp, bySector: list}}}); }} />
+                         <Input value={sec.value} type="number" className="w-32" onChange={e => { const list = [...data.uaeWorkforceStats.icp.bySector]; list[idx].value = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, icp: {...data.uaeWorkforceStats.icp, bySector: list}}}); }} />
+                         <button onClick={() => { const list = data.uaeWorkforceStats.icp.bySector.filter((_, i) => i !== idx); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, icp: {...data.uaeWorkforceStats.icp, bySector: list}}}); }} className="text-red-400"><X size={16} /></button>
+                       </div>
+                     ))}
+                   </div>
+                   <Button size="sm" variant="outline" className="mt-2" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, icp: {...data.uaeWorkforceStats.icp, bySector: [...(data.uaeWorkforceStats.icp.bySector || []), { name: '', value: 0 }]}}})}>+ Add Sector (ICP)</Button>
+                </div>
              </div>
           </div>
         );
@@ -675,15 +804,10 @@ export default function Wizard() {
                     </div>
                  </div>
 
-                 <div className="pt-4 border-t">
-                    <h5 className="font-bold text-sm mb-3">Custom Trade/Economic Indicators</h5>
-                    {data.economicStats.customStats.map((stat, i) => (<div key={stat.id} className="flex gap-4 mb-2 items-end"><Input label="Indicator" value={stat.label} onChange={e => { const list = [...data.economicStats.customStats]; list[i].label = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><Input label="Value" value={stat.value} onChange={e => { const list = [...data.economicStats.customStats]; list[i].value = e.target.value; setData({...data, economicStats: {...data.economicStats, customStats: list}}); }} /><button onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: data.economicStats.customStats.filter(c => c.id !== stat.id)}})} className="text-red-400 mb-2"><X size={16} /></button></div>))}
-                    <Button size="sm" variant="outline" onClick={() => setData({...data, economicStats: {...data.economicStats, customStats: [...data.economicStats.customStats, { id: uuidv4(), label: '', value: '' }]}})}>+ Add Indicator</Button>
-                 </div>
-               </>
-             )}
-          </div>
-        );
+                </>
+              )}
+           </div>
+         );
       case 4:
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
@@ -707,6 +831,16 @@ export default function Wizard() {
                    </Card>
                 ))}
                 <Button variant="outline" onClick={() => setData({...data, pointsOfDiscussion: [...data.pointsOfDiscussion, { id: uuidv4(), title: '', content: '' }]})}>+ Add Point</Button>
+             </div>
+             <div className="space-y-4 pt-6 border-t">
+                <h4 className="font-bold flex items-center gap-2"><CheckCircle size={18} /> {t('previousAgreementsAndUpdates')}</h4>
+                {(data.previousAgreementsAndUpdates || []).map((item, idx) => (
+                   <Card key={item.id} className="p-4 relative">
+                      <button onClick={() => setData({...data, previousAgreementsAndUpdates: (data.previousAgreementsAndUpdates || []).filter(pd => pd.id !== item.id)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
+                      <Input value={item.title} className="font-bold mb-4" placeholder="Topic Title" onChange={e => { const list = [...(data.previousAgreementsAndUpdates || [])]; list[idx].title = e.target.value; setData({...data, previousAgreementsAndUpdates: list}); }} /><RichTextarea label="Content" value={item.content} onChange={(val: string) => { const list = [...(data.previousAgreementsAndUpdates || [])]; list[idx].content = val; setData({...data, previousAgreementsAndUpdates: list}); }} />
+                   </Card>
+                ))}
+                <Button variant="outline" onClick={() => setData({...data, previousAgreementsAndUpdates: [...(data.previousAgreementsAndUpdates || []), { id: uuidv4(), title: '', content: '' }]})}>+ Add Point</Button>
              </div>
              <div className="pt-6 border-t">
                <div className="flex justify-between items-center mb-4">

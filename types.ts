@@ -81,11 +81,24 @@ export interface NewsItem {
 }
 
 export interface UaeWorkforceData {
+  totalWorkersOverride?: number;
   mohre: {
     totalPrivate: DateValue;
     totalDomestic: DateValue;
     unemploymentInsuranceCoverage?: DateValue;
     wpsWageTransferRate?: DateValue;
+    insuranceUnemploymentCoveredNum?: string;
+    insuranceUnemploymentCoveredPct?: string;
+    insuranceUnemploymentExposedNum?: string;
+    insuranceUnemploymentExposedPct?: string;
+    insuranceRightsCoveredNum?: string;
+    insuranceRightsCoveredPct?: string;
+    insuranceRightsExposedNum?: string;
+    insuranceRightsExposedPct?: string;
+    wpsWageTransferNum?: string;
+    wpsWageTransferPct?: string;
+    wageMedianComparison?: string;
+    workersLaborStrikes?: string;
     byEmirate: LabelValue[]; // Abu Dhabi, Dubai, etc.
     bySector: LabelValue[];
   };
@@ -105,6 +118,7 @@ export interface UaeWorkforceData {
 // Complex Report Structure
 export interface ReportData {
   reportDate?: string; // Date of the report/meeting
+  reportMonthYear?: string; // Month and Year (Arabic/English or input from user)
   flagUrl?: string; // Custom uploaded flag
 
   // Section 1: Country Profile & Diplomacy
@@ -118,8 +132,8 @@ export interface ReportData {
   directFlight: boolean; // Yes/No
   uaeEmbassyLocation: string; // Location in that country
   foreignEmbassyLocation: string; // City in UAE
-  callingCode?: string;
-  timezone?: string;
+  totalWorkersInUae?: string;
+  unemploymentRate?: string;
   
   // New Demographics
   crimeRate?: string;
@@ -166,6 +180,7 @@ export interface ReportData {
   // Section 5: Interactions & News (NEW)
   recentInteractions: RecentInteraction[];
   pointsOfDiscussion: PointOfDiscussion[];
+  previousAgreementsAndUpdates?: PointOfDiscussion[];
   relatedNews: NewsItem[];
 
   // Flexible Content
@@ -213,6 +228,7 @@ export interface AuditLog {
 
 export const EMPTY_REPORT_DATA: ReportData = {
   reportDate: new Date().toISOString().split('T')[0],
+  reportMonthYear: '',
   flagUrl: '',
   country: '',
   capital: '',
@@ -222,8 +238,8 @@ export const EMPTY_REPORT_DATA: ReportData = {
   gdp: '',
   hdi: '',
   directFlight: false,
-  callingCode: '',
-  timezone: '',
+  totalWorkersInUae: '',
+  unemploymentRate: '',
   uaeEmbassyLocation: '',
   foreignEmbassyLocation: '',
   crimeRate: '',
@@ -233,11 +249,24 @@ export const EMPTY_REPORT_DATA: ReportData = {
   averageWage: '',
   minimumWage: '',
   uaeWorkforceStats: {
+    totalWorkersOverride: undefined,
     mohre: {
       totalPrivate: { value: '', date: '' },
       totalDomestic: { value: '', date: '' },
       unemploymentInsuranceCoverage: { value: '', date: '' },
       wpsWageTransferRate: { value: '', date: '' },
+      insuranceUnemploymentCoveredNum: '',
+      insuranceUnemploymentCoveredPct: '',
+      insuranceUnemploymentExposedNum: '',
+      insuranceUnemploymentExposedPct: '',
+      insuranceRightsCoveredNum: '',
+      insuranceRightsCoveredPct: '',
+      insuranceRightsExposedNum: '',
+      insuranceRightsExposedPct: '',
+      wpsWageTransferNum: '',
+      wpsWageTransferPct: '',
+      wageMedianComparison: '',
+      workersLaborStrikes: '',
       byEmirate: [
         { name: 'Abu Dhabi', value: 0 },
         { name: 'Dubai', value: 0 },
@@ -293,6 +322,7 @@ export const EMPTY_REPORT_DATA: ReportData = {
   },
   recentInteractions: [],
   pointsOfDiscussion: [],
+  previousAgreementsAndUpdates: [],
   relatedNews: [],
   customSections: [],
   bilateralAgreements: [],

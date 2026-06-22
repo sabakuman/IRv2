@@ -8,7 +8,7 @@ import {
   Printer, X, AlertTriangle, ShieldAlert,
   GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
   ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer,
-  ExternalLink, Clock, Phone
+  ExternalLink, Clock, Phone, Percent, CheckCircle
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { useLanguage } from '../context/LanguageContext';
@@ -244,8 +244,17 @@ export default function PrintView() {
   const sortedMohreEmirates = [...data.uaeWorkforceStats.mohre.byEmirate].sort((a, b) => b.value - a.value);
   const sortedIcpEmirates = [...data.uaeWorkforceStats.icp.byEmirate].sort((a, b) => b.value - a.value);
 
+  const totalMohreByCity = data.uaeWorkforceStats.mohre.byEmirate.reduce((acc, curr) => acc + (curr.value || 0), 0);
+  const totalIcpByCity = data.uaeWorkforceStats.icp.byEmirate.reduce((acc, curr) => acc + (curr.value || 0), 0);
+  const combinedTotalWorkers = data.uaeWorkforceStats.totalWorkersOverride !== undefined && data.uaeWorkforceStats.totalWorkersOverride !== null && data.uaeWorkforceStats.totalWorkersOverride !== 0
+    ? data.uaeWorkforceStats.totalWorkersOverride
+    : totalMohreByCity + totalIcpByCity;
+
   const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
   const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
+
+  const icpSectors = data.uaeWorkforceStats.icp.bySector || [];
+  const maxIcpVal = Math.max(...icpSectors.map(s => s.value), 1);
 
   // Pagination Logic Constants
   const INT_CHUNK_SIZE = 5;
@@ -263,6 +272,12 @@ export default function PrintView() {
   const pointsChunks = [];
   for (let i = 0; i < data.pointsOfDiscussion.length; i += POINTS_CHUNK_SIZE) {
     pointsChunks.push(data.pointsOfDiscussion.slice(i, i + POINTS_CHUNK_SIZE));
+  }
+
+  const updatesChunks = [];
+  const previousUpdates = data.previousAgreementsAndUpdates || [];
+  for (let i = 0; i < previousUpdates.length; i += POINTS_CHUNK_SIZE) {
+    updatesChunks.push(previousUpdates.slice(i, i + POINTS_CHUNK_SIZE));
   }
 
   const sortedAgreements = [...data.bilateralAgreements].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -379,8 +394,8 @@ export default function PrintView() {
             <KPI icon={Briefcase} label={t('workforceMinistry')} value={data.workforceMinistry || 'N/A'} />
             <KPI icon={MessageSquare} label={t('officialLanguage')} value={data.officialLanguage || 'N/A'} />
             <KPI icon={Plane} label={t('directFlight')} value={data.directFlight ? (isRTL ? 'نعم' : 'Yes') : (isRTL ? 'لا' : 'No')} />
-            <KPI icon={Phone} label={t('callingCode')} value={data.callingCode || 'N/A'} />
-            <KPI icon={Clock} label={t('timezone')} value={data.timezone || 'N/A'} />
+            <KPI icon={Users} label={t('totalWorkersInUae')} value={data.totalWorkersInUae || 'N/A'} />
+            <KPI icon={Percent} label={t('unemploymentRate')} value={data.unemploymentRate || 'N/A'} sub={getSource('demo')} />
           </div>
           <SectionHeader icon={TrendingUp} title={t('economicLandscape')} subtitle={t('tradeEducation')} compact />
           <div className="grid grid-cols-4 gap-3 mb-4">
@@ -417,20 +432,132 @@ export default function PrintView() {
         {/* PAGE 3: UAE WORKFORCE */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-          <SectionHeader icon={Building} title={t('sectionUaeWorkforce')} subtitle={t('domesticAnalysis')} />
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <KPI icon={Briefcase} label={t('mohrePrivate')} value={data.uaeWorkforceStats.mohre.totalPrivate.value} sub={getSource('mohre', data.uaeWorkforceStats.mohre.totalPrivate.date)} labelClassName="text-xs font-bold" />
-            <KPI icon={Users} label={t('mohreDomestic')} value={data.uaeWorkforceStats.mohre.totalDomestic.value} sub={getSource('mohre', data.uaeWorkforceStats.mohre.totalDomestic.date)} tone="warn" labelClassName="text-xs font-bold" />
+          <SectionHeader icon={Building} title={`${t('sectionUaeWorkforce')} (${data.reportMonthYear || defaultDateStr})`} subtitle={t('domesticAnalysis')} />
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-2 flex flex-col items-center justify-center text-center shadow-sm mb-2.5">
+            <p className="text-[10px] font-extrabold text-primary-dark uppercase tracking-widest leading-none mb-1 text-center font-sans">
+              {t('totalWorkforceInUaeLaborMarket')}
+            </p>
+            <p className="text-xl font-serif font-black text-primary-dark">
+              {combinedTotalWorkers.toLocaleString()}
+            </p>
           </div>
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <KPI icon={Shield} label={t('unemploymentInsuranceCoverageRate')} value={data.uaeWorkforceStats.mohre.unemploymentInsuranceCoverage?.value || 'N/A'} sub={getSource('mohre', data.uaeWorkforceStats.mohre.unemploymentInsuranceCoverage?.date || data.uaeWorkforceStats.mohre.totalPrivate.date)} tone="ok" labelClassName="text-xs font-bold" />
-            <KPI icon={Banknote} label={t('wpsWageTransferRate')} value={data.uaeWorkforceStats.mohre.wpsWageTransferRate?.value || 'N/A'} sub={getSource('mohre', data.uaeWorkforceStats.mohre.wpsWageTransferRate?.date || data.uaeWorkforceStats.mohre.totalPrivate.date)} tone="ok" labelClassName="text-xs font-bold" />
+
+          <div className="grid grid-cols-4 gap-2.5 mb-2.5 items-stretch">
+            {/* CARD 1: MOHRE PRIVATE */}
+            <div className="bg-white border border-gray-200 rounded-xl p-2.5 flex flex-col justify-between shadow-sm min-h-[90px]">
+              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-10 overflow-hidden">
+                {t('mohrePrivate')}
+              </span>
+              <div>
+                <span className="text-xs font-black block text-gray-900 font-mono">
+                  {data.uaeWorkforceStats.mohre.totalPrivate.value || 'N/A'}
+                </span>
+              </div>
+            </div>
+
+            {/* CARD 2: MOHRE DOMESTIC */}
+            <div className="bg-white border border-gray-200 rounded-xl p-2.5 flex flex-col justify-between shadow-sm min-h-[90px]">
+              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-10 overflow-hidden">
+                {t('mohreDomestic')}
+              </span>
+              <div>
+                <span className="text-xs font-black block text-gray-900 font-mono">
+                  {data.uaeWorkforceStats.mohre.totalDomestic.value || 'N/A'}
+                </span>
+              </div>
+            </div>
+
+            {/* CARD 3: UNEMPLOYMENT INSURANCE */}
+            <div className="bg-white border border-gray-200 rounded-xl p-2.5 flex flex-col justify-between shadow-sm min-h-[90px]">
+              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-10 overflow-hidden">
+                {t('unemploymentInsuranceCoverageRate')}
+              </span>
+              <div>
+                <span className="text-xs font-black block text-gray-900 font-mono">
+                  {data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}
+                </span>
+                <span className="text-[10px] font-extrabold text-emerald-600 block leading-tight font-sans mt-0.5">
+                  {data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct 
+                    ? (data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct.endsWith('%') 
+                        ? data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct 
+                        : `${data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct}%`) 
+                    : '-%'}
+                </span>
+              </div>
+            </div>
+
+            {/* CARD 4: WPS WAGE TRANSFER */}
+            <div className="bg-white border border-gray-200 rounded-xl p-2.5 flex flex-col justify-between shadow-sm min-h-[90px]">
+              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-10 overflow-hidden">
+                {t('wpsWageTransferRate')}
+              </span>
+              <div>
+                <span className="text-xs font-black block text-gray-900 font-mono">
+                  {data.uaeWorkforceStats.mohre.wpsWageTransferNum || 'N/A'}
+                </span>
+                <span className="text-[10px] font-extrabold text-emerald-600 block leading-tight font-sans mt-0.5">
+                  {data.uaeWorkforceStats.mohre.wpsWageTransferPct 
+                    ? (data.uaeWorkforceStats.mohre.wpsWageTransferPct.endsWith('%') 
+                        ? data.uaeWorkforceStats.mohre.wpsWageTransferPct 
+                        : `${data.uaeWorkforceStats.mohre.wpsWageTransferPct}%`) 
+                    : '-%'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* The 4 Tiny Boxes Grid */}
+          <div className="grid grid-cols-4 gap-2.5 mb-2.5">
+            <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('unemploymentInsuranceCoverageRate')}</span>
+              <div>
+                <span className="text-[10px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}</span>
+                <span className="text-[9px] font-extrabold text-primary font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct || '-%'}</span>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('insuranceUnemploymentExposed')}</span>
+              <div>
+                <span className="text-[10px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedNum || 'N/A'}</span>
+                <span className="text-[9px] font-extrabold text-amber-600 font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedPct || '-%'}</span>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('insuranceRightsCovered')}</span>
+              <div>
+                <span className="text-[10px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredNum || 'N/A'}</span>
+                <span className="text-[9px] font-extrabold text-primary font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredPct || '-%'}</span>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('insuranceRightsExposed')}</span>
+              <div>
+                <span className="text-[10px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsExposedNum || 'N/A'}</span>
+                <span className="text-[9px] font-extrabold text-amber-600 font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsExposedPct || '-%'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Two Other KPI Boxes */}
+          <div className="grid grid-cols-2 gap-2.5 mb-2.5">
+            <div className="bg-white border rounded-xl p-2 flex flex-col shadow-sm">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-0.5">{t('wageMedianComparison')}</span>
+              <span className="text-[11px] font-sans font-black text-gray-900 block overflow-hidden truncate">{data.uaeWorkforceStats.mohre.wageMedianComparison || 'N/A'}</span>
+            </div>
+            
+            <div className="bg-white border rounded-xl p-2 flex flex-col shadow-sm">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-0.5">{t('workersLaborStrikes')}</span>
+              <span className="text-[11px] font-sans font-black text-gray-900 block overflow-hidden truncate">{data.uaeWorkforceStats.mohre.workersLaborStrikes || 'N/A'}</span>
+            </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
-                <p className="text-center text-[10px] font-bold text-primary mb-2 uppercase tracking-wider">{t('workersByEmirate')}</p>
-                <div className="h-32 w-full">
+          <div className="grid grid-cols-2 gap-3 mb-2.5">
+            <div className="p-2 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
+                <p className="text-center text-[9px] font-bold text-gray-500 mb-1 uppercase tracking-wider">{t('workersByEmirate')}</p>
+                <div className="h-20 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sortedMohreEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
                           <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
@@ -443,35 +570,34 @@ export default function PrintView() {
                   </ResponsiveContainer>
                 </div>
             </div>
-            <div className="p-3 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
-                <p className="text-center text-[10px] font-bold text-accent mb-2 uppercase tracking-wider">{isRTL ? 'توزيع العاملين حسب الإمارة (ICP)' : 'Workers distribution by Emirate (ICP)'}</p>
-                <div className="h-32 w-full">
+            <div className="p-2 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
+                <p className="text-center text-[9px] font-bold text-gray-500 mb-1 uppercase tracking-wider">{isRTL ? 'توزيع العاملين حسب الإمارة (ICP)' : 'Workers distribution by Emirate (ICP)'}</p>
+                <div className="h-20 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sortedIcpEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
-                          <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
-                          <YAxis hide />
-                          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '8px', fill: '#333', fontWeight: 'bold' }} />
-                            {sortedIcpEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[(index + 3) % BLUE_PALETTE.length]} />))}
-                          </Bar>
+                      <BarChart data={sortedIcpEmirates} margin={{top: 10, right: 5, bottom: 0, left: 5}}>
+                           <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
+                           <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+                             <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '7px', fill: '#444', fontWeight: 'bold' }} />
+                             {sortedIcpEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[(index + 3) % BLUE_PALETTE.length]} />))}
+                           </Bar>
                       </BarChart>
                   </ResponsiveContainer>
                 </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
-            <div className="border border-gray-200 rounded-2xl p-4 flex flex-col bg-white shadow-sm">
-                <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
-                  {isRTL ? `توزيع العمال حسب القطاع في ${data.country}` : `Workers distribution by sector in ${data.country}`}
-                  <span className="ms-2">{getSource('mohre', data.uaeWorkforceStats.mohre.totalPrivate.date)}</span>
+          {/* Sector distribution comparisons */}
+          <div className="grid grid-cols-2 gap-3 flex-1 overflow-hidden">
+            <div className="border border-gray-200 rounded-2xl p-3 flex flex-col bg-white shadow-sm overflow-hidden text-ellipsis">
+                <p className="text-[10px] font-extrabold text-gray-700 mb-2 uppercase tracking-wider leading-none">
+                  {isRTL ? 'توزيع العمال حسب القطاع في (MOHRE)' : 'Workers distribution by sector (MOHRE)'}
                 </p>
-                <div className="space-y-1.5 flex-1 overflow-hidden">
-                  {mohreSectors.slice(0, 10).map((s, i) => (
-                      <div key={i}>
-                        <div className="flex justify-between text-[10px] mb-0.5">
-                            <span className="font-bold text-gray-700 truncate">{s.name}</span>
-                            <span className="font-mono text-gray-900 font-bold">{formatCompactNumber(s.value)}</span>
+                <div className="space-y-1 overflow-hidden">
+                  {mohreSectors.slice(0, 5).map((s, i) => (
+                      <div key={i} className="leading-none">
+                        <div className="flex justify-between text-[9px] mb-0.5">
+                            <span className="font-bold text-gray-600 truncate max-w-[120px]">{s.name}</span>
+                            <span className="font-mono text-gray-900 font-bold text-[8px]">{formatCompactNumber(s.value)}</span>
                         </div>
                         <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
                             <div className="h-full bg-primary transition-all duration-500" style={{ width: `${(s.value / maxMohreVal) * 100}%` }}></div>
@@ -481,16 +607,20 @@ export default function PrintView() {
                 </div>
             </div>
             
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
-                <p className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">{t('additionalIndicators')}</p>
-                <div className="space-y-2">
-                  {data.uaeWorkforceStats.custom.map((stat) => (
-                      <div key={stat.id} className="flex justify-between items-end border-b border-gray-200 pb-2 last:border-0">
-                        <div>
-                            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide leading-tight">{stat.label}</p>
-                            <p className="text-[8px] text-gray-400 font-sans">{formatAsOfDate(stat.date)}</p>
+            <div className="border border-gray-200 rounded-2xl p-3 flex flex-col bg-white shadow-sm overflow-hidden text-ellipsis">
+                <p className="text-[10px] font-extrabold text-gray-700 mb-2 uppercase tracking-wider leading-none">
+                  {isRTL ? 'توزيع العمال حسب القطاع في (ICP)' : 'Workers distribution by sector (ICP)'}
+                </p>
+                <div className="space-y-1 overflow-hidden">
+                  {icpSectors.slice(0, 5).map((s, i) => (
+                      <div key={i} className="leading-none">
+                        <div className="flex justify-between text-[9px] mb-0.5">
+                            <span className="font-bold text-gray-600 truncate max-w-[120px]">{s.name}</span>
+                            <span className="font-mono text-gray-900 font-bold text-[8px]">{formatCompactNumber(s.value)}</span>
                         </div>
-                        <p className="text-lg font-serif font-bold text-gray-900">{stat.value}</p>
+                        <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-accent transition-all duration-500" style={{ width: `${(s.value / maxIcpVal) * 100}%` }}></div>
+                        </div>
                       </div>
                   ))}
                 </div>
@@ -602,6 +732,30 @@ export default function PrintView() {
                 {chunk.map((point, idx) => (
                   <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break">
                       <span className="text-accent font-bold text-lg leading-none">•</span>
+                      <div className="flex-1">
+                        <strong className="block text-[12.5px] text-gray-900 mb-0.5 uppercase tracking-wide leading-tight">{point.title}</strong>
+                        {renderRichText(point.content)}
+                      </div>
+                  </div>
+                ))}
+              </div>
+            </PageContainer>
+          );
+        })}
+
+        {updatesChunks.map((chunk, cIdx) => {
+          const pageTitle = cIdx === 0 
+            ? t('previousAgreementsAndUpdates') 
+            : `${t('previousAgreementsAndUpdates')} ${cIdx + 1}`;
+
+          return (
+            <PageContainer key={`upd-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+              <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+              <SectionHeader icon={CheckCircle} title={pageTitle} />
+              <div className="flex flex-col gap-2 mt-2">
+                {chunk.map((point, idx) => (
+                  <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break">
+                      <span className="text-primary font-bold text-lg leading-none">•</span>
                       <div className="flex-1">
                         <strong className="block text-[12.5px] text-gray-900 mb-0.5 uppercase tracking-wide leading-tight">{point.title}</strong>
                         {renderRichText(point.content)}
