@@ -250,11 +250,28 @@ export default function PrintView() {
     ? data.uaeWorkforceStats.totalWorkersOverride
     : totalMohreByCity + totalIcpByCity;
 
-  const mohreSectors = data.uaeWorkforceStats.mohre.bySector;
-  const maxMohreVal = Math.max(...mohreSectors.map(s => s.value), 1);
+  const processSectors = (sectorsList: { name: string; value: number }[]) => {
+    const sorted = [...sectorsList].sort((a, b) => b.value - a.value);
+    if (sorted.length <= 10) {
+      return sorted;
+    }
+    const top10 = sorted.slice(0, 10);
+    const remaining = sorted.slice(10);
+    const remainingSum = remaining.reduce((sum, item) => sum + (item.value || 0), 0);
+    if (remainingSum > 0) {
+      top10.push({
+        name: isRTL ? 'اخرى' : 'Other',
+        value: remainingSum
+      });
+    }
+    return top10;
+  };
 
-  const icpSectors = data.uaeWorkforceStats.icp.bySector || [];
-  const maxIcpVal = Math.max(...icpSectors.map(s => s.value), 1);
+  const processedMohreSectors = processSectors(data.uaeWorkforceStats.mohre.bySector);
+  const maxMohreVal = Math.max(...processedMohreSectors.map(s => s.value), 1);
+
+  const processedIcpSectors = processSectors(data.uaeWorkforceStats.icp.bySector || []);
+  const maxIcpVal = Math.max(...processedIcpSectors.map(s => s.value), 1);
 
   // Pagination Logic Constants
   const INT_CHUNK_SIZE = 5;
@@ -449,7 +466,7 @@ export default function PrintView() {
                 {t('mohrePrivate')}
               </span>
               <div>
-                <span className="text-xs font-black block text-gray-900 font-mono">
+                <span className="text-[17px] font-black block text-gray-900 font-mono">
                   {data.uaeWorkforceStats.mohre.totalPrivate.value || 'N/A'}
                 </span>
               </div>
@@ -461,7 +478,7 @@ export default function PrintView() {
                 {t('mohreDomestic')}
               </span>
               <div>
-                <span className="text-xs font-black block text-gray-900 font-mono">
+                <span className="text-[17px] font-black block text-gray-900 font-mono">
                   {data.uaeWorkforceStats.mohre.totalDomestic.value || 'N/A'}
                 </span>
               </div>
@@ -473,10 +490,10 @@ export default function PrintView() {
                 {t('unemploymentInsuranceCoverageRate')}
               </span>
               <div>
-                <span className="text-xs font-black block text-gray-900 font-mono">
+                <span className="text-[17px] font-black block text-gray-900 font-mono">
                   {data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}
                 </span>
-                <span className="text-[10px] font-extrabold text-emerald-600 block leading-tight font-sans mt-0.5">
+                <span className="text-[13px] font-extrabold text-emerald-600 block leading-tight font-sans mt-0.5">
                   {data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct 
                     ? (data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct.endsWith('%') 
                         ? data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct 
@@ -492,10 +509,10 @@ export default function PrintView() {
                 {t('wpsWageTransferRate')}
               </span>
               <div>
-                <span className="text-xs font-black block text-gray-900 font-mono">
+                <span className="text-[17px] font-black block text-gray-900 font-mono">
                   {data.uaeWorkforceStats.mohre.wpsWageTransferNum || 'N/A'}
                 </span>
-                <span className="text-[10px] font-extrabold text-emerald-600 block leading-tight font-sans mt-0.5">
+                <span className="text-[13px] font-extrabold text-emerald-600 block leading-tight font-sans mt-0.5">
                   {data.uaeWorkforceStats.mohre.wpsWageTransferPct 
                     ? (data.uaeWorkforceStats.mohre.wpsWageTransferPct.endsWith('%') 
                         ? data.uaeWorkforceStats.mohre.wpsWageTransferPct 
@@ -511,32 +528,32 @@ export default function PrintView() {
             <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('unemploymentInsuranceCoverageRate')}</span>
               <div>
-                <span className="text-[10px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}</span>
-                <span className="text-[9px] font-extrabold text-primary font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct || '-%'}</span>
+                <span className="text-[17px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}</span>
+                <span className="text-[13px] font-extrabold text-primary font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct || '-%'}</span>
               </div>
             </div>
             
             <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('insuranceUnemploymentExposed')}</span>
               <div>
-                <span className="text-[10px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedNum || 'N/A'}</span>
-                <span className="text-[9px] font-extrabold text-amber-600 font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedPct || '-%'}</span>
+                <span className="text-[17px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedNum || 'N/A'}</span>
+                <span className="text-[13px] font-extrabold text-amber-600 font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedPct || '-%'}</span>
               </div>
             </div>
 
             <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('insuranceRightsCovered')}</span>
               <div>
-                <span className="text-[10px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredNum || 'N/A'}</span>
-                <span className="text-[9px] font-extrabold text-primary font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredPct || '-%'}</span>
+                <span className="text-[17px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredNum || 'N/A'}</span>
+                <span className="text-[13px] font-extrabold text-primary font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredPct || '-%'}</span>
               </div>
             </div>
 
             <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('insuranceRightsExposed')}</span>
               <div>
-                <span className="text-[10px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsExposedNum || 'N/A'}</span>
-                <span className="text-[9px] font-extrabold text-amber-600 font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsExposedPct || '-%'}</span>
+                <span className="text-[17px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsExposedNum || 'N/A'}</span>
+                <span className="text-[13px] font-extrabold text-amber-600 font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsExposedPct || '-%'}</span>
               </div>
             </div>
           </div>
@@ -545,12 +562,12 @@ export default function PrintView() {
           <div className="grid grid-cols-2 gap-2.5 mb-2.5">
             <div className="bg-white border rounded-xl p-2 flex flex-col shadow-sm">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-0.5">{t('wageMedianComparison')}</span>
-              <span className="text-[11px] font-sans font-black text-gray-900 block overflow-hidden truncate">{data.uaeWorkforceStats.mohre.wageMedianComparison || 'N/A'}</span>
+              <span className="text-[15px] font-sans font-black text-gray-900 block overflow-hidden truncate">{data.uaeWorkforceStats.mohre.wageMedianComparison || 'N/A'}</span>
             </div>
             
             <div className="bg-white border rounded-xl p-2 flex flex-col shadow-sm">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-0.5">{t('workersLaborStrikes')}</span>
-              <span className="text-[11px] font-sans font-black text-gray-900 block overflow-hidden truncate">{data.uaeWorkforceStats.mohre.workersLaborStrikes || 'N/A'}</span>
+              <span className="text-[15px] font-sans font-black text-gray-900 block overflow-hidden truncate">{data.uaeWorkforceStats.mohre.workersLaborStrikes || 'N/A'}</span>
             </div>
           </div>
           
@@ -593,7 +610,7 @@ export default function PrintView() {
                   {isRTL ? 'توزيع العمال حسب القطاع في (MOHRE)' : 'Workers distribution by sector (MOHRE)'}
                 </p>
                 <div className="space-y-1 overflow-hidden">
-                  {mohreSectors.slice(0, 5).map((s, i) => (
+                  {processedMohreSectors.map((s, i) => (
                       <div key={i} className="leading-none">
                         <div className="flex justify-between text-[9px] mb-0.5">
                             <span className="font-bold text-gray-600 truncate max-w-[120px]">{s.name}</span>
@@ -612,7 +629,7 @@ export default function PrintView() {
                   {isRTL ? 'توزيع العمال حسب القطاع في (ICP)' : 'Workers distribution by sector (ICP)'}
                 </p>
                 <div className="space-y-1 overflow-hidden">
-                  {icpSectors.slice(0, 5).map((s, i) => (
+                  {processedIcpSectors.map((s, i) => (
                       <div key={i} className="leading-none">
                         <div className="flex justify-between text-[9px] mb-0.5">
                             <span className="font-bold text-gray-600 truncate max-w-[120px]">{s.name}</span>

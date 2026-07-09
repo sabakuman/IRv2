@@ -7,6 +7,7 @@ import { createRequire } from 'module';
 import { initializeMOUDatabase } from './server/mou_init.js';
 import { createMOURoutes } from './server/routes/mou.js';
 import { createServer as createViteServer } from 'vite';
+import { GoogleGenAI } from '@google/genai';
 
 // SQLite requires CommonJS import style in some environments
 const require = createRequire(import.meta.url);
@@ -144,6 +145,56 @@ app.post('/api/announcement', (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });
+});
+
+// AI Generation Proxy Route
+app.post('/api/ai/generate', async (req, res) => {
+  let { prompt, model, config } = req.body;
+  const userApiKey = req.headers['x-user-apikey'];
+
+  // Fallback chain for API Key: 
+  // 1. Header 'x-user-apikey'
+  // 2. Server Environment variables
+  const apiKey = (userApiKey && userApiKey.trim() !== '') 
+    ? userApiKey 
+    : (process.env.GEMINI_API_KEY || process.env.API_KEY);
+
+  if (!apiKey) {
+    return res.status(400).json({ 
+      error: 'No Gemini API Key is configured. Please provide a key in settings or set GEMINI_API_KEY / API_KEY on the server.' 
+    });
+  }
+
+  // Rewrite model if it is invalid/outdated
+  if (!model || model === 'gemini-3-flash-preview') {
+    model = 'gemini-2.5-flash';
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    console.log(`[AI PROXY] Requesting model "${model}"`);
+    
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: config
+    });
+
+    if (response) {
+      res.json({
+        text: response.text,
+        candidates: response.candidates || []
+      });
+    } else {
+      res.status(500).json({ error: 'Did not receive a completion response from Gemini.' });
+    }
+  } catch (error) {
+    console.error('[AI PROXY ERROR]:', error);
+    res.status(500).json({ 
+      error: error.message || 'Error occurred during generation.',
+      details: error.toString()
+    });
+  }
 });
 
 // Login

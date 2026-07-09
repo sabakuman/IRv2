@@ -12,26 +12,47 @@ import { MockService } from '../services/mockService';
 import { GoogleGenAI } from "@google/genai";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t } = useLanguage();
 
   // Test State
   const [testStatus, setTestStatus] = useState<'none' | 'loading' | 'success' | 'error'>('none');
+  const [testType, setTestType] = useState<'system' | 'personal'>('system');
   const [testError, setTestError] = useState('');
 
-  const handleTestKey = async () => {
+  // Personal Key State
+  const [personalKey, setPersonalKey] = useState(user?.apiKey || '');
+  const [isSavingKey, setIsSavingKey] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'none' | 'success' | 'error'>('none');
+  const [showPersonalKey, setShowPersonalKey] = useState(false);
+
+  const handleTestKey = async (type: 'system' | 'personal') => {
     setTestStatus('loading');
+    setTestType(type);
     setTestError('');
 
     try {
-      // Always initialize with process.env.API_KEY as per guidelines
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: 'Respond with the word "OK" only.',
+      const activeKey = type === 'personal' ? personalKey.trim() : '';
+
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-apikey': activeKey
+        },
+        body: JSON.stringify({
+          prompt: 'Respond with the word "OK" only.',
+          model: 'gemini-2.5-flash'
+        })
       });
 
+      if (!res.ok) {
+        const errJson = await res.json();
+        throw new Error(errJson.error || 'Connection verification failed.');
+      }
+
+      const response = await res.json();
       if (response.text) {
         setTestStatus('success');
       } else {
@@ -40,6 +61,26 @@ export default function Settings() {
     } catch (err: any) {
       setTestStatus('error');
       setTestError(err.message || "Invalid API Key or connection error.");
+    }
+  };
+
+  const handleSavePersonalKey = async () => {
+    if (!user) return;
+    setIsSavingKey(true);
+    setSaveStatus('none');
+    try {
+      const updatedUser = await MockService.updateApiKey(user.id, personalKey.trim());
+      if (updatedUser) {
+        updateUser(updatedUser);
+        setSaveStatus('success');
+      } else {
+        setSaveStatus('error');
+      }
+    } catch (e) {
+      console.error(e);
+      setSaveStatus('error');
+    } finally {
+      setIsSavingKey(false);
     }
   };
   
@@ -77,39 +118,112 @@ export default function Settings() {
             </div>
           </Card>
 
-          {/* AI Configuration Section (System Key Only) */}
-          <Card className="dark:bg-secondary dark:border-gray-800">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 dark:text-white">
-              <Sparkles size={20} className="text-primary dark:text-accent" /> AI System Connection
-            </h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              The application utilizes a secure pre-configured system API key for all intelligent features.
-            </p>
-            
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-3 pt-2">
-                <Button 
-                  variant="outline" 
-                  onClick={handleTestKey}
-                  disabled={testStatus === 'loading'}
-                  className="min-w-[120px]"
-                >
-                  {testStatus === 'loading' ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
-                  Test System Connection
-                </Button>
+          {/* AI Connection & API Key Configuration */}
+          <Card className="dark:bg-secondary dark:border-gray-800 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold mb-2 flex items-center gap-2 dark:text-white">
+                <Sparkles size={20} className="text-primary dark:text-accent" /> AI &amp; Gemini API Configuration
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Configure and test your connection to the Google Gemini AI system.
+              </p>
+            </div>
+
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-6">
+              {/* System Key Section */}
+              <div className="space-y-2">
+                <h3 className="text-md font-semibold text-gray-950 dark:text-gray-100 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-blue-500 rounded-full"></span> Secure System Key (Default)
+                </h3>
+                <p className="text-xs text-muted-foreground max-w-xl">
+                  By default, all reports generate using our secure, pre-configured server-side API Key. No user configuration is required.
+                </p>
+                <div className="pt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleTestKey('system')}
+                    disabled={testStatus === 'loading'}
+                    className="gap-2"
+                  >
+                    {testStatus === 'loading' && testType === 'system' ? <Loader2 className="animate-spin" size={14} /> : <Play size={14} />}
+                    Test System Key Connection
+                  </Button>
+                </div>
               </div>
 
-              {testStatus === 'success' && (
-                <div className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800 animate-in fade-in slide-in-from-top-1">
-                  <CheckCircle size={16} /> Connection Successful! System API key is valid.
-                </div>
-              )}
+              {/* Personal API Key Section */}
+              <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-3">
+                <h3 className="text-md font-semibold text-gray-950 dark:text-gray-100 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-green-500 rounded-full"></span> Personal Gemini API Key
+                </h3>
+                <p className="text-xs text-muted-foreground max-w-xl">
+                  Want to use your own Gemini billing? Provide your personal API Key. The application will securely prioritize your key over the system default.
+                </p>
 
-              {testStatus === 'error' && (
-                <div className="flex items-center gap-2 text-sm font-bold text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-800 animate-in fade-in slide-in-from-top-1">
-                  <XCircle size={16} /> {testError}
+                <div className="flex gap-2 max-w-xl pt-2 items-end">
+                  <div className="relative flex-1">
+                    <Input 
+                      type={showPersonalKey ? "text" : "password"}
+                      value={personalKey}
+                      onChange={(e) => setPersonalKey(e.target.value)}
+                      placeholder="AIzaSy..."
+                      label="Your Gemini API Key"
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowPersonalKey(!showPersonalKey)}
+                      className="absolute right-3 bottom-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                    >
+                      {showPersonalKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleSavePersonalKey}
+                    disabled={isSavingKey}
+                    className="flex items-center gap-2 h-[38px] mb-0.5"
+                  >
+                    {isSavingKey ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                    Save Key
+                  </Button>
                 </div>
-              )}
+
+                <div className="flex gap-3 pt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleTestKey('personal')}
+                    disabled={testStatus === 'loading' || !personalKey}
+                    className="gap-2"
+                  >
+                    {testStatus === 'loading' && testType === 'personal' ? <Loader2 className="animate-spin" size={14} /> : <Play size={14} />}
+                    Test Personal Key
+                  </Button>
+                </div>
+
+                {saveStatus === 'success' && (
+                  <p className="text-xs text-green-600 font-medium">Personal API Key saved and synced successfully to your profile!</p>
+                )}
+                {saveStatus === 'error' && (
+                  <p className="text-xs text-red-600 font-medium">Failed to save personal key to profile.</p>
+                )}
+              </div>
+
+              {/* Status and Error Alerts */}
+              <div className="space-y-2">
+                {testStatus === 'success' && (
+                  <div className="flex items-center gap-2 text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800/50">
+                    <CheckCircle size={16} /> Connection Successful! The {testType === 'personal' ? 'personal' : 'system'} API key is verified and fully functional.
+                  </div>
+                )}
+
+                {testStatus === 'error' && (
+                  <div className="flex items-center gap-2 text-sm font-bold text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-800/50">
+                    <XCircle size={16} /> {testError}
+                  </div>
+                )}
+              </div>
             </div>
           </Card>
 

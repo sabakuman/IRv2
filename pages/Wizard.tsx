@@ -117,83 +117,91 @@ export default function Wizard() {
     
     setIsFetchingAI(true);
     const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
-    const apiKey = user?.apiKey || process.env.API_KEY;
-
-    if (!apiKey) {
-      alert("No API Key found. Please add a Personal API Key in Settings.");
-      setIsFetchingAI(false);
-      return;
-    }
+    const userApiKey = user?.apiKey || '';
 
     try {
-      const ai = new GoogleGenAI({ apiKey });
       const prompt = `Fetch the latest official labour market and economic data for ${data.country}. IMPORTANT: All text values MUST be returned in ${targetLanguage}. Ensure numeric values are strings if they contain units. Always provide monthly wages in USD ($) or AED (درهم) only - convert from local currency if necessary. Include Top 5 export products and Top 5 import products as individual string arrays. Also include 'tipRank' (Trafficking in Persons Rank, e.g. Tier 2) and 'remittancesFromUAE' (annual amount). List Top 5 Universities. Also fetch if there are 'directFlight' (boolean, true if direct flights from UAE exist, else false) and 'unemploymentRate' (latest official national unemployment rate of that country, e.g. '5.2%').`;
       
-      const response: GenerateContentResponse = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: { 
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              capital: { type: Type.STRING },
-              officialLanguage: { type: Type.STRING },
-              population: { type: Type.STRING },
-              currency: { type: Type.STRING },
-              gdp: { type: Type.STRING },
-              hdi: { type: Type.STRING },
-              averageWage: { type: Type.STRING },
-              minimumWage: { type: Type.STRING },
-              crimeRate: { type: Type.STRING },
-              literacyRate: { type: Type.STRING },
-              governmentType: { type: Type.STRING },
-              workforceMinistry: { type: Type.STRING },
-              directFlight: { type: Type.BOOLEAN },
-              unemploymentRate: { type: Type.STRING },
-              totalWorkforce: { type: Type.STRING },
-              participationMale: { type: Type.NUMBER },
-              participationFemale: { type: Type.NUMBER },
-              migrationDestinations: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    country: { type: Type.STRING },
-                    count: { type: Type.STRING }
-                  }
+      const config = { 
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            capital: { type: Type.STRING },
+            officialLanguage: { type: Type.STRING },
+            population: { type: Type.STRING },
+            currency: { type: Type.STRING },
+            gdp: { type: Type.STRING },
+            hdi: { type: Type.STRING },
+            averageWage: { type: Type.STRING },
+            minimumWage: { type: Type.STRING },
+            crimeRate: { type: Type.STRING },
+            literacyRate: { type: Type.STRING },
+            governmentType: { type: Type.STRING },
+            workforceMinistry: { type: Type.STRING },
+            directFlight: { type: Type.BOOLEAN },
+            unemploymentRate: { type: Type.STRING },
+            totalWorkforce: { type: Type.STRING },
+            participationMale: { type: Type.NUMBER },
+            participationFemale: { type: Type.NUMBER },
+            migrationDestinations: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  country: { type: Type.STRING },
+                  count: { type: Type.STRING }
                 }
-              },
-              topSectors: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    name: { type: Type.STRING },
-                    value: { type: Type.NUMBER }
-                  }
+              }
+            },
+            topSectors: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  value: { type: Type.NUMBER }
                 }
-              },
-              availableSkills: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-              },
-              topExportProducts: { type: Type.ARRAY, items: { type: Type.STRING } },
-              topImportProducts: { type: Type.ARRAY, items: { type: Type.STRING } },
-              economicStats_inflation: { type: Type.STRING },
-              economicStats_gdp: { type: Type.STRING },
-              economicStats_totalExportsToUAE: { type: Type.STRING },
-              economicStats_totalImportsFromUAE: { type: Type.STRING },
-              tipRank: { type: Type.STRING },
-              remittancesFromUAE: { type: Type.STRING },
-              topUniversities: { type: Type.ARRAY, items: { type: Type.STRING } }
-            }
+              }
+            },
+            availableSkills: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            topExportProducts: { type: Type.ARRAY, items: { type: Type.STRING } },
+            topImportProducts: { type: Type.ARRAY, items: { type: Type.STRING } },
+            economicStats_inflation: { type: Type.STRING },
+            economicStats_gdp: { type: Type.STRING },
+            economicStats_totalExportsToUAE: { type: Type.STRING },
+            economicStats_totalImportsFromUAE: { type: Type.STRING },
+            tipRank: { type: Type.STRING },
+            remittancesFromUAE: { type: Type.STRING },
+            topUniversities: { type: Type.ARRAY, items: { type: Type.STRING } }
           }
         }
+      };
+
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-apikey': userApiKey
+        },
+        body: JSON.stringify({
+          prompt,
+          model: 'gemini-2.5-flash',
+          config
+        })
       });
-      
-      if (response.text) {
-        const aiData = JSON.parse(response.text);
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Server error generating AI data.');
+      }
+
+      const responseJson = await res.json();
+      if (responseJson.text) {
+        const aiData = JSON.parse(responseJson.text);
         setData(prev => ({ 
           ...prev, 
           ...aiData,
@@ -228,41 +236,53 @@ export default function Wizard() {
   const handleFetchAgreements = async () => {
     if (!data.country) return;
     setIsFetchingAI(true);
-    const apiKey = user?.apiKey || process.env.API_KEY;
-    if (!apiKey) return setIsFetchingAI(false);
+    const userApiKey = user?.apiKey || '';
 
     try {
-      const ai = new GoogleGenAI({ apiKey });
       const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
       const prompt = `Identify and list 5-10 formal bilateral labour agreements, MoUs, or protocols between the UAE (MOHRE/MOFA) and ${data.country}. Return as JSON array with title, date, status (active or pending), and summary. Language: ${targetLanguage}.`;
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                title: { type: Type.STRING },
-                date: { type: Type.STRING },
-                status: { type: Type.STRING, enum: ['active', 'pending'] },
-                summary: { type: Type.STRING }
-              }
+      const config = {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              date: { type: Type.STRING },
+              status: { type: Type.STRING, enum: ['active', 'pending'] },
+              summary: { type: Type.STRING }
             }
           }
         }
+      };
+
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-apikey': userApiKey
+        },
+        body: JSON.stringify({
+          prompt,
+          model: 'gemini-2.5-flash',
+          config
+        })
       });
 
-      if (response.text) {
-        const agrs = JSON.parse(response.text);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Server error generating agreements.');
+      }
+
+      const responseJson = await res.json();
+      if (responseJson.text) {
+        const agrs = JSON.parse(responseJson.text);
         setData(prev => ({ ...prev, bilateralAgreements: agrs }));
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to fetch agreements.");
+      alert("Failed to fetch agreements: " + (e.message || "Connection error."));
     } finally {
       setIsFetchingAI(false);
     }
@@ -272,40 +292,49 @@ export default function Wizard() {
      if (!data.country) return;
      
      setIsFetchingNews(true);
-     const apiKey = user?.apiKey || process.env.API_KEY;
-     if (!apiKey) { setIsFetchingNews(false); return; }
+     const userApiKey = user?.apiKey || '';
 
      try {
-       const ai = new GoogleGenAI({ apiKey });
        const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
        const prompt = `Find exactly 3 most recent official news items or press releases (from 2024-2025) concerning bilateral workforce cooperation, diplomatic visits, or labour market agreements between the UAE and ${data.country}. 
        Return ONLY a valid JSON array of objects. 
        Format: [{"title": "...", "source": "...", "date": "...", "summary": "...", "url": "..."}] 
        All text MUST be in ${targetLanguage}.`;
        
-       const response: GenerateContentResponse = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: prompt,
-          config: { 
-            tools: [{ googleSearch: {} }]
-          },
+       const config = { 
+         tools: [{ googleSearch: {} }]
+       };
+
+       const res = await fetch('/api/ai/generate', {
+         method: 'POST',
+         headers: { 
+           'Content-Type': 'application/json',
+           'x-user-apikey': userApiKey
+         },
+         body: JSON.stringify({
+           prompt,
+           model: 'gemini-2.5-flash',
+           config
+         })
        });
-       
-       if (response.text) {
-         // Cleaning potential markdown wrappers
-         let cleanedText = response.text.trim();
+
+       if (!res.ok) {
+         const err = await res.json();
+         throw new Error(err.error || 'Server error generating news.');
+       }
+
+       const responseJson = await res.json();
+       if (responseJson.text) {
+         let cleanedText = responseJson.text.trim();
          if (cleanedText.startsWith('```')) {
             cleanedText = cleanedText.replace(/^```(json)?\n?/, '').replace(/\n?```$/, '');
          }
          
          const newsItems = JSON.parse(cleanedText);
-         
-         // Extract grounding URLs for reliability
-         const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+         const groundingChunks = responseJson.candidates?.[0]?.groundingMetadata?.groundingChunks;
          
          const formattedNews: NewsItem[] = newsItems.map((n: any, idx: number) => {
             let finalUrl = n.url || '';
-            // If model didn't provide URL in JSON but we have grounding metadata, use it
             if (!finalUrl && groundingChunks && groundingChunks[idx]?.web?.uri) {
                finalUrl = groundingChunks[idx].web.uri;
             }
@@ -325,11 +354,11 @@ export default function Wizard() {
            relatedNews: [...prev.relatedNews, ...formattedNews] 
          }));
        }
-     } catch (error: any) { 
-       console.error("AI News Fetch Error:", error);
-       alert("AI News Search failed. This might be due to a specific security policy or a temporary grounding failure. Please try again.");
-     } finally { 
-       setIsFetchingNews(false); 
+     } catch (e: any) {
+        console.error(e);
+        alert("Failed to fetch news: " + (e.message || "Connection error."));
+     } finally {
+        setIsFetchingNews(false);
      }
   };
 
