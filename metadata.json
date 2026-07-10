@@ -1,5 +1,6 @@
 {
   "name": "UAE Labour Market Intelligence",
   "description": "A ministerial-grade bilateral reporting tool for the UAE Ministry to generate labour market intelligence reports.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

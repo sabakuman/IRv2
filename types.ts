@@ -57,6 +57,12 @@ export interface LabelValue {
   value: number;
 }
 
+export interface SectorSalary {
+  name: string;
+  uaeValue: number;
+  partnerValue: number;
+}
+
 export interface RecentInteraction {
   id: string;
   title: string;
@@ -113,6 +119,7 @@ export interface UaeWorkforceData {
     date: string;
     isTotal: boolean; // For the mandatory "Total Workers in UAE"
   }>;
+  salaryBySector?: SectorSalary[];
 }
 
 // Complex Report Structure
@@ -292,6 +299,14 @@ export const EMPTY_REPORT_DATA: ReportData = {
     },
     custom: [
       { id: 'total-uae', label: 'Total Workers in UAE', value: '', date: '', isTotal: true }
+    ],
+    salaryBySector: [
+      { name: 'Construction', uaeValue: 4500, partnerValue: 1200 },
+      { name: 'Retail', uaeValue: 3800, partnerValue: 950 },
+      { name: 'Services', uaeValue: 4200, partnerValue: 1100 },
+      { name: 'Hospitality', uaeValue: 3500, partnerValue: 800 },
+      { name: 'Manufacturing', uaeValue: 5000, partnerValue: 1400 },
+      { name: 'Transportation', uaeValue: 4800, partnerValue: 1300 },
     ]
   },
   workforceStats: {

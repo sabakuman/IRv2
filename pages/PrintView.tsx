@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MockService } from '../services/mockService';
 import { Report } from '../types';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList, Legend } from 'recharts';
 import { 
   Globe, Users, TrendingUp, Building, Building2,
   Handshake, Landmark, Plane, Banknote, 
@@ -244,33 +244,205 @@ export default function PrintView() {
   const sortedMohreEmirates = [...data.uaeWorkforceStats.mohre.byEmirate].sort((a, b) => b.value - a.value);
   const sortedIcpEmirates = [...data.uaeWorkforceStats.icp.byEmirate].sort((a, b) => b.value - a.value);
 
+  const translateSectorName = (name: string) => {
+    if (!isRTL) {
+      const map: Record<string, string> = {
+        'الإنشاءات': 'Construction',
+        'التجزئة': 'Retail',
+        'الخدمات': 'Services',
+        'الضيافة': 'Hospitality',
+        'الصناعة': 'Manufacturing',
+        'النقل': 'Transportation',
+        'أخرى': 'Other',
+        'اخرى': 'Other',
+      };
+      return map[name] || name;
+    } else {
+      const map: Record<string, string> = {
+        'Construction': 'الإنشاءات',
+        'Retail': 'التجزئة',
+        'Services': 'الخدمات',
+        'Hospitality': 'الضيافة',
+        'Manufacturing': 'الصناعة',
+        'Transportation': 'النقل',
+        'Other': 'أخرى',
+      };
+      return map[name] || name;
+    }
+  };
+
+  const formatPctValue = (val: string | undefined | null) => {
+    if (val === undefined || val === null || val === '') return '-%';
+    const trimmed = String(val).trim();
+    if (trimmed === '-%' || trimmed === '-') return '-%';
+    if (trimmed.endsWith('%')) return trimmed;
+    return `${trimmed}%`;
+  };
+
+  const salarySectors = (data.uaeWorkforceStats.salaryBySector && data.uaeWorkforceStats.salaryBySector.length > 0)
+    ? data.uaeWorkforceStats.salaryBySector
+    : [
+        { name: isRTL ? 'الإنشاءات' : 'Construction', uaeValue: 4500, partnerValue: 1200 },
+        { name: isRTL ? 'التجزئة' : 'Retail', uaeValue: 3800, partnerValue: 950 },
+        { name: isRTL ? 'الخدمات' : 'Services', uaeValue: 4200, partnerValue: 1100 },
+        { name: isRTL ? 'الضيافة' : 'Hospitality', uaeValue: 3500, partnerValue: 800 },
+        { name: isRTL ? 'الصناعة' : 'Manufacturing', uaeValue: 5000, partnerValue: 1400 },
+        { name: isRTL ? 'النقل' : 'Transportation', uaeValue: 4800, partnerValue: 1300 },
+      ];
+
+  const processSalarySectors = (sectors: { name: string; uaeValue: number; partnerValue: number }[], limit = 10) => {
+    const sorted = [...sectors].sort((a, b) => b.uaeValue - a.uaeValue);
+    if (sorted.length <= limit) {
+      return sorted;
+    }
+    const topLimit = sorted.slice(0, limit);
+    const remaining = sorted.slice(limit);
+    const uaeSum = remaining.reduce((sum, item) => sum + (item.uaeValue || 0), 0);
+    const partnerSum = remaining.reduce((sum, item) => sum + (item.partnerValue || 0), 0);
+    const remainingUaeAvg = Math.round(uaeSum / remaining.length);
+    const remainingPartnerAvg = Math.round(partnerSum / remaining.length);
+    
+    topLimit.push({
+      name: isRTL ? 'أخرى' : 'Other',
+      uaeValue: remainingUaeAvg,
+      partnerValue: remainingPartnerAvg
+    });
+    return topLimit;
+  };
+
+  const mappedSalarySectors = [...salarySectors].map(s => ({
+    name: translateSectorName(s.name),
+    uaeValue: Number(s.uaeValue || 0),
+    partnerValue: Number(s.partnerValue || 0)
+  }));
+  const sortedSalarySectors = processSalarySectors(mappedSalarySectors, 10);
+
+  // Find max value in salary sectors to set manual Y-axis max about 15-20% higher
+  const maxSalaryVal = Math.max(
+    ...sortedSalarySectors.slice(0, 11).flatMap(s => [s.uaeValue || 0, s.partnerValue || 0]),
+    1
+  );
+  const manualMaxSalary = Math.ceil(maxSalaryVal * 1.22);
+
+  // Custom label renderers to match the exact requirements of horizontal labels
+  const wrapSectorName = (name: string): string[] => {
+    if (!name) return [];
+    let display = name;
+    if (display.length > 18) {
+      display = display.substring(0, 15) + '...';
+    }
+    const words = display.split(' ');
+    if (words.length <= 1) {
+      return [display];
+    }
+    // Find the split point that makes lines as equal as possible
+    let bestDiff = Infinity;
+    let bestIdx = 1;
+    for (let i = 1; i < words.length; i++) {
+      const l1 = words.slice(0, i).join(' ').length;
+      const l2 = words.slice(i).join(' ').length;
+      const diff = Math.abs(l1 - l2);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIdx = i;
+      }
+    }
+    return [
+      words.slice(0, bestIdx).join(' '),
+      words.slice(bestIdx).join(' ')
+    ];
+  };
+
+  const renderCustomXAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const name = payload?.value || '';
+    const lines = wrapSectorName(name);
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={4}
+          fill="#374151"
+          textAnchor="middle"
+          style={{ fontSize: '7.5px', fontWeight: 700 }}
+        >
+          {lines.map((line, idx) => (
+            <tspan key={idx} x={0} dy={idx === 0 ? 0 : 8.5}>
+              {line}
+            </tspan>
+          ))}
+        </text>
+      </g>
+    );
+  };
+
+  const formatSectorTick = (value: string) => {
+    return value && value.length > 18 ? value.substring(0, 15) + '...' : value;
+  };
+
+  const renderUaeLabel = (props: any) => {
+    const { x, y, width, value } = props;
+    if (value === undefined || value === null || value === 0) return null;
+    const cx = x + width / 2 - 4.5;
+    const cy = y - 11;
+    return (
+      <text
+        x={cx}
+        y={cy}
+        fill="#10b981"
+        textAnchor="middle"
+        style={{ fontSize: '7.5px', fontWeight: 700 }}
+      >
+        {Number(value).toLocaleString()}
+      </text>
+    );
+  };
+
+  const renderPartnerLabel = (props: any) => {
+    const { x, y, width, value } = props;
+    if (value === undefined || value === null || value === 0) return null;
+    const cx = x + width / 2 + 4.5;
+    const cy = y - 5;
+    return (
+      <text
+        x={cx}
+        y={cy}
+        fill="#2563eb"
+        textAnchor="middle"
+        style={{ fontSize: '7.5px', fontWeight: 700 }}
+      >
+        {Number(value).toLocaleString()}
+      </text>
+    );
+  };
+
   const totalMohreByCity = data.uaeWorkforceStats.mohre.byEmirate.reduce((acc, curr) => acc + (curr.value || 0), 0);
   const totalIcpByCity = data.uaeWorkforceStats.icp.byEmirate.reduce((acc, curr) => acc + (curr.value || 0), 0);
   const combinedTotalWorkers = data.uaeWorkforceStats.totalWorkersOverride !== undefined && data.uaeWorkforceStats.totalWorkersOverride !== null && data.uaeWorkforceStats.totalWorkersOverride !== 0
     ? data.uaeWorkforceStats.totalWorkersOverride
     : totalMohreByCity + totalIcpByCity;
 
-  const processSectors = (sectorsList: { name: string; value: number }[]) => {
+  const processSectors = (sectorsList: { name: string; value: number }[], limit = 10) => {
     const sorted = [...sectorsList].sort((a, b) => b.value - a.value);
-    if (sorted.length <= 10) {
+    if (sorted.length <= limit) {
       return sorted;
     }
-    const top10 = sorted.slice(0, 10);
-    const remaining = sorted.slice(10);
+    const topLimit = sorted.slice(0, limit);
+    const remaining = sorted.slice(limit);
     const remainingSum = remaining.reduce((sum, item) => sum + (item.value || 0), 0);
     if (remainingSum > 0) {
-      top10.push({
-        name: isRTL ? 'اخرى' : 'Other',
+      topLimit.push({
+        name: isRTL ? 'أخرى' : 'Other',
         value: remainingSum
       });
     }
-    return top10;
+    return topLimit;
   };
 
-  const processedMohreSectors = processSectors(data.uaeWorkforceStats.mohre.bySector);
+  const processedMohreSectors = processSectors(data.uaeWorkforceStats.mohre.bySector, 10);
   const maxMohreVal = Math.max(...processedMohreSectors.map(s => s.value), 1);
 
-  const processedIcpSectors = processSectors(data.uaeWorkforceStats.icp.bySector || []);
+  const processedIcpSectors = processSectors(data.uaeWorkforceStats.icp.bySector || [], 10);
   const maxIcpVal = Math.max(...processedIcpSectors.map(s => s.value), 1);
 
   // Pagination Logic Constants
@@ -449,138 +621,127 @@ export default function PrintView() {
         {/* PAGE 3: UAE WORKFORCE */}
         <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
           <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-          <SectionHeader icon={Building} title={`${t('sectionUaeWorkforce')} (${data.reportMonthYear || defaultDateStr})`} subtitle={t('domesticAnalysis')} />
-          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-2 flex flex-col items-center justify-center text-center shadow-sm mb-2.5">
-            <p className="text-[10px] font-extrabold text-primary-dark uppercase tracking-widest leading-none mb-1 text-center font-sans">
+          <SectionHeader icon={Building} title={`${t('sectionUaeWorkforce')} (${data.reportMonthYear || defaultDateStr})`} subtitle={t('domesticAnalysis')} compact />
+          
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-1.5 flex items-center justify-between px-4 shadow-sm mb-2">
+            <p className="text-[9px] font-extrabold text-primary-dark uppercase tracking-wider font-sans leading-none">
               {t('totalWorkforceInUaeLaborMarket')}
             </p>
-            <p className="text-xl font-serif font-black text-primary-dark">
+            <p className="text-lg font-serif font-black text-primary-dark leading-none">
               {combinedTotalWorkers.toLocaleString()}
             </p>
           </div>
 
-          <div className="grid grid-cols-4 gap-2.5 mb-2.5 items-stretch">
+          <div className="grid grid-cols-4 gap-2 mb-2 items-stretch">
             {/* CARD 1: MOHRE PRIVATE */}
-            <div className="bg-white border border-gray-200 rounded-xl p-2.5 flex flex-col justify-between shadow-sm min-h-[90px]">
-              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-10 overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col justify-between shadow-sm min-h-[58px]">
+              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-8 overflow-hidden">
                 {t('mohrePrivate')}
               </span>
-              <div>
-                <span className="text-[17px] font-black block text-gray-900 font-mono">
-                  {data.uaeWorkforceStats.mohre.totalPrivate.value || 'N/A'}
-                </span>
-              </div>
+              <span className="text-[14px] font-black block text-gray-900 font-mono leading-none">
+                {data.uaeWorkforceStats.mohre.totalPrivate.value || 'N/A'}
+              </span>
             </div>
 
             {/* CARD 2: MOHRE DOMESTIC */}
-            <div className="bg-white border border-gray-200 rounded-xl p-2.5 flex flex-col justify-between shadow-sm min-h-[90px]">
-              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-10 overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col justify-between shadow-sm min-h-[58px]">
+              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-8 overflow-hidden">
                 {t('mohreDomestic')}
               </span>
-              <div>
-                <span className="text-[17px] font-black block text-gray-900 font-mono">
-                  {data.uaeWorkforceStats.mohre.totalDomestic.value || 'N/A'}
-                </span>
-              </div>
+              <span className="text-[14px] font-black block text-gray-900 font-mono leading-none">
+                {data.uaeWorkforceStats.mohre.totalDomestic.value || 'N/A'}
+              </span>
             </div>
 
             {/* CARD 3: UNEMPLOYMENT INSURANCE */}
-            <div className="bg-white border border-gray-200 rounded-xl p-2.5 flex flex-col justify-between shadow-sm min-h-[90px]">
-              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-10 overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col justify-between shadow-sm min-h-[58px]">
+              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-8 overflow-hidden">
                 {t('unemploymentInsuranceCoverageRate')}
               </span>
-              <div>
-                <span className="text-[17px] font-black block text-gray-900 font-mono">
+              <div className="flex items-baseline justify-between mt-1">
+                <span className="text-[14px] font-black text-gray-900 font-mono leading-none">
                   {data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}
                 </span>
-                <span className="text-[13px] font-extrabold text-emerald-600 block leading-tight font-sans mt-0.5">
-                  {data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct 
-                    ? (data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct.endsWith('%') 
-                        ? data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct 
-                        : `${data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct}%`) 
-                    : '-%'}
+                <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
+                  {formatPctValue(data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct)}
                 </span>
               </div>
             </div>
 
             {/* CARD 4: WPS WAGE TRANSFER */}
-            <div className="bg-white border border-gray-200 rounded-xl p-2.5 flex flex-col justify-between shadow-sm min-h-[90px]">
-              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-10 overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col justify-between shadow-sm min-h-[58px]">
+              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-8 overflow-hidden">
                 {t('wpsWageTransferRate')}
               </span>
-              <div>
-                <span className="text-[17px] font-black block text-gray-900 font-mono">
+              <div className="flex items-baseline justify-between mt-1">
+                <span className="text-[14px] font-black text-gray-900 font-mono leading-none">
                   {data.uaeWorkforceStats.mohre.wpsWageTransferNum || 'N/A'}
                 </span>
-                <span className="text-[13px] font-extrabold text-emerald-600 block leading-tight font-sans mt-0.5">
-                  {data.uaeWorkforceStats.mohre.wpsWageTransferPct 
-                    ? (data.uaeWorkforceStats.mohre.wpsWageTransferPct.endsWith('%') 
-                        ? data.uaeWorkforceStats.mohre.wpsWageTransferPct 
-                        : `${data.uaeWorkforceStats.mohre.wpsWageTransferPct}%`) 
-                    : '-%'}
+                <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
+                  {formatPctValue(data.uaeWorkforceStats.mohre.wpsWageTransferPct)}
                 </span>
               </div>
             </div>
           </div>
 
           {/* The 4 Tiny Boxes Grid */}
-          <div className="grid grid-cols-4 gap-2.5 mb-2.5">
-            <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('unemploymentInsuranceCoverageRate')}</span>
-              <div>
-                <span className="text-[17px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}</span>
-                <span className="text-[13px] font-extrabold text-primary font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct || '-%'}</span>
+          <div className="grid grid-cols-4 gap-2 mb-2">
+            <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('unemploymentInsuranceCoverageRate')}</span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}</span>
+                <span className="text-[9px] font-extrabold text-primary font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct)}</span>
               </div>
             </div>
             
-            <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('insuranceUnemploymentExposed')}</span>
-              <div>
-                <span className="text-[17px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedNum || 'N/A'}</span>
-                <span className="text-[13px] font-extrabold text-amber-600 font-sans">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedPct || '-%'}</span>
+            <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('insuranceUnemploymentExposed')}</span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedNum || 'N/A'}</span>
+                <span className="text-[9px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedPct)}</span>
               </div>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('insuranceRightsCovered')}</span>
-              <div>
-                <span className="text-[17px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredNum || 'N/A'}</span>
-                <span className="text-[13px] font-extrabold text-primary font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredPct || '-%'}</span>
+            <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('insuranceRightsCovered')}</span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredNum || 'N/A'}</span>
+                <span className="text-[9px] font-extrabold text-primary font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceRightsCoveredPct)}</span>
               </div>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200/60 rounded-xl p-2 flex flex-col justify-between shadow-sm">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-1 block h-7 overflow-hidden">{t('insuranceRightsExposed')}</span>
-              <div>
-                <span className="text-[17px] font-black text-gray-900 block font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsExposedNum || 'N/A'}</span>
-                <span className="text-[13px] font-extrabold text-amber-600 font-sans">{data.uaeWorkforceStats.mohre.insuranceRightsExposedPct || '-%'}</span>
+            <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
+              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('insuranceRightsExposed')}</span>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceRightsExposedNum || 'N/A'}</span>
+                <span className="text-[9px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceRightsExposedPct)}</span>
               </div>
             </div>
           </div>
 
-          {/* Two Other KPI Boxes */}
-          <div className="grid grid-cols-2 gap-2.5 mb-2.5">
-            <div className="bg-white border rounded-xl p-2 flex flex-col shadow-sm">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-0.5">{t('wageMedianComparison')}</span>
-              <span className="text-[15px] font-sans font-black text-gray-900 block overflow-hidden truncate">{data.uaeWorkforceStats.mohre.wageMedianComparison || 'N/A'}</span>
+          {/* Two Other KPI Boxes - Made bigger per request */}
+          <div className="grid grid-cols-2 gap-3 mb-2.5">
+            <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between px-4 shadow-sm min-h-[44px]">
+              <span className="text-[9px] font-black text-gray-600 uppercase leading-tight max-w-[70%]">{t('wageMedianComparison')}</span>
+              <span className="text-[14px] font-sans font-black text-gray-950 leading-none shrink-0">{data.uaeWorkforceStats.mohre.wageMedianComparison || 'N/A'}</span>
             </div>
             
-            <div className="bg-white border rounded-xl p-2 flex flex-col shadow-sm">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-snug mb-0.5">{t('workersLaborStrikes')}</span>
-              <span className="text-[15px] font-sans font-black text-gray-900 block overflow-hidden truncate">{data.uaeWorkforceStats.mohre.workersLaborStrikes || 'N/A'}</span>
+            <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between px-4 shadow-sm min-h-[44px]">
+              <span className="text-[9px] font-black text-gray-600 uppercase leading-tight max-w-[70%]">{t('workersLaborStrikes')}</span>
+              <span className="text-[14px] font-sans font-black text-gray-950 leading-none shrink-0">{data.uaeWorkforceStats.mohre.workersLaborStrikes || 'N/A'}</span>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-3 mb-2.5">
+          <div className="grid grid-cols-2 gap-3 mb-1.5">
             <div className="p-2 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
                 <p className="text-center text-[9px] font-bold text-gray-500 mb-1 uppercase tracking-wider">{t('workersByEmirate')}</p>
-                <div className="h-20 w-full">
+                <div className="h-24 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sortedMohreEmirates} margin={{top: 15, right: 5, bottom: 0, left: 5}}>
-                          <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
+                      <BarChart data={sortedMohreEmirates} margin={{top: 12, right: 5, bottom: 16, left: 5}}>
+                          <XAxis dataKey="name" tick={{fontSize: 8.5, fontWeight: 'bold', fill: '#374151'}} tickMargin={4} interval={0} height={18} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                           <YAxis hide />
-                          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '8px', fill: '#333', fontWeight: 'bold' }} />
+                          <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+                            <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '7.5px', fill: '#333', fontWeight: 'bold' }} />
                             {sortedMohreEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />))}
                           </Bar>
                       </BarChart>
@@ -589,10 +750,10 @@ export default function PrintView() {
             </div>
             <div className="p-2 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
                 <p className="text-center text-[9px] font-bold text-gray-500 mb-1 uppercase tracking-wider">{isRTL ? 'توزيع العاملين حسب الإمارة (ICP)' : 'Workers distribution by Emirate (ICP)'}</p>
-                <div className="h-20 w-full">
+                <div className="h-24 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sortedIcpEmirates} margin={{top: 10, right: 5, bottom: 0, left: 5}}>
-                           <XAxis dataKey="name" tick={{fontSize: 7}} interval={0} height={15} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
+                      <BarChart data={sortedIcpEmirates} margin={{top: 12, right: 5, bottom: 16, left: 5}}>
+                           <XAxis dataKey="name" tick={{fontSize: 8.5, fontWeight: 'bold', fill: '#374151'}} tickMargin={4} interval={0} height={18} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
                            <Bar dataKey="value" radius={[3, 3, 0, 0]}>
                              <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '7px', fill: '#444', fontWeight: 'bold' }} />
                              {sortedIcpEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[(index + 3) % BLUE_PALETTE.length]} />))}
@@ -603,44 +764,75 @@ export default function PrintView() {
             </div>
           </div>
 
-          {/* Sector distribution comparisons */}
-          <div className="grid grid-cols-2 gap-3 flex-1 overflow-hidden">
-            <div className="border border-gray-200 rounded-2xl p-3 flex flex-col bg-white shadow-sm overflow-hidden text-ellipsis">
-                <p className="text-[10px] font-extrabold text-gray-700 mb-2 uppercase tracking-wider leading-none">
+          {/* Sector distribution comparisons - Unified Inline Rows for compact space-saving */}
+          <div className="grid grid-cols-2 gap-3 mb-1.5">
+            <div className="border border-gray-200 rounded-2xl p-2 flex flex-col bg-white shadow-sm overflow-hidden text-ellipsis">
+                <p className="text-[9px] font-extrabold text-gray-700 mb-1.5 uppercase tracking-wider leading-none">
                   {isRTL ? 'توزيع العمال حسب القطاع في (MOHRE)' : 'Workers distribution by sector (MOHRE)'}
                 </p>
-                <div className="space-y-1 overflow-hidden">
+                <div className="space-y-0.5 overflow-hidden">
                   {processedMohreSectors.map((s, i) => (
-                      <div key={i} className="leading-none">
-                        <div className="flex justify-between text-[9px] mb-0.5">
-                            <span className="font-bold text-gray-600 truncate max-w-[120px]">{s.name}</span>
-                            <span className="font-mono text-gray-900 font-bold text-[8px]">{formatCompactNumber(s.value)}</span>
-                        </div>
-                        <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                      <div key={i} className="flex items-center justify-between text-[7.5px] leading-tight py-0.5 border-b border-gray-100 last:border-0">
+                        <span className="font-bold text-gray-700 truncate max-w-[100px]">{s.name}</span>
+                        <div className="flex-1 mx-2 h-1 bg-gray-100 rounded-full overflow-hidden">
                             <div className="h-full bg-primary transition-all duration-500" style={{ width: `${(s.value / maxMohreVal) * 100}%` }}></div>
                         </div>
+                        <span className="font-mono text-gray-900 font-bold shrink-0">{formatCompactNumber(s.value)}</span>
                       </div>
                   ))}
                 </div>
             </div>
             
-            <div className="border border-gray-200 rounded-2xl p-3 flex flex-col bg-white shadow-sm overflow-hidden text-ellipsis">
-                <p className="text-[10px] font-extrabold text-gray-700 mb-2 uppercase tracking-wider leading-none">
+            <div className="border border-gray-200 rounded-2xl p-2 flex flex-col bg-white shadow-sm overflow-hidden text-ellipsis">
+                <p className="text-[9px] font-extrabold text-gray-700 mb-1.5 uppercase tracking-wider leading-none">
                   {isRTL ? 'توزيع العمال حسب القطاع في (ICP)' : 'Workers distribution by sector (ICP)'}
                 </p>
-                <div className="space-y-1 overflow-hidden">
+                <div className="space-y-0.5 overflow-hidden">
                   {processedIcpSectors.map((s, i) => (
-                      <div key={i} className="leading-none">
-                        <div className="flex justify-between text-[9px] mb-0.5">
-                            <span className="font-bold text-gray-600 truncate max-w-[120px]">{s.name}</span>
-                            <span className="font-mono text-gray-900 font-bold text-[8px]">{formatCompactNumber(s.value)}</span>
-                        </div>
-                        <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                      <div key={i} className="flex items-center justify-between text-[7.5px] leading-tight py-0.5 border-b border-gray-100 last:border-0">
+                        <span className="font-bold text-gray-700 truncate max-w-[100px]">{s.name}</span>
+                        <div className="flex-1 mx-2 h-1 bg-gray-100 rounded-full overflow-hidden">
                             <div className="h-full bg-accent transition-all duration-500" style={{ width: `${(s.value / maxIcpVal) * 100}%` }}></div>
                         </div>
+                        <span className="font-mono text-gray-900 font-bold shrink-0">{formatCompactNumber(s.value)}</span>
                       </div>
                   ))}
                 </div>
+            </div>
+          </div>
+
+          {/* Average Salary per Sector Comparison Chart */}
+          <div className="p-2 py-1.5 border border-gray-200 rounded-2xl bg-white shadow-sm flex flex-col items-center">
+            <p className="text-center text-[9px] font-bold text-gray-700 mb-1 leading-relaxed max-w-xl">
+              {isRTL 
+                ? 'توزيع وسيط الرواتب لهذه للعمالة من هذه الجنسية مقارنة بوسيط سوق العمل بناء على المستوى المهاري على حسب القطاع' 
+                : `Median salary distribution for this nationality compared to the labour market median based on skill level by sector (${data.country})`}
+            </p>
+            <div className="w-full">
+              <div className="h-[135px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={sortedSalarySectors.slice(0, 11)} barGap={4} barCategoryGap="20%" margin={{top: 15, right: 5, bottom: 15, left: 5}}>
+                    <XAxis 
+                      dataKey="name" 
+                      tick={renderCustomXAxisTick} 
+                      tickFormatter={formatSectorTick} 
+                      tickMargin={2} 
+                      interval={0} 
+                      height={20} 
+                      axisLine={false} 
+                      tickLine={false} 
+                    />
+                    <YAxis hide domain={[0, manualMaxSalary]} />
+                    <Bar dataKey="uaeValue" name={isRTL ? 'وسيط سوق العمل (AED)' : 'Labour Market Wide (AED)'} radius={[4, 4, 0, 0]} fill="#10b981" barSize={7}>
+                      <LabelList dataKey="uaeValue" content={renderUaeLabel} />
+                    </Bar>
+                    <Bar dataKey="partnerValue" name={isRTL ? `متوسط رواتب عمالة ${data.country} (AED)` : `${data.country} Sector Average (AED)`} radius={[4, 4, 0, 0]} fill="#2563eb" barSize={7}>
+                      <LabelList dataKey="partnerValue" content={renderPartnerLabel} />
+                    </Bar>
+                    <Legend iconSize={8} wrapperStyle={{ fontSize: '8px', paddingTop: '3px' }} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         </PageContainer>

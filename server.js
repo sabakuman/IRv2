@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
   const DB_FILE = path.join(__dirname, 'database.sqlite');
 
 // Middleware
@@ -161,17 +161,24 @@ app.post('/api/ai/generate', async (req, res) => {
 
   if (!apiKey) {
     return res.status(400).json({ 
-      error: 'No Gemini API Key is configured. Please provide a key in settings or set GEMINI_API_KEY / API_KEY on the server.' 
+      error: 'No Gemini API Key is configured. Please provide your Gemini API key in the Settings > Secrets panel (add GEMINI_API_KEY) to enable bilateral intelligence reporting.' 
     });
   }
 
-  // Rewrite model if it is invalid/outdated
-  if (!model || model === 'gemini-3-flash-preview') {
-    model = 'gemini-2.5-flash';
+  // Rewrite model to standard gemini-3.5-flash for maximum compatibility
+  if (!model || model.includes('preview') || model.includes('2.5') || model.includes('1.5') || model.includes('flash')) {
+    model = 'gemini-3.5-flash';
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ 
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
     console.log(`[AI PROXY] Requesting model "${model}"`);
     
     const response = await ai.models.generateContent({
@@ -190,10 +197,24 @@ app.post('/api/ai/generate', async (req, res) => {
     }
   } catch (error) {
     console.error('[AI PROXY ERROR]:', error);
-    res.status(500).json({ 
-      error: error.message || 'Error occurred during generation.',
-      details: error.toString()
-    });
+    
+    // Check if it is a common invalid API key error
+    const isInvalidKey = error.message?.includes('API_KEY_INVALID') || 
+                         error.message?.includes('API key not valid') || 
+                         error.toString().includes('API key not valid') ||
+                         error.toString().includes('API_KEY_INVALID');
+                         
+    if (isInvalidKey) {
+      res.status(400).json({
+        error: 'Your Gemini API Key is invalid or expired. Please configure a valid GEMINI_API_KEY in the Settings > Secrets panel (top right) or add it to your .env file.',
+        details: error.toString()
+      });
+    } else {
+      res.status(500).json({ 
+        error: error.message || 'Error occurred during generation.',
+        details: error.toString()
+      });
+    }
   }
 });
 

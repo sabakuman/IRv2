@@ -67,6 +67,7 @@ export default function Wizard() {
   const [loading, setLoading] = useState(!!id);
   const [isFetchingAI, setIsFetchingAI] = useState(false);
   const [isFetchingNews, setIsFetchingNews] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [data, setData] = useState<ReportData>(EMPTY_REPORT_DATA);
   const [reportTitle, setReportTitle] = useState('');
 
@@ -85,7 +86,21 @@ export default function Wizard() {
     if (id) {
       MockService.getReportById(id).then(r => {
         if (r) {
-          setData(r.data);
+          const reportData = { ...r.data };
+          if (!reportData.uaeWorkforceStats) {
+            reportData.uaeWorkforceStats = { salaryBySector: [] } as any;
+          }
+          if (!reportData.uaeWorkforceStats.salaryBySector || reportData.uaeWorkforceStats.salaryBySector.length === 0) {
+            reportData.uaeWorkforceStats.salaryBySector = [
+              { name: 'Construction', uaeValue: 4500, partnerValue: 1200 },
+              { name: 'Retail', uaeValue: 3800, partnerValue: 950 },
+              { name: 'Services', uaeValue: 4200, partnerValue: 1100 },
+              { name: 'Hospitality', uaeValue: 3500, partnerValue: 800 },
+              { name: 'Manufacturing', uaeValue: 5000, partnerValue: 1400 },
+              { name: 'Transportation', uaeValue: 4800, partnerValue: 1300 },
+            ];
+          }
+          setData(reportData);
           setReportTitle(r.title);
         }
         setLoading(false);
@@ -116,6 +131,7 @@ export default function Wizard() {
     }
     
     setIsFetchingAI(true);
+    setAiError(null);
     const targetLanguage = language === 'ar' ? 'Arabic' : 'English';
     const userApiKey = user?.apiKey || '';
 
@@ -189,7 +205,7 @@ export default function Wizard() {
         },
         body: JSON.stringify({
           prompt,
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           config
         })
       });
@@ -227,7 +243,7 @@ export default function Wizard() {
       }
     } catch (error: any) { 
       console.error("AI Fetch Error:", error);
-      alert("Failed to fetch data via AI. Please ensure your connection is stable.");
+      setAiError(error.message || "Failed to fetch data via AI. Please ensure your connection is stable.");
     } finally { 
       setIsFetchingAI(false); 
     }
@@ -236,6 +252,7 @@ export default function Wizard() {
   const handleFetchAgreements = async () => {
     if (!data.country) return;
     setIsFetchingAI(true);
+    setAiError(null);
     const userApiKey = user?.apiKey || '';
 
     try {
@@ -265,7 +282,7 @@ export default function Wizard() {
         },
         body: JSON.stringify({
           prompt,
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.5-flash',
           config
         })
       });
@@ -282,7 +299,7 @@ export default function Wizard() {
       }
     } catch (e: any) {
       console.error(e);
-      alert("Failed to fetch agreements: " + (e.message || "Connection error."));
+      setAiError(e.message || "Failed to fetch agreements: Connection error.");
     } finally {
       setIsFetchingAI(false);
     }
@@ -292,6 +309,7 @@ export default function Wizard() {
      if (!data.country) return;
      
      setIsFetchingNews(true);
+     setAiError(null);
      const userApiKey = user?.apiKey || '';
 
      try {
@@ -313,7 +331,7 @@ export default function Wizard() {
          },
          body: JSON.stringify({
            prompt,
-           model: 'gemini-2.5-flash',
+           model: 'gemini-3.5-flash',
            config
          })
        });
@@ -356,7 +374,7 @@ export default function Wizard() {
        }
      } catch (e: any) {
         console.error(e);
-        alert("Failed to fetch news: " + (e.message || "Connection error."));
+        setAiError(e.message || "Failed to fetch news: Connection error.");
      } finally {
         setIsFetchingNews(false);
      }
@@ -688,6 +706,64 @@ export default function Wizard() {
                      ))}
                    </div>
                    <Button size="sm" variant="outline" className="mt-2" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, icp: {...data.uaeWorkforceStats.icp, bySector: [...(data.uaeWorkforceStats.icp.bySector || []), { name: '', value: 0 }]}}})}>+ Add Sector (ICP)</Button>
+                 </div>
+              </div>
+
+              {/* Average Salary per Sector (Median) */}
+              <div className="pt-6 mt-6 border-t col-span-1 md:col-span-2">
+                 <h5 className="font-bold text-sm mb-3 text-primary dark:text-primary-light">
+                   توزيع وسيط الرواتب لهذه للعمالة من هذه الجنسية مقارنة بوسيط سوق العمل بناء على المستوى المهاري على حسب القطاع
+                   <span className="block text-xs text-gray-500 font-normal mt-1">
+                     Median salary distribution for this nationality compared to the labour market median based on skill level by sector
+                   </span>
+                 </h5>
+                 <div className="space-y-4 max-w-2xl">
+                   {(data.uaeWorkforceStats.salaryBySector || []).map((sec, idx) => (
+                     <div key={idx} className="flex flex-col md:flex-row gap-4 p-4 border rounded-xl bg-gray-50/50 dark:bg-gray-800/40 relative">
+                       <div className="flex-1">
+                         <label className="text-xs font-bold text-gray-600 dark:text-gray-300 block mb-1">
+                           القطاع / Sector Name
+                         </label>
+                         <Input placeholder="e.g. Construction / الإنشاءات" value={sec.name} onChange={e => { const list = [...(data.uaeWorkforceStats.salaryBySector || [])]; list[idx].name = e.target.value; setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, salaryBySector: list}}); }} />
+                       </div>
+                       
+                       <div className="w-full md:w-48">
+                         <label className="text-xs font-bold text-emerald-600 dark:text-emerald-400 block mb-1 flex items-center gap-1">
+                           <span className="inline-block w-2 H-2 rounded-full bg-emerald-500"></span>
+                           سوق العمل / Labour Market Wide (AED) (أخضر)
+                         </label>
+                         <Input 
+                           placeholder="Labour Market Wide" 
+                           value={sec.uaeValue} 
+                           type="number" 
+                           className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500 dark:border-emerald-800"
+                           onChange={e => { const list = [...(data.uaeWorkforceStats.salaryBySector || [])]; list[idx].uaeValue = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, salaryBySector: list}}); }} 
+                         />
+                       </div>
+
+                       <div className="w-full md:w-48">
+                         <label className="text-xs font-bold text-blue-600 dark:text-blue-400 block mb-1 flex items-center gap-1">
+                           <span className="inline-block w-2 H-2 rounded-full bg-blue-500"></span>
+                           {data.country || 'Partner'} Salary (AED) (أزرق)
+                         </label>
+                         <Input 
+                           placeholder={`${data.country || 'Partner'} Salary`} 
+                           value={sec.partnerValue} 
+                           type="number" 
+                           className="border-blue-200 focus:border-blue-500 focus:ring-blue-500 dark:border-blue-800"
+                           onChange={e => { const list = [...(data.uaeWorkforceStats.salaryBySector || [])]; list[idx].partnerValue = Number(e.target.value); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, salaryBySector: list}}); }} 
+                         />
+                       </div>
+
+                       <button onClick={() => { const list = (data.uaeWorkforceStats.salaryBySector || []).filter((_, i) => i !== idx); setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, salaryBySector: list}}); }} className="text-red-400 self-end md:mb-2.5 hover:text-red-600 transition-colors"><X size={18} /></button>
+                     </div>
+                   ))}
+                 </div>
+                 <Button size="sm" variant="outline" className="mt-3 border-dashed hover:border-solid hover:bg-gray-100" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, salaryBySector: [...(data.uaeWorkforceStats.salaryBySector || []), { name: '', uaeValue: 0, partnerValue: 0 }]}})}>+ Add Sector Salary</Button>
+              </div>
+
+              <div className="hidden">
+                 <div>
                 </div>
              </div>
           </div>
@@ -1023,7 +1099,21 @@ export default function Wizard() {
           ))}
         </div>
         <div className="lg:col-span-3 space-y-8">
-          <Card className="min-h-[500px] p-8 shadow-2xl">{renderStep()}</Card>
+          <Card className="min-h-[500px] p-8 shadow-2xl">
+            {aiError && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl text-red-700 dark:text-red-300 text-sm flex gap-3 items-start relative animate-in fade-in slide-in-from-top-4">
+                <ShieldAlert className="shrink-0 text-red-500 mt-0.5" size={18} />
+                <div className="flex-1">
+                  <p className="font-bold">{language === 'ar' ? 'تنبيه الاتصال بالذكاء الاصطناعي' : 'AI Service Notice'}</p>
+                  <p className="text-xs mt-1 leading-relaxed">{aiError}</p>
+                </div>
+                <button onClick={() => setAiError(null)} className="absolute top-2 right-2 text-red-400 hover:text-red-600">
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+            {renderStep()}
+          </Card>
           <div className="flex justify-between items-center pt-6">
             <Button variant="ghost" onClick={() => setCurrentStep(Math.max(0, currentStep - 1))} disabled={currentStep === 0}><ArrowLeft size={18} /> {t('back')}</Button>
             <div className="flex gap-4">

@@ -28,15 +28,22 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { 
     );
 };
 
-export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label?: string }> = ({ label, className = '', ...props }) => (
-  <div className="flex flex-col gap-1.5 w-full">
-    {label && <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300">{label}</label>}
-    <input 
-      className={`w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 ${className}`} 
-      {...props} 
-    />
-  </div>
-);
+export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label?: string }> = ({ label, className = '', ...props }) => {
+  const { value, ...rest } = props;
+  const inputProps: React.InputHTMLAttributes<HTMLInputElement> = { ...rest };
+  if (value !== undefined) {
+    inputProps.value = value === null ? '' : value;
+  }
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      {label && <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300">{label}</label>}
+      <input 
+        className={`w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 ${className}`} 
+        {...inputProps} 
+      />
+    </div>
+  );
+};
 
 export const Badge: React.FC<{ children: React.ReactNode; color?: 'green' | 'blue' | 'yellow' | 'red' }> = ({ children, color = 'blue' }) => {
   const colors = {
