@@ -712,7 +712,7 @@ export default function Wizard() {
               {/* Average Salary per Sector (Median) */}
               <div className="pt-6 mt-6 border-t col-span-1 md:col-span-2">
                  <h5 className="font-bold text-sm mb-3 text-primary dark:text-primary-light">
-                   توزيع وسيط الرواتب لهذه للعمالة من هذه الجنسية مقارنة بوسيط سوق العمل بناء على المستوى المهاري على حسب القطاع
+                   توزيع وسيط الرواتب مقارنة بوسيط سوق العمل على حسب القطاع
                    <span className="block text-xs text-gray-500 font-normal mt-1">
                      Median salary distribution for this nationality compared to the labour market median based on skill level by sector
                    </span>

@@ -204,6 +204,27 @@ export default function PrintView() {
     return map[name] || name;
   };
 
+  const translateCountryName = (country: string) => {
+    if (!isRTL || !country) return country;
+    const lower = country.toLowerCase().trim();
+    const map: Record<string, string> = {
+      'india': 'الهند',
+      'pakistan': 'باكستان',
+      'bangladesh': 'بنغلاديش',
+      'philippines': 'الفلبين',
+      'nepal': 'نيبال',
+      'sri lanka': 'سريلانكا',
+      'egypt': 'مصر',
+      'uganda': 'أوغندا',
+      'kenya': 'كينيا',
+      'ethiopia': 'إثيوبيا',
+      'indonesia': 'إندونيسيا',
+      'vietnam': 'فيتنام',
+      'partner': 'الدولة الشريكة'
+    };
+    return map[lower] || country;
+  };
+
   const DefaultFooter = () => (
     <div className="pt-2 flex justify-between items-center bg-white w-full border-t border-gray-100">
       <p className="text-[8px] text-gray-400 font-sans">
@@ -805,7 +826,7 @@ export default function PrintView() {
           <div className="p-2 py-1.5 border border-gray-200 rounded-2xl bg-white shadow-sm flex flex-col items-center">
             <p className="text-center text-[9px] font-bold text-gray-700 mb-1 leading-relaxed max-w-xl">
               {isRTL 
-                ? 'توزيع وسيط الرواتب لهذه للعمالة من هذه الجنسية مقارنة بوسيط سوق العمل بناء على المستوى المهاري على حسب القطاع' 
+                ? 'توزيع وسيط الرواتب مقارنة بوسيط سوق العمل على حسب القطاع' 
                 : `Median salary distribution for this nationality compared to the labour market median based on skill level by sector (${data.country})`}
             </p>
             <div className="w-full">
@@ -826,10 +847,14 @@ export default function PrintView() {
                     <Bar dataKey="uaeValue" name={isRTL ? 'وسيط سوق العمل (AED)' : 'Labour Market Wide (AED)'} radius={[4, 4, 0, 0]} fill="#10b981" barSize={7}>
                       <LabelList dataKey="uaeValue" content={renderUaeLabel} />
                     </Bar>
-                    <Bar dataKey="partnerValue" name={isRTL ? `متوسط رواتب عمالة ${data.country} (AED)` : `${data.country} Sector Average (AED)`} radius={[4, 4, 0, 0]} fill="#2563eb" barSize={7}>
+                    <Bar dataKey="partnerValue" name={isRTL ? `متوسط رواتب عمالة (${translateCountryName(data.country)})` : `${data.country} Sector Average (AED)`} radius={[4, 4, 0, 0]} fill="#2563eb" barSize={7}>
                       <LabelList dataKey="partnerValue" content={renderPartnerLabel} />
                     </Bar>
-                    <Legend iconSize={8} wrapperStyle={{ fontSize: '8px', paddingTop: '3px' }} />
+                    <Legend 
+                      iconSize={8} 
+                      wrapperStyle={{ fontSize: '8px', paddingTop: '3px' }} 
+                      formatter={(value) => <span style={{ paddingLeft: '8px', paddingRight: '8px', display: 'inline-block' }}>{value}</span>}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
