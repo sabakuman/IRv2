@@ -105,6 +105,10 @@ export interface UaeWorkforceData {
     wpsWageTransferPct?: string;
     wageMedianComparison?: string;
     workersLaborStrikes?: string;
+    skilledPartnerWage?: string;
+    skilledUaeWage?: string;
+    unskilledPartnerWage?: string;
+    unskilledUaeWage?: string;
     byEmirate: LabelValue[]; // Abu Dhabi, Dubai, etc.
     bySector: LabelValue[];
   };
@@ -274,6 +278,10 @@ export const EMPTY_REPORT_DATA: ReportData = {
       wpsWageTransferPct: '',
       wageMedianComparison: '',
       workersLaborStrikes: '',
+      skilledPartnerWage: '',
+      skilledUaeWage: '',
+      unskilledPartnerWage: '',
+      unskilledUaeWage: '',
       byEmirate: [
         { name: 'Abu Dhabi', value: 0 },
         { name: 'Dubai', value: 0 },

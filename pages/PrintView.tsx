@@ -193,8 +193,18 @@ export default function PrintView() {
     return <SourceLink label={label} type={type} />;
   };
 
+  const formatWageValueWithAED = (val: string | undefined) => {
+    if (!val) return '—';
+    const trimmed = val.trim();
+    if (!trimmed) return '—';
+    if (trimmed.toLowerCase().includes('aed') || trimmed.includes('د.إ') || trimmed.toLowerCase().includes('usd') || trimmed.includes('$')) {
+      return trimmed;
+    }
+    return `${trimmed} AED`;
+  };
+
   const normalizeWageDisplay = (wage: string) => {
-    if (!wage) return 'N/A';
+    if (!wage) return isRTL ? 'لا يوجد' : 'N/A';
     return wage;
   };
 
@@ -660,7 +670,7 @@ export default function PrintView() {
                 {t('mohrePrivate')}
               </span>
               <span className="text-[14px] font-black block text-gray-900 font-mono leading-none">
-                {data.uaeWorkforceStats.mohre.totalPrivate.value || 'N/A'}
+                {data.uaeWorkforceStats.mohre.totalPrivate.value || (isRTL ? 'لا يوجد' : 'N/A')}
               </span>
             </div>
 
@@ -670,7 +680,7 @@ export default function PrintView() {
                 {t('mohreDomestic')}
               </span>
               <span className="text-[14px] font-black block text-gray-900 font-mono leading-none">
-                {data.uaeWorkforceStats.mohre.totalDomestic.value || 'N/A'}
+                {data.uaeWorkforceStats.mohre.totalDomestic.value || (isRTL ? 'لا يوجد' : 'N/A')}
               </span>
             </div>
 
@@ -681,7 +691,7 @@ export default function PrintView() {
               </span>
               <div className="flex items-baseline justify-between mt-1">
                 <span className="text-[14px] font-black text-gray-900 font-mono leading-none">
-                  {data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}
+                  {data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}
                 </span>
                 <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
                   {formatPctValue(data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct)}
@@ -696,7 +706,7 @@ export default function PrintView() {
               </span>
               <div className="flex items-baseline justify-between mt-1">
                 <span className="text-[14px] font-black text-gray-900 font-mono leading-none">
-                  {data.uaeWorkforceStats.mohre.wpsWageTransferNum || 'N/A'}
+                  {data.uaeWorkforceStats.mohre.wpsWageTransferNum || (isRTL ? 'لا يوجد' : 'N/A')}
                 </span>
                 <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
                   {formatPctValue(data.uaeWorkforceStats.mohre.wpsWageTransferPct)}
@@ -710,7 +720,7 @@ export default function PrintView() {
             <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('unemploymentInsuranceCoverageRate')}</span>
               <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || 'N/A'}</span>
+                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
                 <span className="text-[9px] font-extrabold text-primary font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct)}</span>
               </div>
             </div>
@@ -718,7 +728,7 @@ export default function PrintView() {
             <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('insuranceUnemploymentExposed')}</span>
               <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedNum || 'N/A'}</span>
+                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
                 <span className="text-[9px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedPct)}</span>
               </div>
             </div>
@@ -726,7 +736,7 @@ export default function PrintView() {
             <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('insuranceRightsCovered')}</span>
               <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredNum || 'N/A'}</span>
+                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
                 <span className="text-[9px] font-extrabold text-primary font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceRightsCoveredPct)}</span>
               </div>
             </div>
@@ -734,24 +744,69 @@ export default function PrintView() {
             <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
               <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('insuranceRightsExposed')}</span>
               <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceRightsExposedNum || 'N/A'}</span>
+                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceRightsExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
                 <span className="text-[9px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceRightsExposedPct)}</span>
               </div>
             </div>
           </div>
 
-          {/* Two Other KPI Boxes - Made bigger per request */}
-          <div className="grid grid-cols-2 gap-3 mb-2.5">
-            <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between px-4 shadow-sm min-h-[44px]">
-              <span className="text-[9px] font-black text-gray-600 uppercase leading-tight max-w-[70%]">{t('wageMedianComparison')}</span>
-              <span className="text-[14px] font-sans font-black text-gray-950 leading-none shrink-0">{data.uaeWorkforceStats.mohre.wageMedianComparison || 'N/A'}</span>
-            </div>
-            
-            <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between px-4 shadow-sm min-h-[44px]">
-              <span className="text-[9px] font-black text-gray-600 uppercase leading-tight max-w-[70%]">{t('workersLaborStrikes')}</span>
-              <span className="text-[14px] font-sans font-black text-gray-950 leading-none shrink-0">{data.uaeWorkforceStats.mohre.workersLaborStrikes || 'N/A'}</span>
-            </div>
+          {/* Strikes KPI Box - Styled like the Total Workforce Banner */}
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-1.5 flex items-center justify-between px-4 shadow-sm mb-2.5">
+            <p className="text-[9px] font-extrabold text-primary-dark uppercase tracking-wider font-sans leading-none">
+              {t('workersLaborStrikes')}
+            </p>
+            <p className="text-lg font-serif font-black text-primary-dark leading-none">
+              {data.uaeWorkforceStats.mohre.workersLaborStrikes || '0'}
+            </p>
           </div>
+
+          {/* Skilled / Unskilled Median Wage Table */}
+          {((data.uaeWorkforceStats.mohre.skilledPartnerWage || 
+             data.uaeWorkforceStats.mohre.skilledUaeWage || 
+             data.uaeWorkforceStats.mohre.unskilledPartnerWage || 
+             data.uaeWorkforceStats.mohre.unskilledUaeWage)) && (
+            <div className="overflow-hidden border border-gray-200 rounded-xl shadow-sm mb-2.5">
+              <table className="w-full text-center border-collapse">
+                <thead>
+                  <tr className="bg-[#00a4e4] text-white text-[9.5px] font-extrabold">
+                    <th className="py-1.5 px-3 border border-white/20 font-sans tracking-wider w-1/3">
+                      {isRTL ? 'المستوى المهاري' : 'Skill Level'}
+                    </th>
+                    <th className="py-1.5 px-3 border border-white/20 font-sans tracking-wider w-1/3">
+                      {isRTL ? `وسيط الراتب للعمال من ${translateCountryName(data.country)} في الإمارات` : `Median Wage for ${data.country} Workers in the UAE`}
+                    </th>
+                    <th className="py-1.5 px-3 border border-white/20 font-sans tracking-wider w-1/3">
+                      {isRTL ? 'وسيط الراتب لسوق العمل' : 'Labor Market Median Wage'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="bg-[#0c567c] text-white text-[11px] font-bold">
+                    <td className="py-1.5 px-3 border border-white/10 font-sans">
+                      {isRTL ? 'ماهر' : 'Skilled'}
+                    </td>
+                    <td className="py-1.5 px-3 border border-white/10 font-mono">
+                      {formatWageValueWithAED(data.uaeWorkforceStats.mohre.skilledPartnerWage)}
+                    </td>
+                    <td className="py-1.5 px-3 border border-white/10 font-mono">
+                      {formatWageValueWithAED(data.uaeWorkforceStats.mohre.skilledUaeWage)}
+                    </td>
+                  </tr>
+                  <tr className="bg-[#2d3e50] text-white text-[11px] font-bold">
+                    <td className="py-1.5 px-3 border border-white/10 font-sans">
+                      {isRTL ? 'غير ماهر' : 'Unskilled'}
+                    </td>
+                    <td className="py-1.5 px-3 border border-white/10 font-mono">
+                      {formatWageValueWithAED(data.uaeWorkforceStats.mohre.unskilledPartnerWage)}
+                    </td>
+                    <td className="py-1.5 px-3 border border-white/10 font-mono">
+                      {formatWageValueWithAED(data.uaeWorkforceStats.mohre.unskilledUaeWage)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
           
           <div className="grid grid-cols-2 gap-3 mb-1.5">
             <div className="p-2 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
@@ -823,43 +878,45 @@ export default function PrintView() {
           </div>
 
           {/* Average Salary per Sector Comparison Chart */}
-          <div className="p-2 py-1.5 border border-gray-200 rounded-2xl bg-white shadow-sm flex flex-col items-center">
-            <p className="text-center text-[9px] font-bold text-gray-700 mb-1 leading-relaxed max-w-xl">
-              {isRTL 
-                ? 'توزيع وسيط الرواتب مقارنة بوسيط سوق العمل على حسب القطاع' 
-                : `Median salary distribution for this nationality compared to the labour market median based on skill level by sector (${data.country})`}
-            </p>
-            <div className="w-full">
-              <div className="h-[135px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sortedSalarySectors.slice(0, 11)} barGap={4} barCategoryGap="20%" margin={{top: 15, right: 5, bottom: 15, left: 5}}>
-                    <XAxis 
-                      dataKey="name" 
-                      tick={renderCustomXAxisTick} 
-                      tickFormatter={formatSectorTick} 
-                      tickMargin={2} 
-                      interval={0} 
-                      height={20} 
-                      axisLine={false} 
-                      tickLine={false} 
-                    />
-                    <YAxis hide domain={[0, manualMaxSalary]} />
-                    <Bar dataKey="uaeValue" name={isRTL ? 'وسيط سوق العمل (AED)' : 'Labour Market Wide (AED)'} radius={[4, 4, 0, 0]} fill="#10b981" barSize={7}>
-                      <LabelList dataKey="uaeValue" content={renderUaeLabel} />
-                    </Bar>
-                    <Bar dataKey="partnerValue" name={isRTL ? `متوسط رواتب عمالة (${translateCountryName(data.country)})` : `${data.country} Sector Average (AED)`} radius={[4, 4, 0, 0]} fill="#2563eb" barSize={7}>
-                      <LabelList dataKey="partnerValue" content={renderPartnerLabel} />
-                    </Bar>
-                    <Legend 
-                      iconSize={8} 
-                      wrapperStyle={{ fontSize: '8px', paddingTop: '3px' }} 
-                      formatter={(value) => <span style={{ paddingLeft: '8px', paddingRight: '8px', display: 'inline-block' }}>{value}</span>}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+          {data.uaeWorkforceStats.salaryBySector && data.uaeWorkforceStats.salaryBySector.length > 0 && (
+            <div className="p-2 py-1.5 border border-gray-200 rounded-2xl bg-white shadow-sm flex flex-col items-center">
+              <p className="text-center text-[9px] font-bold text-gray-700 mb-1 leading-relaxed max-w-xl">
+                {isRTL 
+                  ? 'توزيع وسيط الرواتب مقارنة بوسيط سوق العمل على حسب القطاع' 
+                  : `Median salary distribution for this nationality compared to the labour market median based on skill level by sector (${data.country})`}
+              </p>
+              <div className="w-full">
+                <div className="h-[135px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={sortedSalarySectors.slice(0, 11)} barGap={4} barCategoryGap="20%" margin={{top: 15, right: 5, bottom: 15, left: 5}}>
+                      <XAxis 
+                        dataKey="name" 
+                        tick={renderCustomXAxisTick} 
+                        tickFormatter={formatSectorTick} 
+                        tickMargin={2} 
+                        interval={0} 
+                        height={20} 
+                        axisLine={false} 
+                        tickLine={false} 
+                      />
+                      <YAxis hide domain={[0, manualMaxSalary]} />
+                      <Bar dataKey="uaeValue" name={isRTL ? 'وسيط سوق العمل (AED)' : 'Labour Market Wide (AED)'} radius={[4, 4, 0, 0]} fill="#10b981" barSize={7}>
+                        <LabelList dataKey="uaeValue" content={renderUaeLabel} />
+                      </Bar>
+                      <Bar dataKey="partnerValue" name={isRTL ? `وسيط رواتب عمالة ${translateCountryName(data.country)}` : `${data.country} Sector Average (AED)`} radius={[4, 4, 0, 0]} fill="#2563eb" barSize={7}>
+                        <LabelList dataKey="partnerValue" content={renderPartnerLabel} />
+                      </Bar>
+                      <Legend 
+                        iconSize={8} 
+                        wrapperStyle={{ fontSize: '8px', paddingTop: '3px' }} 
+                        formatter={(value) => <span style={{ paddingLeft: '8px', paddingRight: '8px', display: 'inline-block' }}>{value}</span>}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </PageContainer>
 
         {/* PAGE 4: PARTNER WORKFORCE */}

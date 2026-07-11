@@ -657,10 +657,58 @@ export default function Wizard() {
 
                 {/* Wage Median & Strikes Group */}
                 <Card className="p-4 bg-white dark:bg-gray-800 border space-y-4">
-                  <h5 className="font-bold text-xs text-amber-600 uppercase tracking-wider font-sans">مؤشرات إضافية (Other Indicators)</h5>
+                  <h5 className="font-bold text-xs text-amber-600 uppercase tracking-wider font-sans">مؤشرات إضافية ومقارنة الرواتب (Indicators & Wage Comparison)</h5>
                   <div className="space-y-4">
-                    <Input label={t('wageMedianComparison')} placeholder="e.g. $1,200" value={data.uaeWorkforceStats.mohre.wageMedianComparison || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, wageMedianComparison: e.target.value}}})} />
                     <Input label={t('workersLaborStrikes')} placeholder="e.g. 0" value={data.uaeWorkforceStats.mohre.workersLaborStrikes || ''} onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, workersLaborStrikes: e.target.value}}})} />
+                    
+                    <div className="border-t pt-3 mt-3">
+                      <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">مقارنة وسيط الرواتب حسب المستوى المهاري (Median Wage Comparison by Skill Level)</p>
+                      <div className="grid grid-cols-3 gap-2 items-center text-[10px] font-bold text-gray-500 mb-1">
+                        <div>المستوى المهاري</div>
+                        <div>وسيط الراتب للجنسية</div>
+                        <div>وسيط الراتب لسوق العمل</div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {/* Skilled Row */}
+                        <div className="grid grid-cols-3 gap-2 items-center">
+                          <span className="text-xs font-semibold dark:text-white">ماهر (Skilled)</span>
+                          <input 
+                            type="text" 
+                            className="w-full text-xs font-mono border rounded p-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white" 
+                            placeholder="e.g. AED 4,500" 
+                            value={data.uaeWorkforceStats.mohre.skilledPartnerWage || ''} 
+                            onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, skilledPartnerWage: e.target.value}}})} 
+                          />
+                          <input 
+                            type="text" 
+                            className="w-full text-xs font-mono border rounded p-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white" 
+                            placeholder="e.g. AED 5,000" 
+                            value={data.uaeWorkforceStats.mohre.skilledUaeWage || ''} 
+                            onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, skilledUaeWage: e.target.value}}})} 
+                          />
+                        </div>
+
+                        {/* Unskilled Row */}
+                        <div className="grid grid-cols-3 gap-2 items-center">
+                          <span className="text-xs font-semibold dark:text-white">غير ماهر (Unskilled)</span>
+                          <input 
+                            type="text" 
+                            className="w-full text-xs font-mono border rounded p-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white" 
+                            placeholder="e.g. AED 1,200" 
+                            value={data.uaeWorkforceStats.mohre.unskilledPartnerWage || ''} 
+                            onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, unskilledPartnerWage: e.target.value}}})} 
+                          />
+                          <input 
+                            type="text" 
+                            className="w-full text-xs font-mono border rounded p-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white" 
+                            placeholder="e.g. AED 1,500" 
+                            value={data.uaeWorkforceStats.mohre.unskilledUaeWage || ''} 
+                            onChange={e => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, mohre: {...data.uaeWorkforceStats.mohre, unskilledUaeWage: e.target.value}}})} 
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </Card>
              </div>
