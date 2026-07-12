@@ -807,7 +807,9 @@ export default function Wizard() {
                      </div>
                    ))}
                  </div>
-                 <Button size="sm" variant="outline" className="mt-3 border-dashed hover:border-solid hover:bg-gray-100" onClick={() => setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, salaryBySector: [...(data.uaeWorkforceStats.salaryBySector || []), { name: '', uaeValue: 0, partnerValue: 0 }]}})}>+ Add Sector Salary</Button>
+                 <Button size="sm" variant="outline" className="mt-3 border-dashed hover:border-solid hover:bg-gray-100" onClick={() => { if ((data.uaeWorkforceStats.salaryBySector || []).length < 10) { setData({...data, uaeWorkforceStats: {...data.uaeWorkforceStats, salaryBySector: [...(data.uaeWorkforceStats.salaryBySector || []), { name: '', uaeValue: 0, partnerValue: 0 }]}}); } }} disabled={(data.uaeWorkforceStats.salaryBySector || []).length >= 10}>
+                    {(data.uaeWorkforceStats.salaryBySector || []).length < 10 ? "+ Add Sector Salary" : "تنبيه: الحد الأقصى هو 10 قطاعات (Max 10 sectors reached)"}
+                  </Button>
               </div>
 
               <div className="hidden">

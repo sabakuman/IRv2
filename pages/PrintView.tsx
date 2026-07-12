@@ -323,22 +323,7 @@ export default function PrintView() {
 
   const processSalarySectors = (sectors: { name: string; uaeValue: number; partnerValue: number }[], limit = 10) => {
     const sorted = [...sectors].sort((a, b) => b.uaeValue - a.uaeValue);
-    if (sorted.length <= limit) {
-      return sorted;
-    }
-    const topLimit = sorted.slice(0, limit);
-    const remaining = sorted.slice(limit);
-    const uaeSum = remaining.reduce((sum, item) => sum + (item.uaeValue || 0), 0);
-    const partnerSum = remaining.reduce((sum, item) => sum + (item.partnerValue || 0), 0);
-    const remainingUaeAvg = Math.round(uaeSum / remaining.length);
-    const remainingPartnerAvg = Math.round(partnerSum / remaining.length);
-    
-    topLimit.push({
-      name: isRTL ? 'أخرى' : 'Other',
-      uaeValue: remainingUaeAvg,
-      partnerValue: remainingPartnerAvg
-    });
-    return topLimit;
+    return sorted.slice(0, limit);
   };
 
   const mappedSalarySectors = [...salarySectors].map(s => ({
@@ -350,7 +335,7 @@ export default function PrintView() {
 
   // Find max value in salary sectors to set manual Y-axis max about 15-20% higher
   const maxSalaryVal = Math.max(
-    ...sortedSalarySectors.slice(0, 11).flatMap(s => [s.uaeValue || 0, s.partnerValue || 0]),
+    ...sortedSalarySectors.slice(0, 10).flatMap(s => [s.uaeValue || 0, s.partnerValue || 0]),
     1
   );
   const manualMaxSalary = Math.ceil(maxSalaryVal * 1.22);
@@ -358,30 +343,24 @@ export default function PrintView() {
   // Custom label renderers to match the exact requirements of horizontal labels
   const wrapSectorName = (name: string): string[] => {
     if (!name) return [];
-    let display = name;
-    if (display.length > 18) {
-      display = display.substring(0, 15) + '...';
-    }
-    const words = display.split(' ');
-    if (words.length <= 1) {
-      return [display];
-    }
-    // Find the split point that makes lines as equal as possible
-    let bestDiff = Infinity;
-    let bestIdx = 1;
-    for (let i = 1; i < words.length; i++) {
-      const l1 = words.slice(0, i).join(' ').length;
-      const l2 = words.slice(i).join(' ').length;
-      const diff = Math.abs(l1 - l2);
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        bestIdx = i;
+    const words = name.split(/\s+/);
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      if (!currentLine) {
+        currentLine = word;
+      } else if (currentLine.length + word.length + 1 <= 16) {
+        currentLine += ' ' + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
       }
     }
-    return [
-      words.slice(0, bestIdx).join(' '),
-      words.slice(bestIdx).join(' ')
-    ];
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    return lines;
   };
 
   const renderCustomXAxisTick = (props: any) => {
@@ -408,7 +387,7 @@ export default function PrintView() {
   };
 
   const formatSectorTick = (value: string) => {
-    return value && value.length > 18 ? value.substring(0, 15) + '...' : value;
+    return value;
   };
 
   const renderUaeLabel = (props: any) => {
@@ -888,14 +867,14 @@ export default function PrintView() {
               <div className="w-full">
                 <div className="h-[135px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={sortedSalarySectors.slice(0, 11)} barGap={4} barCategoryGap="20%" margin={{top: 15, right: 5, bottom: 15, left: 5}}>
+                    <BarChart data={sortedSalarySectors.slice(0, 10)} barGap={4} barCategoryGap="20%" margin={{top: 15, right: 5, bottom: 15, left: 5}}>
                       <XAxis 
                         dataKey="name" 
                         tick={renderCustomXAxisTick} 
                         tickFormatter={formatSectorTick} 
                         tickMargin={2} 
                         interval={0} 
-                        height={20} 
+                        height={32} 
                         axisLine={false} 
                         tickLine={false} 
                       />
