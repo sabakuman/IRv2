@@ -7,7 +7,7 @@ import { MockService } from '../services/mockService';
 import { Report, UserProfile } from '../types';
 import { FLAGS } from '../constants';
 import { Card, Button, Badge } from '../components/ui/LayoutComponents';
-import { Search, Plus, Edit3, Trash2, Printer, FileText, Lock, RefreshCw, Eye } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Printer, FileText, Lock, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ReportsList() {
@@ -56,24 +56,13 @@ export default function ReportsList() {
     }
   };
 
-  const handleView = (id: string) => {
-    navigate(`/print/${id}?lang=${language}`);
-  };
-
   const handlePrint = (id: string) => {
     const href = window.location.href;
     const hashIndex = href.indexOf('#');
     let baseUrl = hashIndex !== -1 ? href.substring(0, hashIndex) : href;
     if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
     const printUrl = `${baseUrl}/#/print/${id}?lang=${language}`;
-    try {
-      const win = window.open(printUrl, '_blank');
-      if (!win || win.closed || typeof win.closed === 'undefined') {
-        navigate(`/print/${id}?lang=${language}`);
-      }
-    } catch (e) {
-      navigate(`/print/${id}?lang=${language}`);
-    }
+    window.open(printUrl, '_blank');
   };
 
   const getUserName = (userId: string) => {
@@ -176,15 +165,7 @@ export default function ReportsList() {
                        />
                        {report.data.country}
                     </td>
-                    <td className="p-4 text-sm font-medium dark:text-gray-200">
-                      <button 
-                        onClick={() => handleView(report.id)}
-                        className="text-left font-semibold hover:text-primary transition-colors hover:underline cursor-pointer"
-                        title={t('viewReport')}
-                      >
-                        {report.title}
-                      </button>
-                    </td>
+                    <td className="p-4 text-sm font-medium dark:text-gray-200">{report.title}</td>
                     <td className="p-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       {getUserName(report.userId)}
                       {isOwner && <span className="ml-2 text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">You</span>}
@@ -199,14 +180,6 @@ export default function ReportsList() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                         <button 
-                           onClick={() => handleView(report.id)}
-                           className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400 transition-colors"
-                           title={t('viewReport')}
-                         >
-                           <Eye size={16} />
-                         </button>
-
                          <button 
                            onClick={() => navigate(`/wizard/${report.id}`)}
                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors"

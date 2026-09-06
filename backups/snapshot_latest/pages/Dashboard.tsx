@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { MockService } from '../services/mockService';
 import { Report, LetterLog } from '../types';
 import { Card, Button } from '../components/ui/LayoutComponents';
-import { FileText, Plus, Activity, Edit3, ArrowRight, Save, X, Calendar, Mail, Eye } from 'lucide-react';
+import { FileText, Plus, Activity, Edit3, ArrowRight, Save, X, Calendar, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function Dashboard() {
@@ -149,30 +149,13 @@ export default function Dashboard() {
                            {report.data.country ? report.data.country.substring(0, 2).toUpperCase() : '??'}
                         </div>
                         <div>
-                           <h4 
-                             onClick={() => navigate(`/print/${report.id}?lang=${language}`)}
-                             className="font-bold text-gray-800 dark:text-gray-100 hover:text-primary cursor-pointer transition-colors"
-                             title={t('viewReport')}
-                           >
-                             {report.title}
-                           </h4>
+                           <h4 className="font-bold text-gray-800 dark:text-gray-100">{report.title}</h4>
                            <p className="text-xs text-gray-500 dark:text-gray-400">Updated {new Date(report.updatedAt).toLocaleDateString()}</p>
                         </div>
                      </div>
-                     <div className="flex items-center gap-1">
-                       <Button 
-                         variant="ghost" 
-                         size="sm"
-                         onClick={() => navigate(`/print/${report.id}?lang=${language}`)}
-                         title={t('viewReport')}
-                         className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
-                       >
-                          <Eye size={16} />
-                       </Button>
-                       <Button variant="ghost" size="sm" onClick={() => navigate(`/wizard/${report.id}`)} title="Edit Report">
-                          <Edit3 size={16} />
-                       </Button>
-                     </div>
+                     <Button variant="ghost" onClick={() => navigate(`/wizard/${report.id}`)}>
+                        <Edit3 size={16} />
+                     </Button>
                   </Card>
                ))}
                {reports.length === 0 && !loading && (

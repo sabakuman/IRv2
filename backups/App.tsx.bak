@@ -19,7 +19,6 @@ import MOUWizard from './pages/MOUWizard';
 import MOUPrintView from './pages/MOUPrintView';
 
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import ErrorBoundary from './components/ErrorBoundary';
 
 // Route Guard Component
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
@@ -83,16 +82,14 @@ const AppRoutes = () => {
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <HashRouter>
-              <AppRoutes />
-            </HashRouter>
-          </AuthProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <HashRouter>
+            <AppRoutes />
+          </HashRouter>
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }

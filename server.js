@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { initializeMOUDatabase } from './server/mou_init.js';
 import { createMOURoutes } from './server/routes/mou.js';
+import { seedInitialReport } from './server/seedReport.js';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 
@@ -125,6 +126,8 @@ function initializeDatabase() {
         adminStmt.finalize();
       }
     });
+
+    seedInitialReport(db);
   });
 }
 

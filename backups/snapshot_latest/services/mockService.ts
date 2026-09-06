@@ -18,25 +18,13 @@ export const MockService = {
 
   // --- Reports ---
   getReports: async (): Promise<Report[]> => {
-    try {
-      const res = await fetch(`${API_URL}/reports`);
-      return res.ok ? await res.json() : [];
-    } catch (e) {
-      console.error('Failed to fetch reports:', e);
-      return [];
-    }
+    const res = await fetch(`${API_URL}/reports`);
+    return res.ok ? await res.json() : [];
   },
 
   getReportById: async (id: string): Promise<Report | undefined> => {
-    try {
-      const cleanId = id ? id.split('?')[0].split('#')[0] : '';
-      if (!cleanId) return undefined;
-      const res = await fetch(`${API_URL}/reports/${cleanId}`);
-      return res.ok ? await res.json() : undefined;
-    } catch (e) {
-      console.error(`Failed to fetch report with id ${id}:`, e);
-      return undefined;
-    }
+    const res = await fetch(`${API_URL}/reports/${id}`);
+    return res.ok ? await res.json() : undefined;
   },
 
   saveReport: async (report: Report): Promise<void> => {

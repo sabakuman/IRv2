@@ -45,9 +45,6 @@ export interface Delegate {
   title: string;
   imageUrl: string;
   bio: string;
-  metBefore?: boolean;
-  meetingYear?: string;
-  meetingLocation?: string;
 }
 
 export interface DateValue {
@@ -80,13 +77,6 @@ export interface PointOfDiscussion {
   content: string;
 }
 
-export interface PendingMatter {
-  id: string;
-  matter: string;
-  dept: string;
-  status?: string;
-}
-
 export interface NewsItem {
   id: string;
   title: string;
@@ -96,18 +86,8 @@ export interface NewsItem {
   url?: string; // Added for grounding support
 }
 
-export interface WorkersHistory {
-  yearCurrent?: string;
-  totalCurrent?: number;
-  yearPrevious?: string;
-  totalPrevious?: number;
-  yearTwoYearsAgo?: string;
-  totalTwoYearsAgo?: number;
-}
-
 export interface UaeWorkforceData {
   totalWorkersOverride?: number;
-  workersHistory?: WorkersHistory;
   mohre: {
     totalPrivate: DateValue;
     totalDomestic: DateValue;
@@ -125,8 +105,6 @@ export interface UaeWorkforceData {
     wpsWageTransferPct?: string;
     wageMedianComparison?: string;
     workersLaborStrikes?: string;
-    laborComplaintsUnderReview?: string;
-    totalComplaintsCurrentYear?: string;
     skilledPartnerWage?: string;
     skilledUaeWage?: string;
     unskilledPartnerWage?: string;
@@ -240,39 +218,6 @@ export interface ReportData {
     uae: Delegate[];
     partner: Delegate[];
   };
-
-  // Executive Brief & User Summary
-  summary?: string; // Manual text user entered on input page
-  lastCorrespondence?: {
-    direction?: 'outgoing' | 'incoming' | string;
-    date?: string;
-    ref?: string;
-    subject?: string;
-    status?: 'awaiting_reply' | 'closed' | 'actioned' | string;
-  };
-  mouSignedWithMohre?: {
-    signed?: 'yes' | 'no' | boolean | string;
-    signedDate?: string;
-    type?: 'domestic' | 'general' | 'both' | string;
-  };
-  lastMeeting?: {
-    date?: string;
-    type?: string;
-    title?: string;
-    coverage?: string;
-  };
-  attentionNotes?: string[];
-  pendingMatters?: PendingMatter[];
-  sectionVisibility?: {
-    profileEconomy?: boolean;
-    uaeWorkforce?: boolean;
-    partnerWorkforce?: boolean;
-    interactions?: boolean;
-    discussionPoints?: boolean;
-    previousUpdates?: boolean;
-    agreements?: boolean;
-    delegation?: boolean;
-  };
 }
 
 export interface Report {
@@ -316,14 +261,6 @@ export const EMPTY_REPORT_DATA: ReportData = {
   minimumWage: '',
   uaeWorkforceStats: {
     totalWorkersOverride: undefined,
-    workersHistory: {
-      yearCurrent: '',
-      totalCurrent: undefined,
-      yearPrevious: '',
-      totalPrevious: undefined,
-      yearTwoYearsAgo: '',
-      totalTwoYearsAgo: undefined,
-    },
     mohre: {
       totalPrivate: { value: '', date: '' },
       totalDomestic: { value: '', date: '' },
@@ -341,8 +278,6 @@ export const EMPTY_REPORT_DATA: ReportData = {
       wpsWageTransferPct: '',
       wageMedianComparison: '',
       workersLaborStrikes: '',
-      laborComplaintsUnderReview: '',
-      totalComplaintsCurrentYear: '',
       skilledPartnerWage: '',
       skilledUaeWage: '',
       unskilledPartnerWage: '',
@@ -420,7 +355,4 @@ export const EMPTY_REPORT_DATA: ReportData = {
     uae: [],
     partner: []
   },
-  summary: '',
-  lastCorrespondence: undefined,
-  pendingMatters: [],
 };

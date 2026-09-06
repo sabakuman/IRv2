@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { MockService } from '../services/mockService';
-import { Report } from '../types';
+import { Report, ReportData, EMPTY_REPORT_DATA } from '../types';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList, Legend } from 'recharts';
 import { 
   Globe, Users, TrendingUp, Building, Building2,
@@ -11,9 +12,11 @@ import {
   ExternalLink, Clock, Phone, Percent, CheckCircle
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
+import { ExecutiveBriefPage } from '../components/ExecutiveBriefPage';
+import { WorkforceWageAnalytics } from '../components/WorkforceWageAnalytics';
 import { useLanguage } from '../context/LanguageContext';
 
-const BLUE_PALETTE = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
+const BLUE_PALETTE = ['#2563eb', '#3b82f6', '#60a5fa', '#38bdf8', '#7dd3fc', '#93c5fd'];
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '';
@@ -77,17 +80,34 @@ const SourceLink = ({ label, type }: { label: string, type: string }) => {
 };
 
 export default function PrintView() {
-  const getParamId = () => {
-    const hash = window.location.hash;
-    const parts = hash.split('/');
-    if (parts.length >= 3 && parts[1] === 'print') return parts[2];
+  const { id: routeId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const getCleanId = () => {
+    if (routeId) {
+      return routeId.split('?')[0].split('#')[0];
+    }
+    const hash = window.location.hash || '';
+    const cleanHash = hash.includes('?') ? hash.substring(0, hash.indexOf('?')) : hash;
+    const parts = cleanHash.split('/');
+    const printIdx = parts.indexOf('print');
+    if (printIdx !== -1 && parts[printIdx + 1]) {
+      return parts[printIdx + 1].split('?')[0].split('#')[0];
+    }
+    const pathParts = window.location.pathname.split('/');
+    const pIdx = pathParts.indexOf('print');
+    if (pIdx !== -1 && pathParts[pIdx + 1]) {
+      return pathParts[pIdx + 1].split('?')[0].split('#')[0];
+    }
     return undefined;
   };
-  const id = getParamId();
+
+  const id = getCleanId();
 
   const { t, language, dir, setLanguage } = useLanguage();
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check for lang query parameter - with HashRouter, it's in the hash
@@ -102,45 +122,152 @@ export default function PrintView() {
 
   useEffect(() => {
     if (id) {
-      MockService.getReportById(id).then(r => {
-        if (r) setReport(r);
-        else setError(true);
-      });
+      setLoading(true);
+      setError(false);
+      MockService.getReportById(id)
+        .then(r => {
+          if (r && r.data) {
+            setReport(r);
+            setError(false);
+          } else {
+            setError(true);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to load report:", err);
+          setError(true);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      setError(true);
+      setLoading(false);
     }
   }, [id]);
 
-  if (error) {
+  if (loading) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center text-primary font-serif gap-3 no-print" dir={dir}>
+        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-base font-medium">{t('generatingDoc')}</div>
+      </div>
+    );
+  }
+
+  if (error || !report) {
     return (
       <div className="h-screen flex flex-col items-center justify-center text-gray-500 gap-4 no-print" dir={dir}>
         <AlertTriangle size={48} className="text-red-500" />
         <h2 className="text-xl font-bold text-gray-800">{t('reportNotFound')}</h2>
         <p className="text-sm">{t('reportNotFoundMsg')}</p>
-        <button onClick={() => window.close()} className="px-4 py-2 bg-gray-200 rounded-lg text-sm font-medium">{t('closeWindow')}</button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate('/reports')} 
+            className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+          >
+            {language === 'ar' ? 'العودة للتقارير' : 'Back to Reports'}
+          </button>
+          <button 
+            onClick={() => navigate('/dashboard')} 
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors border"
+          >
+            {language === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
+          </button>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors border"
+          >
+            {language === 'ar' ? 'إعادة تحميل' : 'Reload'}
+          </button>
+        </div>
       </div>
     );
   }
 
-  if (!report) return (
-    <div className="h-screen flex items-center justify-center text-primary font-serif animate-pulse no-print" dir={dir}>
-      {t('generatingDoc')}
-    </div>
-  );
+  const rawData: any = (report && report.data) ? report.data : {};
+  const data: ReportData = {
+    ...EMPTY_REPORT_DATA,
+    ...rawData,
+    country: rawData.country || '',
+    economicStats: {
+      ...EMPTY_REPORT_DATA.economicStats,
+      ...(rawData.economicStats || {})
+    },
+    educationStats: {
+      ...EMPTY_REPORT_DATA.educationStats,
+      ...(rawData.educationStats || {})
+    },
+    workforceStats: {
+      ...EMPTY_REPORT_DATA.workforceStats,
+      ...(rawData.workforceStats || {}),
+      migrationDestinations: rawData.workforceStats?.migrationDestinations || [],
+      topSectors: rawData.workforceStats?.topSectors || [],
+      availableSkills: rawData.workforceStats?.availableSkills || []
+    },
+    uaeWorkforceStats: {
+      ...EMPTY_REPORT_DATA.uaeWorkforceStats,
+      ...(rawData.uaeWorkforceStats || {}),
+      workersHistory: {
+        ...EMPTY_REPORT_DATA.uaeWorkforceStats?.workersHistory,
+        ...(rawData.uaeWorkforceStats?.workersHistory || {})
+      },
+      mohre: {
+        ...EMPTY_REPORT_DATA.uaeWorkforceStats?.mohre,
+        ...(rawData.uaeWorkforceStats?.mohre || {}),
+        totalPrivate: {
+          ...EMPTY_REPORT_DATA.uaeWorkforceStats?.mohre?.totalPrivate,
+          ...(rawData.uaeWorkforceStats?.mohre?.totalPrivate || {})
+        },
+        totalDomestic: {
+          ...EMPTY_REPORT_DATA.uaeWorkforceStats?.mohre?.totalDomestic,
+          ...(rawData.uaeWorkforceStats?.mohre?.totalDomestic || {})
+        },
+        byEmirate: (rawData.uaeWorkforceStats?.mohre?.byEmirate && rawData.uaeWorkforceStats.mohre.byEmirate.length > 0)
+          ? rawData.uaeWorkforceStats.mohre.byEmirate
+          : EMPTY_REPORT_DATA.uaeWorkforceStats.mohre.byEmirate,
+        bySector: rawData.uaeWorkforceStats?.mohre?.bySector || []
+      },
+      icp: {
+        ...EMPTY_REPORT_DATA.uaeWorkforceStats?.icp,
+        ...(rawData.uaeWorkforceStats?.icp || {}),
+        byEmirate: (rawData.uaeWorkforceStats?.icp?.byEmirate && rawData.uaeWorkforceStats.icp.byEmirate.length > 0)
+          ? rawData.uaeWorkforceStats.icp.byEmirate
+          : EMPTY_REPORT_DATA.uaeWorkforceStats.icp.byEmirate,
+        bySector: rawData.uaeWorkforceStats?.icp?.bySector || []
+      },
+      salaryBySector: (rawData.uaeWorkforceStats?.salaryBySector && rawData.uaeWorkforceStats.salaryBySector.length > 0)
+        ? rawData.uaeWorkforceStats.salaryBySector
+        : EMPTY_REPORT_DATA.uaeWorkforceStats.salaryBySector
+    },
+    delegations: {
+      uae: rawData.delegations?.uae || [],
+      partner: rawData.delegations?.partner || []
+    },
+    recentInteractions: rawData.recentInteractions || [],
+    pointsOfDiscussion: rawData.pointsOfDiscussion || [],
+    previousAgreementsAndUpdates: rawData.previousAgreementsAndUpdates || [],
+    bilateralAgreements: rawData.bilateralAgreements || [],
+    customSections: rawData.customSections || [],
+    relatedNews: rawData.relatedNews || [],
+    keyIssues: rawData.keyIssues || [],
+    recommendations: rawData.recommendations || []
+  };
 
-  const { data } = report;
   const isRTL = language === 'ar';
   
   // Dynamic Year Logic
   const reportDateObj = data.reportDate ? new Date(data.reportDate) : new Date();
-  const reportYear = reportDateObj.getFullYear();
-  const reportMonth = reportDateObj.getMonth();
+  const reportYear = !isNaN(reportDateObj.getFullYear()) ? reportDateObj.getFullYear() : new Date().getFullYear();
+  const reportMonth = !isNaN(reportDateObj.getMonth()) ? reportDateObj.getMonth() : new Date().getMonth();
   const prevYear = reportYear - 1;
 
   const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const monthsAr = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
   const defaultDateStr = language === 'ar' 
-    ? `${monthsAr[reportMonth]} ${reportYear}`
-    : `${monthsEn[reportMonth]} ${reportYear}`;
+    ? `${monthsAr[reportMonth] || ''} ${reportYear}`
+    : `${monthsEn[reportMonth] || ''} ${reportYear}`;
 
   const formatCompactNumber = (value: any) => {
     const num = Number(value);
@@ -214,17 +341,22 @@ export default function PrintView() {
     return map[name] || name;
   };
 
-  const translateCountryName = (country: string) => {
-    if (!isRTL || !country) return country;
-    const lower = country.toLowerCase().trim();
+  const translateCountryName = (country: string = '') => {
+    if (!isRTL || !country) return country || '';
+    const lower = (country || '').toLowerCase().trim();
     const map: Record<string, string> = {
       'india': 'الهند',
+      'republic of india': 'الهند',
       'pakistan': 'باكستان',
+      'islamic republic of pakistan': 'باكستان',
       'bangladesh': 'بنغلاديش',
+      'people\'s republic of bangladesh': 'بنغلاديش',
       'philippines': 'الفلبين',
+      'republic of the philippines': 'الفلبين',
       'nepal': 'نيبال',
       'sri lanka': 'سريلانكا',
       'egypt': 'مصر',
+      'arab republic of egypt': 'مصر',
       'uganda': 'أوغندا',
       'kenya': 'كينيا',
       'ethiopia': 'إثيوبيا',
@@ -244,36 +376,73 @@ export default function PrintView() {
     </div>
   );
 
-  const HeaderBand = ({ country, reportId, title, flagUrl }: any) => {
-    const getFlagCode = (c: string) => {
-      const lower = c.toLowerCase();
+  const HeaderBand = ({ country = '', reportId = '', title = '', flagUrl }: any) => {
+    const getFlagCode = (c: string = '') => {
+      const lower = (c || '').toLowerCase();
       if (lower.includes('india')) return 'in';
       if (lower.includes('philippines')) return 'ph';
       if (lower.includes('pakistan')) return 'pk';
       if (lower.includes('bangladesh')) return 'bd';
+      if (lower.includes('sri lanka')) return 'lk';
+      if (lower.includes('nepal')) return 'np';
+      if (lower.includes('indonesia')) return 'id';
+      if (lower.includes('egypt')) return 'eg';
+      if (lower.includes('jordan')) return 'jo';
+      if (lower.includes('vietnam')) return 'vn';
       return 'ae';
     };
-    const flagSrc = flagUrl || `https://flagcdn.com/w320/${getFlagCode(country)}.png`;
+    const flagSrc = flagUrl || `https://flagcdn.com/w40/${getFlagCode(country)}.png`;
     return (
-      <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
-        <div className="flex items-center gap-3">
-          <img src={flagSrc} className="h-6 w-auto shadow-sm object-cover" alt={country} />
-          <div className="h-8 w-px bg-gray-200" />
+      <div className="flex items-center justify-between border-b border-gray-200 pb-2 mb-2.5">
+        <div className="flex items-center gap-2.5">
+          <img 
+            src={flagSrc} 
+            className="w-8 h-5 rounded border border-gray-300 object-cover shadow-2xs shrink-0" 
+            style={{ width: '32px', height: '20px', minWidth: '32px', minHeight: '20px', objectFit: 'cover' }} 
+            alt={country} 
+          />
+          <div className="h-6 w-px bg-gray-200" />
           <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-widest text-gray-500">{title}</p>
-            <p className="text-sm font-bold text-primary-dark uppercase">{country}</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-500 leading-none">{title}</p>
+            <p className="text-xs font-bold text-primary-dark uppercase leading-tight mt-0.5">{country}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="kpi-chip chip-restrict flex items-center gap-1"><ShieldAlert size={12} /> Restricted</span>
+        <div className="flex items-center gap-2.5">
+          <span className="kpi-chip chip-restrict flex items-center gap-1 text-[8.5px] py-0.5 px-2">
+            <ShieldAlert size={10} /> {isRTL ? 'سري' : 'Restricted'}
+          </span>
           <span className="text-[9px] text-gray-400 font-mono">REF: {reportId}</span>
         </div>
       </div>
     );
   };
 
-  const sortedMohreEmirates = [...data.uaeWorkforceStats.mohre.byEmirate].sort((a, b) => b.value - a.value);
-  const sortedIcpEmirates = [...data.uaeWorkforceStats.icp.byEmirate].sort((a, b) => b.value - a.value);
+  const sortedMohreEmirates = [...(data.uaeWorkforceStats?.mohre?.byEmirate || [])].sort((a, b) => b.value - a.value);
+  const sortedIcpEmirates = [...(data.uaeWorkforceStats?.icp?.byEmirate || [])].sort((a, b) => b.value - a.value);
+
+  // Unified Emirate Data combining MOHRE and ICP
+  const mohreList = data.uaeWorkforceStats?.mohre?.byEmirate || [];
+  const icpList = data.uaeWorkforceStats?.icp?.byEmirate || [];
+  const mohreMap = new Map(mohreList.map(e => [e.name, Number(e.value || 0)]));
+  const icpMap = new Map(icpList.map(e => [e.name, Number(e.value || 0)]));
+
+  const standardEmirates = ['Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain'];
+  const allNames = Array.from(new Set([
+    ...standardEmirates,
+    ...mohreList.map(e => e.name),
+    ...icpList.map(e => e.name)
+  ]));
+
+  const combinedEmirates = allNames.map(name => {
+    const mohre = mohreMap.get(name) || 0;
+    const icp = icpMap.get(name) || 0;
+    return {
+      name,
+      mohre,
+      icp,
+      total: mohre + icp
+    };
+  }).sort((a, b) => b.total - a.total);
 
   const translateSectorName = (name: string) => {
     if (!isRTL) {
@@ -426,14 +595,15 @@ export default function PrintView() {
     );
   };
 
-  const totalMohreByCity = data.uaeWorkforceStats.mohre.byEmirate.reduce((acc, curr) => acc + (curr.value || 0), 0);
-  const totalIcpByCity = data.uaeWorkforceStats.icp.byEmirate.reduce((acc, curr) => acc + (curr.value || 0), 0);
-  const combinedTotalWorkers = data.uaeWorkforceStats.totalWorkersOverride !== undefined && data.uaeWorkforceStats.totalWorkersOverride !== null && data.uaeWorkforceStats.totalWorkersOverride !== 0
+  const totalMohreByCity = (data.uaeWorkforceStats?.mohre?.byEmirate || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
+  const totalIcpByCity = (data.uaeWorkforceStats?.icp?.byEmirate || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
+  const combinedTotalWorkers = data.uaeWorkforceStats?.totalWorkersOverride !== undefined && data.uaeWorkforceStats?.totalWorkersOverride !== null && data.uaeWorkforceStats?.totalWorkersOverride !== 0
     ? data.uaeWorkforceStats.totalWorkersOverride
     : totalMohreByCity + totalIcpByCity;
 
   const processSectors = (sectorsList: { name: string; value: number }[], limit = 10) => {
-    const sorted = [...sectorsList].sort((a, b) => b.value - a.value);
+    const safeList = Array.isArray(sectorsList) ? sectorsList : [];
+    const sorted = [...safeList].sort((a, b) => b.value - a.value);
     if (sorted.length <= limit) {
       return sorted;
     }
@@ -449,11 +619,34 @@ export default function PrintView() {
     return topLimit;
   };
 
-  const processedMohreSectors = processSectors(data.uaeWorkforceStats.mohre.bySector, 10);
+  const processedMohreSectors = processSectors(data.uaeWorkforceStats?.mohre?.bySector || [], 10);
   const maxMohreVal = Math.max(...processedMohreSectors.map(s => s.value), 1);
 
-  const processedIcpSectors = processSectors(data.uaeWorkforceStats.icp.bySector || [], 10);
+  const processedIcpSectors = processSectors(data.uaeWorkforceStats?.icp?.bySector || [], 10);
   const maxIcpVal = Math.max(...processedIcpSectors.map(s => s.value), 1);
+
+  const parseNumericCount = (c: any): number => {
+    if (typeof c === 'number') return c;
+    if (!c) return 0;
+    const sanitized = String(c).replace(/,/g, '').replace(/[^\d.-]/g, '');
+    return parseFloat(sanitized) || 0;
+  };
+
+  const processMigrationDestinations = (destList: { country: string; count: string }[], limit = 5) => {
+    const parsed = (destList || [])
+      .map(d => ({
+        country: d.country,
+        count: d.count,
+        numericVal: parseNumericCount(d.count)
+      }))
+      .filter(d => d.country && d.country.trim() !== '');
+
+    // Sort descending by numeric value (the bigger the longer, goes down descending)
+    const sorted = [...parsed].sort((a, b) => b.numericVal - a.numericVal);
+
+    // Max 5 items
+    return sorted.slice(0, limit);
+  };
 
   // Pagination Logic Constants
   const INT_CHUNK_SIZE = 5;
@@ -461,7 +654,7 @@ export default function PrintView() {
   const AGR_CHUNK_SIZE = 6;
 
   // --- SORT RELATIONSHIP SUMMARY (RECENT INTERACTIONS) BY DATE DESCENDING (NEWEST FIRST) ---
-  const sortedInteractions = [...data.recentInteractions].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const sortedInteractions = [...(data.recentInteractions || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   const interactionChunks = [];
   for (let i = 0; i < sortedInteractions.length; i += INT_CHUNK_SIZE) {
@@ -469,8 +662,9 @@ export default function PrintView() {
   }
 
   const pointsChunks = [];
-  for (let i = 0; i < data.pointsOfDiscussion.length; i += POINTS_CHUNK_SIZE) {
-    pointsChunks.push(data.pointsOfDiscussion.slice(i, i + POINTS_CHUNK_SIZE));
+  const rawPoints = data.pointsOfDiscussion || [];
+  for (let i = 0; i < rawPoints.length; i += POINTS_CHUNK_SIZE) {
+    pointsChunks.push(rawPoints.slice(i, i + POINTS_CHUNK_SIZE));
   }
 
   const updatesChunks = [];
@@ -479,14 +673,16 @@ export default function PrintView() {
     updatesChunks.push(previousUpdates.slice(i, i + POINTS_CHUNK_SIZE));
   }
 
-  const sortedAgreements = [...data.bilateralAgreements].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const sortedAgreements = [...(data.bilateralAgreements || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const agreementChunks = [];
   for (let i = 0; i < sortedAgreements.length; i += AGR_CHUNK_SIZE) {
     agreementChunks.push(sortedAgreements.slice(i, i + AGR_CHUNK_SIZE));
   }
 
-  const maxMigrationDest = Math.max(...data.workforceStats.migrationDestinations.map(d => parseFloat(d.count) || 0), 1);
-  const maxPartnerSector = Math.max(...data.workforceStats.topSectors.map(s => s.value), 1);
+  const processedMigrationDests = processMigrationDestinations(data.workforceStats?.migrationDestinations || [], 5);
+  const maxMigrationDest = Math.max(...processedMigrationDests.map(d => d.numericVal), 1);
+  const sortedPartnerSectors = [...(data.workforceStats?.topSectors || [])].sort((a, b) => (b.value || 0) - (a.value || 0));
+  const maxPartnerSector = Math.max(...sortedPartnerSectors.map(s => s.value || 0), 1);
 
   /**
    * REFINED STATUS BADGE LOGIC
@@ -562,7 +758,7 @@ export default function PrintView() {
               </div>
               <div className="bg-gray-50 rounded-3xl p-10 border border-gray-100 max-w-xl">
                 <div className="flex items-center gap-8 mb-8">
-                    <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${data.country.toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" alt="flag" /></div>
+                    <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${(data.country || '').toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" alt="flag" /></div>
                     <div>
                       <p className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1">{t('subjectMarket')}</p>
                       <h2 className="text-4xl font-serif font-bold text-gray-900">{data.country}</h2>
@@ -578,10 +774,21 @@ export default function PrintView() {
           <div className="h-3 bg-primary w-full"></div>
         </div>
 
-        {/* PAGE 2: PROFILE & ECONOMY */}
-        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-          <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact />
+        {/* PAGE 2: EXECUTIVE BRIEF (الملخص التنفيذي) */}
+        <ExecutiveBriefPage 
+          report={report}
+          data={data}
+          combinedTotalWorkers={combinedTotalWorkers}
+          isRTL={isRTL}
+          t={t}
+          footer={<DefaultFooter />}
+        />
+
+        {/* PAGE 3: PROFILE & ECONOMY */}
+        {data.sectionVisibility?.profileEconomy !== false && (
+          <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact />
           <div className="grid grid-cols-4 gap-3 mb-4">
             <KPI icon={Landmark} label={t('capital')} value={data.capital} />
             <KPI icon={Users} label={t('population')} value={data.population} sub={getSource('demo')} />
@@ -598,26 +805,26 @@ export default function PrintView() {
           </div>
           <SectionHeader icon={TrendingUp} title={t('economicLandscape')} subtitle={t('tradeEducation')} compact />
           <div className="grid grid-cols-4 gap-3 mb-4">
-            <KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats.tipRank} tone="warn" sub={getSource('tip')} />
-            <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats.inflation} sub={getSource('economy')} />
+            <KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats?.tipRank || '—'} tone="warn" sub={getSource('tip')} />
+            <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats?.inflation || '—'} sub={getSource('economy')} />
             <KPI icon={Banknote} label={t('gdp')} value={data.gdp} sub={getSource('economy')} />
-            <KPI icon={ArrowRightLeft} label={isRTL ? "الحوالات السنوية من الإمارات" : "Annual Remittances from UAE"} value={data.economicStats.remittancesFromUAE || 'N/A'} sub={getSource('cbuae')} />
+            <KPI icon={ArrowRightLeft} label={isRTL ? "الحوالات السنوية من الإمارات" : "Annual Remittances from UAE"} value={data.economicStats?.remittancesFromUAE || 'N/A'} sub={getSource('cbuae')} />
           </div>
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-4 shadow-sm">
             <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')} <span className="ms-2">{getSource('trade')}</span></h4>
             <div className="grid grid-cols-2 gap-8">
-                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الصادرات من الإمارات إلى (${data.country})` : `Imports to ${data.country} from the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalImportsFromUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{data.economicStats.topImportProducts.join(', ')}</p></div>
-                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الواردات  إلى  الإمارات من (${data.country})` : `Exports from ${data.country} to the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats.totalExportsToUAE}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{data.economicStats.topExportProducts.join(', ')}</p></div>
+                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الصادرات من الإمارات إلى (${data.country})` : `Imports to ${data.country} from the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats?.totalImportsFromUAE || '—'}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{Array.isArray(data.economicStats?.topImportProducts) ? data.economicStats.topImportProducts.join(', ') : (data.economicStats?.topImportProducts || '')}</p></div>
+                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الواردات  إلى  الإمارات من (${data.country})` : `Exports from ${data.country} to the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats?.totalExportsToUAE || '—'}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{Array.isArray(data.economicStats?.topExportProducts) ? data.economicStats.topExportProducts.join(', ') : (data.economicStats?.topExportProducts || '')}</p></div>
             </div>
           </div>
           <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact />
           <div className="grid grid-cols-3 gap-3">
-            <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats.higherEducationEnrollment} sub={getSource('edu')} />
-            <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats.primaryEnrollment} sub={getSource('edu')} />
+            <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats?.higherEducationEnrollment || '—'} sub={getSource('edu')} />
+            <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats?.primaryEnrollment || '—'} sub={getSource('edu')} />
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center shadow-sm">
               <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">{t('topUniversities')} <span className="ms-2">{getSource('edu')}</span></p>
               <ul className="text-[11px] text-gray-700 leading-snug space-y-1">
-                {(data.educationStats.topUniversities || []).slice(0, 5).map((u, i) => (
+                {(data.educationStats?.topUniversities || []).slice(0, 5).map((u, i) => (
                   <li key={i} className="flex gap-1.5 items-start">
                     <span className="shrink-0 font-bold text-primary opacity-60">•</span>
                     <span className="break-words leading-tight flex-1 font-medium">{u}</span>
@@ -627,159 +834,285 @@ export default function PrintView() {
             </div>
           </div>
         </PageContainer>
+        )}
 
-        {/* PAGE 3: UAE WORKFORCE */}
-        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-          <SectionHeader icon={Building} title={`${t('sectionUaeWorkforce')} (${data.reportMonthYear || defaultDateStr})`} subtitle={t('domesticAnalysis')} compact />
+        {/* PAGE 4: UAE WORKFORCE */}
+        {data.sectionVisibility?.uaeWorkforce !== false && (
+          <PageContainer footer={<DefaultFooter />} contentClassName="px-8 pt-4 pb-12" className="shadow-xl print:shadow-none mb-8 print:mb-0">
+            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <SectionHeader icon={Building} title={`${t('sectionUaeWorkforce')} (${data.reportMonthYear || defaultDateStr})`} subtitle={t('domesticAnalysis')} compact />
           
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-1.5 flex items-center justify-between px-4 shadow-sm mb-2">
-            <p className="text-[9px] font-extrabold text-primary-dark uppercase tracking-wider font-sans leading-none">
+          <div className="bg-primary/5 border border-primary/20 rounded-lg py-1 px-3 flex items-center justify-between shadow-2xs mb-1.5">
+            <p className="text-[9px] font-black text-primary-dark uppercase tracking-wider font-sans leading-none">
               {t('totalWorkforceInUaeLaborMarket')}
             </p>
-            <p className="text-lg font-serif font-black text-primary-dark leading-none">
+            <p className="text-[15.5px] font-serif font-black text-primary-dark leading-none">
               {combinedTotalWorkers.toLocaleString()}
             </p>
           </div>
 
-          <div className="grid grid-cols-4 gap-2 mb-2 items-stretch">
+          {/* ROW 1: WORKFORCE BREAKDOWN & CORE PROTECTION */}
+          <div className="grid grid-cols-4 gap-2 mb-1.5 items-stretch">
             {/* CARD 1: MOHRE PRIVATE */}
-            <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col justify-between shadow-sm min-h-[58px]">
-              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-8 overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
+              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
                 {t('mohrePrivate')}
               </span>
-              <span className="text-[14px] font-black block text-gray-900 font-mono leading-none">
-                {data.uaeWorkforceStats.mohre.totalPrivate.value || (isRTL ? 'لا يوجد' : 'N/A')}
+              <span className="text-[12.5px] font-black block text-gray-900 font-mono leading-none mt-0.5 pt-0.5 border-t border-gray-100">
+                {data.uaeWorkforceStats?.mohre?.totalPrivate?.value || (isRTL ? 'لا يوجد' : 'N/A')}
               </span>
             </div>
 
             {/* CARD 2: MOHRE DOMESTIC */}
-            <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col justify-between shadow-sm min-h-[58px]">
-              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-8 overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
+              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
                 {t('mohreDomestic')}
               </span>
-              <span className="text-[14px] font-black block text-gray-900 font-mono leading-none">
-                {data.uaeWorkforceStats.mohre.totalDomestic.value || (isRTL ? 'لا يوجد' : 'N/A')}
+              <span className="text-[12.5px] font-black block text-gray-900 font-mono leading-none mt-0.5 pt-0.5 border-t border-gray-100">
+                {data.uaeWorkforceStats?.mohre?.totalDomestic?.value || (isRTL ? 'لا يوجد' : 'N/A')}
               </span>
             </div>
 
-            {/* CARD 3: UNEMPLOYMENT INSURANCE */}
-            <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col justify-between shadow-sm min-h-[58px]">
-              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-8 overflow-hidden">
-                {t('unemploymentInsuranceCoverageRate')}
-              </span>
-              <div className="flex items-baseline justify-between mt-1">
-                <span className="text-[14px] font-black text-gray-900 font-mono leading-none">
-                  {data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}
-                </span>
-                <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
-                  {formatPctValue(data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct)}
-                </span>
-              </div>
-            </div>
-
-            {/* CARD 4: WPS WAGE TRANSFER */}
-            <div className="bg-white border border-gray-200 rounded-lg p-2.5 flex flex-col justify-between shadow-sm min-h-[58px]">
-              <span className="text-[8.5px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-8 overflow-hidden">
+            {/* CARD 3: WPS WAGE TRANSFER */}
+            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
+              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
                 {t('wpsWageTransferRate')}
               </span>
-              <div className="flex items-baseline justify-between mt-1">
-                <span className="text-[14px] font-black text-gray-900 font-mono leading-none">
-                  {data.uaeWorkforceStats.mohre.wpsWageTransferNum || (isRTL ? 'لا يوجد' : 'N/A')}
+              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">
+                  {data.uaeWorkforceStats?.mohre?.wpsWageTransferNum || (isRTL ? 'لا يوجد' : 'N/A')}
                 </span>
                 <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
-                  {formatPctValue(data.uaeWorkforceStats.mohre.wpsWageTransferPct)}
+                  {formatPctValue(data.uaeWorkforceStats?.mohre?.wpsWageTransferPct)}
+                </span>
+              </div>
+            </div>
+
+            {/* CARD 4: UNEMPLOYMENT INSURANCE (COVERED) */}
+            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
+              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                {t('unemploymentInsuranceCoverageRate')}
+              </span>
+              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">
+                  {data.uaeWorkforceStats?.mohre?.insuranceUnemploymentCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}
+                </span>
+                <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
+                  {formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceUnemploymentCoveredPct)}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* The 4 Tiny Boxes Grid */}
-          <div className="grid grid-cols-4 gap-2 mb-2">
-            <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('unemploymentInsuranceCoverageRate')}</span>
-              <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
-                <span className="text-[9px] font-extrabold text-primary font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceUnemploymentCoveredPct)}</span>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('insuranceUnemploymentExposed')}</span>
-              <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
-                <span className="text-[9px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceUnemploymentExposedPct)}</span>
+          {/* ROW 2: INSURANCE EXPOSURES & WORKER RIGHTS */}
+          <div className="grid grid-cols-3 gap-2 mb-1.5 items-stretch">
+            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[42px]">
+              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                {t('insuranceUnemploymentExposed')}
+              </span>
+              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats?.mohre?.insuranceUnemploymentExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
+                <span className="text-[10px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceUnemploymentExposedPct)}</span>
               </div>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('insuranceRightsCovered')}</span>
-              <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceRightsCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
-                <span className="text-[9px] font-extrabold text-primary font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceRightsCoveredPct)}</span>
+            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[42px]">
+              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                {t('insuranceRightsCovered')}
+              </span>
+              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats?.mohre?.insuranceRightsCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
+                <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceRightsCoveredPct)}</span>
               </div>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200/60 rounded-lg p-2 flex flex-col justify-between shadow-sm min-h-[52px]">
-              <span className="text-[8px] font-extrabold text-gray-500 uppercase leading-tight mb-1 block h-7 overflow-hidden">{t('insuranceRightsExposed')}</span>
-              <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats.mohre.insuranceRightsExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
-                <span className="text-[9px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats.mohre.insuranceRightsExposedPct)}</span>
+            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[42px]">
+              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                {t('insuranceRightsExposed')}
+              </span>
+              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats?.mohre?.insuranceRightsExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
+                <span className="text-[10px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceRightsExposedPct)}</span>
               </div>
             </div>
           </div>
 
-          {/* Strikes KPI Box - Styled like the Total Workforce Banner */}
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-1.5 flex items-center justify-between px-4 shadow-sm mb-2.5">
-            <p className="text-[9px] font-extrabold text-primary-dark uppercase tracking-wider font-sans leading-none">
-              {t('workersLaborStrikes')}
-            </p>
-            <p className="text-lg font-serif font-black text-primary-dark leading-none">
-              {data.uaeWorkforceStats.mohre.workersLaborStrikes || '0'}
-            </p>
+          {/* ROW 3: LABOR COMPLAINTS & STRIKES */}
+          <div className="grid grid-cols-3 gap-2 mb-1.5 items-stretch">
+            {/* TOTAL COMPLAINTS CURRENT YEAR */}
+            <div className="bg-white border border-primary/30 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[40px]">
+              <span className="text-[8px] font-extrabold text-primary uppercase leading-[1.2] block break-words">
+                {t('totalComplaintsCurrentYear')}
+              </span>
+              <span className="text-[13px] font-black block text-primary font-mono leading-none mt-0.5 pt-0.5 border-t border-primary/10">
+                {data.uaeWorkforceStats?.mohre?.totalComplaintsCurrentYear || '0'}
+              </span>
+            </div>
+
+            {/* LABOR COMPLAINTS UNDER REVIEW */}
+            <div className="bg-white border border-amber-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[40px]">
+              <span className="text-[8px] font-extrabold text-amber-700 uppercase leading-[1.2] block break-words">
+                {t('laborComplaintsUnderReview')}
+              </span>
+              <span className="text-[13px] font-black block text-amber-600 font-mono leading-none mt-0.5 pt-0.5 border-t border-amber-100">
+                {data.uaeWorkforceStats?.mohre?.laborComplaintsUnderReview || '0'}
+              </span>
+            </div>
+
+            {/* STRIKES */}
+            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[40px]">
+              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                {t('workersLaborStrikes')}
+              </span>
+              <span className="text-[13px] font-black block text-gray-900 font-mono leading-none mt-0.5 pt-0.5 border-t border-gray-100">
+                {data.uaeWorkforceStats?.mohre?.workersLaborStrikes || '0'}
+              </span>
+            </div>
           </div>
+
+          {/* 3-YEAR WORKFORCE COMPARISON & TREND (ON TOP OF BLUE TABLE) */}
+          {(() => {
+            const history = data.uaeWorkforceStats?.workersHistory || {};
+            const currentYearLabel = history.yearCurrent || (typeof data.reportDate === 'string' && data.reportDate.includes('-') ? data.reportDate.split('-')[0] : '2024');
+            const prevYearLabel = history.yearPrevious || (parseInt(currentYearLabel) ? (parseInt(currentYearLabel) - 1).toString() : '2023');
+            const twoYearsAgoLabel = history.yearTwoYearsAgo || (parseInt(currentYearLabel) ? (parseInt(currentYearLabel) - 2).toString() : '2022');
+
+            const currentYearVal = (history.totalCurrent !== undefined && history.totalCurrent !== null && history.totalCurrent > 0)
+              ? history.totalCurrent
+              : combinedTotalWorkers;
+
+            const prevYearVal = history.totalPrevious || 0;
+            const twoYearsAgoVal = history.totalTwoYearsAgo || 0;
+
+            let pctChange: number | null = null;
+            let diffVal: number | null = null;
+            let isIncrease: boolean | null = null;
+
+            const baseVal = Number(prevYearVal) > 0 ? Number(prevYearVal) : Number(twoYearsAgoVal);
+            if (baseVal > 0) {
+              diffVal = Number(currentYearVal) - baseVal;
+              pctChange = (diffVal / baseVal) * 100;
+              isIncrease = diffVal >= 0;
+            }
+
+            return (
+              <div className="border border-sky-200 bg-sky-50/50 rounded-lg p-1 mb-1 shadow-2xs">
+                <div className="flex items-center justify-between mb-0.5 pb-0.5 border-b border-sky-100">
+                  <div className="flex items-center gap-1">
+                    <TrendingUp size={11} className="text-primary shrink-0" />
+                    <span className="text-[8.5px] font-black text-primary-dark uppercase tracking-wider font-sans leading-none">
+                      {t('workersThreeYearTrend')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-1.5 text-center">
+                  <div className="bg-white border border-sky-100 rounded-lg py-0.5 px-1 shadow-2xs">
+                    <span className="text-[7.5px] font-bold text-gray-500 block mb-0.5 font-sans">
+                      {isRTL ? `عام ${twoYearsAgoLabel}` : `Year ${twoYearsAgoLabel}`}
+                    </span>
+                    <span className="text-[11.5px] font-black text-gray-800 font-mono leading-none block">
+                      {twoYearsAgoVal > 0 ? twoYearsAgoVal.toLocaleString() : '---'}
+                    </span>
+                  </div>
+
+                  <div className="bg-white border border-sky-100 rounded-lg py-0.5 px-1 shadow-2xs">
+                    <span className="text-[7.5px] font-bold text-gray-500 block mb-0.5 font-sans">
+                      {isRTL ? `عام ${prevYearLabel}` : `Year ${prevYearLabel}`}
+                    </span>
+                    <span className="text-[11.5px] font-black text-gray-800 font-mono leading-none block">
+                      {prevYearVal > 0 ? prevYearVal.toLocaleString() : '---'}
+                    </span>
+                  </div>
+
+                  <div className="bg-white border border-primary/40 rounded-lg py-0.5 px-1 shadow-2xs ring-1 ring-primary/20">
+                    <span className="text-[7.5px] font-black text-primary block mb-0.5 font-sans">
+                      {isRTL ? `عام ${currentYearLabel} (الحالي)` : `Year ${currentYearLabel} (Current)`}
+                    </span>
+                    <span className="text-[11.5px] font-black text-primary-dark font-mono leading-none block">
+                      {Number(currentYearVal).toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className={`border rounded-lg py-0.5 px-1 shadow-2xs flex flex-col justify-center ${
+                    pctChange !== null 
+                      ? (isIncrease 
+                          ? 'bg-emerald-50/90 border-emerald-300 ring-1 ring-emerald-200' 
+                          : 'bg-rose-50/90 border-rose-300 ring-1 ring-rose-200')
+                      : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <span className={`text-[7px] font-black block mb-0.5 font-sans leading-tight ${
+                      pctChange !== null 
+                        ? (isIncrease ? 'text-emerald-800' : 'text-rose-800') 
+                        : 'text-gray-500'
+                    }`}>
+                      {pctChange !== null 
+                        ? (isRTL 
+                            ? (isIncrease ? 'معدل ومقدار النمو' : 'معدل ومقدار التراجع') 
+                            : (isIncrease ? 'Growth Rate' : 'Decline Rate'))
+                        : (isRTL ? 'معدل التغير' : 'Change Rate')}
+                    </span>
+                    {pctChange !== null && diffVal !== null ? (
+                      <div className="flex items-baseline justify-center gap-1 leading-none">
+                        <span className={`text-[10.5px] font-black font-mono ${isIncrease ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          {isIncrease ? '▲' : '▼'} {isIncrease ? `+${pctChange.toFixed(1)}%` : `${pctChange.toFixed(1)}%`}
+                        </span>
+                        <span className={`text-[7.5px] font-extrabold font-mono ${isIncrease ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          ({diffVal >= 0 ? `+${diffVal.toLocaleString()}` : diffVal.toLocaleString()})
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-[10.5px] font-black text-gray-400 font-mono leading-none block">
+                        ---
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Skilled / Unskilled Median Wage Table */}
-          {((data.uaeWorkforceStats.mohre.skilledPartnerWage || 
-             data.uaeWorkforceStats.mohre.skilledUaeWage || 
-             data.uaeWorkforceStats.mohre.unskilledPartnerWage || 
-             data.uaeWorkforceStats.mohre.unskilledUaeWage)) && (
-            <div className="overflow-hidden border border-gray-200 rounded-xl shadow-sm mb-2.5">
+          {((data.uaeWorkforceStats?.mohre?.skilledPartnerWage || 
+             data.uaeWorkforceStats?.mohre?.skilledUaeWage || 
+             data.uaeWorkforceStats?.mohre?.unskilledPartnerWage || 
+             data.uaeWorkforceStats?.mohre?.unskilledUaeWage)) && (
+            <div className="overflow-hidden border border-gray-200 rounded-lg shadow-2xs mb-1">
               <table className="w-full text-center border-collapse">
                 <thead>
-                  <tr className="bg-[#00a4e4] text-white text-[9.5px] font-extrabold">
-                    <th className="py-1.5 px-3 border border-white/20 font-sans tracking-wider w-1/3">
+                  <tr className="bg-[#00a4e4] text-white text-[8.5px] font-extrabold">
+                    <th className="py-0.5 px-2 border border-white/20 font-sans tracking-wider w-1/3">
                       {isRTL ? 'المستوى المهاري' : 'Skill Level'}
                     </th>
-                    <th className="py-1.5 px-3 border border-white/20 font-sans tracking-wider w-1/3">
+                    <th className="py-0.5 px-2 border border-white/20 font-sans tracking-wider w-1/3">
                       {isRTL ? `وسيط الراتب للعمال من ${translateCountryName(data.country)} في الإمارات` : `Median Wage for ${data.country} Workers in the UAE`}
                     </th>
-                    <th className="py-1.5 px-3 border border-white/20 font-sans tracking-wider w-1/3">
+                    <th className="py-0.5 px-2 border border-white/20 font-sans tracking-wider w-1/3">
                       {isRTL ? 'وسيط الراتب لسوق العمل' : 'Labor Market Median Wage'}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="bg-[#0c567c] text-white text-[11px] font-bold">
-                    <td className="py-1.5 px-3 border border-white/10 font-sans">
+                  <tr className="bg-[#0c567c] text-white text-[9.5px] font-bold">
+                    <td className="py-0.5 px-2 border border-white/10 font-sans">
                       {isRTL ? 'ماهر' : 'Skilled'}
                     </td>
-                    <td className="py-1.5 px-3 border border-white/10 font-mono">
-                      {formatWageValueWithAED(data.uaeWorkforceStats.mohre.skilledPartnerWage)}
+                    <td className="py-0.5 px-2 border border-white/10 font-mono">
+                      {formatWageValueWithAED(data.uaeWorkforceStats?.mohre?.skilledPartnerWage)}
                     </td>
-                    <td className="py-1.5 px-3 border border-white/10 font-mono">
-                      {formatWageValueWithAED(data.uaeWorkforceStats.mohre.skilledUaeWage)}
+                    <td className="py-0.5 px-2 border border-white/10 font-mono">
+                      {formatWageValueWithAED(data.uaeWorkforceStats?.mohre?.skilledUaeWage)}
                     </td>
                   </tr>
-                  <tr className="bg-[#2d3e50] text-white text-[11px] font-bold">
-                    <td className="py-1.5 px-3 border border-white/10 font-sans">
+                  <tr className="bg-[#2d3e50] text-white text-[9.5px] font-bold">
+                    <td className="py-0.5 px-2 border border-white/10 font-sans">
                       {isRTL ? 'غير ماهر' : 'Unskilled'}
                     </td>
-                    <td className="py-1.5 px-3 border border-white/10 font-mono">
-                      {formatWageValueWithAED(data.uaeWorkforceStats.mohre.unskilledPartnerWage)}
+                    <td className="py-0.5 px-2 border border-white/10 font-mono">
+                      {formatWageValueWithAED(data.uaeWorkforceStats?.mohre?.unskilledPartnerWage)}
                     </td>
-                    <td className="py-1.5 px-3 border border-white/10 font-mono">
-                      {formatWageValueWithAED(data.uaeWorkforceStats.mohre.unskilledUaeWage)}
+                    <td className="py-0.5 px-2 border border-white/10 font-mono">
+                      {formatWageValueWithAED(data.uaeWorkforceStats?.mohre?.unskilledUaeWage)}
                     </td>
                   </tr>
                 </tbody>
@@ -787,192 +1120,106 @@ export default function PrintView() {
             </div>
           )}
           
-          <div className="grid grid-cols-2 gap-3 mb-1.5">
-            <div className="p-2 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
-                <p className="text-center text-[9px] font-bold text-gray-500 mb-1 uppercase tracking-wider">{t('workersByEmirate')}</p>
-                <div className="h-24 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sortedMohreEmirates} margin={{top: 12, right: 5, bottom: 16, left: 5}}>
-                          <XAxis dataKey="name" tick={{fontSize: 8.5, fontWeight: 'bold', fill: '#374151'}} tickMargin={4} interval={0} height={18} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
-                          <YAxis hide />
-                          <Bar dataKey="value" radius={[3, 3, 0, 0]}>
-                            <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '7.5px', fill: '#333', fontWeight: 'bold' }} />
-                            {sortedMohreEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[index % BLUE_PALETTE.length]} />))}
-                          </Bar>
-                      </BarChart>
-                  </ResponsiveContainer>
-                </div>
-            </div>
-            <div className="p-2 border border-gray-200 rounded-2xl bg-white flex flex-col items-center shadow-sm">
-                <p className="text-center text-[9px] font-bold text-gray-500 mb-1 uppercase tracking-wider">{isRTL ? 'توزيع العاملين حسب الإمارة (ICP)' : 'Workers distribution by Emirate (ICP)'}</p>
-                <div className="h-24 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sortedIcpEmirates} margin={{top: 12, right: 5, bottom: 16, left: 5}}>
-                           <XAxis dataKey="name" tick={{fontSize: 8.5, fontWeight: 'bold', fill: '#374151'}} tickMargin={4} interval={0} height={18} axisLine={false} tickLine={false} tickFormatter={(val) => translateEmirate(val)} />
-                           <Bar dataKey="value" radius={[3, 3, 0, 0]}>
-                             <LabelList dataKey="value" position="top" formatter={formatCompactNumber} style={{ fontSize: '7px', fill: '#444', fontWeight: 'bold' }} />
-                             {sortedIcpEmirates.map((entry, index) => (<Cell key={`cell-${index}`} fill={BLUE_PALETTE[(index + 3) % BLUE_PALETTE.length]} />))}
-                           </Bar>
-                      </BarChart>
-                  </ResponsiveContainer>
-                </div>
-            </div>
-          </div>
-
-          {/* Sector distribution comparisons - Unified Inline Rows for compact space-saving */}
-          <div className="grid grid-cols-2 gap-3 mb-1.5">
-            <div className="border border-gray-200 rounded-2xl p-2 flex flex-col bg-white shadow-sm overflow-hidden text-ellipsis">
-                <p className="text-[9px] font-extrabold text-gray-700 mb-1.5 uppercase tracking-wider leading-none">
-                  {isRTL ? 'توزيع العمال حسب القطاع في (MOHRE)' : 'Workers distribution by sector (MOHRE)'}
-                </p>
-                <div className="space-y-0.5 overflow-hidden">
-                  {processedMohreSectors.map((s, i) => (
-                      <div key={i} className="flex items-center justify-between text-[7.5px] leading-tight py-0.5 border-b border-gray-100 last:border-0">
-                        <span className="font-bold text-gray-700 truncate max-w-[100px]">{s.name}</span>
-                        <div className="flex-1 mx-2 h-1 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary transition-all duration-500" style={{ width: `${(s.value / maxMohreVal) * 100}%` }}></div>
-                        </div>
-                        <span className="font-mono text-gray-900 font-bold shrink-0">{formatCompactNumber(s.value)}</span>
-                      </div>
-                  ))}
-                </div>
-            </div>
-            
-            <div className="border border-gray-200 rounded-2xl p-2 flex flex-col bg-white shadow-sm overflow-hidden text-ellipsis">
-                <p className="text-[9px] font-extrabold text-gray-700 mb-1.5 uppercase tracking-wider leading-none">
-                  {isRTL ? 'توزيع العمال حسب القطاع في (ICP)' : 'Workers distribution by sector (ICP)'}
-                </p>
-                <div className="space-y-0.5 overflow-hidden">
-                  {processedIcpSectors.map((s, i) => (
-                      <div key={i} className="flex items-center justify-between text-[7.5px] leading-tight py-0.5 border-b border-gray-100 last:border-0">
-                        <span className="font-bold text-gray-700 truncate max-w-[100px]">{s.name}</span>
-                        <div className="flex-1 mx-2 h-1 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-accent transition-all duration-500" style={{ width: `${(s.value / maxIcpVal) * 100}%` }}></div>
-                        </div>
-                        <span className="font-mono text-gray-900 font-bold shrink-0">{formatCompactNumber(s.value)}</span>
-                      </div>
-                  ))}
-                </div>
-            </div>
-          </div>
-
-          {/* Average Salary per Sector Comparison Chart */}
-          {data.uaeWorkforceStats.salaryBySector && data.uaeWorkforceStats.salaryBySector.length > 0 && (
-            <div className="p-2 py-1.5 border border-gray-200 rounded-2xl bg-white shadow-sm flex flex-col items-center">
-              <p className="text-center text-[9px] font-bold text-gray-700 mb-1 leading-relaxed max-w-xl">
-                {isRTL 
-                  ? 'توزيع وسيط الرواتب مقارنة بوسيط سوق العمل على حسب القطاع' 
-                  : `Median salary distribution for this nationality compared to the labour market median based on skill level by sector (${data.country})`}
-              </p>
-              <div className="w-full">
-                <div className="h-[135px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={sortedSalarySectors.slice(0, 10)} barGap={4} barCategoryGap="20%" margin={{top: 15, right: 5, bottom: 15, left: 5}}>
-                      <XAxis 
-                        dataKey="name" 
-                        tick={renderCustomXAxisTick} 
-                        tickFormatter={formatSectorTick} 
-                        tickMargin={2} 
-                        interval={0} 
-                        height={32} 
-                        axisLine={false} 
-                        tickLine={false} 
-                      />
-                      <YAxis hide domain={[0, manualMaxSalary]} />
-                      <Bar dataKey="uaeValue" name={isRTL ? 'وسيط سوق العمل (AED)' : 'Labour Market Wide (AED)'} radius={[4, 4, 0, 0]} fill="#10b981" barSize={7}>
-                        <LabelList dataKey="uaeValue" content={renderUaeLabel} />
-                      </Bar>
-                      <Bar dataKey="partnerValue" name={isRTL ? `وسيط رواتب عمالة ${translateCountryName(data.country)}` : `${data.country} Sector Average (AED)`} radius={[4, 4, 0, 0]} fill="#2563eb" barSize={7}>
-                        <LabelList dataKey="partnerValue" content={renderPartnerLabel} />
-                      </Bar>
-                      <Legend 
-                        iconSize={8} 
-                        wrapperStyle={{ fontSize: '8px', paddingTop: '3px' }} 
-                        formatter={(value) => <span style={{ paddingLeft: '8px', paddingRight: '8px', display: 'inline-block' }}>{value}</span>}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* WORKFORCE DISTRIBUTION & WAGE RANGES (MOHRE × ICP) - Architectural Grid Theme */}
+          <WorkforceWageAnalytics
+            data={data}
+            isRTL={isRTL}
+            t={t}
+            formatCompactNumber={formatCompactNumber}
+            translateEmirate={translateEmirate}
+            translateCountryName={translateCountryName}
+            combinedTotalWorkers={combinedTotalWorkers}
+          />
         </PageContainer>
+        )}
 
-        {/* PAGE 4: PARTNER WORKFORCE */}
-        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-          <SectionHeader icon={Users} title={`${t('workforceOf')} ${data.country}`} subtitle={t('sourceMarketAnalysis')} />
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats.totalWorkforce} sub={getSource('demo')} />
-            <div className="col-span-2 kpi-card flex flex-col items-center justify-center p-3 shadow-sm">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 border-b border-gray-100 pb-1.5 w-full justify-center">
-                  <span>{t('genderDistribution')}</span>
-                </p>
-                <div className="flex items-center justify-around w-full">
-                    <div className="text-center flex-1">
-                      <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('maleParticipation')}</p>
-                      <p className="text-2xl font-serif font-bold text-blue-600 leading-none">{data.workforceStats.participationMale}%</p>
-                    </div>
-                    <div className="h-8 w-px bg-gray-200"></div>
-                    <div className="text-center flex-1">
-                      <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('femaleParticipation')}</p>
-                      <p className="text-2xl font-serif font-bold text-pink-600 leading-none">{data.workforceStats.participationFemale}%</p>
-                    </div>
-                </div>
+        {/* PAGE 5: PARTNER WORKFORCE */}
+        {data.sectionVisibility?.partnerWorkforce !== false && (
+          <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+            <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+            <SectionHeader icon={Users} title={`${t('workforceOf')} ${data.country}`} subtitle={t('sourceMarketAnalysis')} compact />
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats?.totalWorkforce || '—'} sub={getSource('demo')} />
+              <div className="col-span-2 kpi-card flex flex-col items-center justify-center p-3 shadow-sm">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 border-b border-gray-100 pb-1.5 w-full justify-center">
+                    <span>{t('genderDistribution')}</span>
+                  </p>
+                  <div className="flex items-center justify-around w-full">
+                      <div className="text-center flex-1">
+                        <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('maleParticipation')}</p>
+                        <p className="text-2xl font-serif font-bold text-blue-600 leading-none">{data.workforceStats?.participationMale || '0'}%</p>
+                      </div>
+                      <div className="h-8 w-px bg-gray-200"></div>
+                      <div className="text-center flex-1">
+                        <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('femaleParticipation')}</p>
+                        <p className="text-2xl font-serif font-bold text-pink-600 leading-none">{data.workforceStats?.participationFemale || '0'}%</p>
+                      </div>
+                  </div>
+              </div>
+              <KPI icon={Banknote} label={t('avgWage')} value={normalizeWageDisplay(data.averageWage)} tone="ok" sub={getSource('demo')} />
             </div>
-            <KPI icon={Banknote} label={t('avgWage')} value={normalizeWageDisplay(data.averageWage)} tone="ok" sub={getSource('demo')} />
-          </div>
-          <div className="grid grid-cols-2 gap-6 mb-8">
-            <div className="kpi-card p-4 shadow-sm">
-                <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Plane size={16} /> {t('migrationDestinations')}</p>
-                <div className="space-y-4">
-                  {data.workforceStats.migrationDestinations.slice(0, 5).map((dest, i) => {
-                    const val = parseFloat(dest.count) || 0;
-                    return (
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              <div className="kpi-card p-4 shadow-sm">
+                  <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Plane size={16} /> {t('migrationDestinations')}</p>
+                  <div className="space-y-3.5">
+                    {processedMigrationDests.map((dest, i) => {
+                      const barWidth = Math.max(5, Math.min(100, (dest.numericVal / maxMigrationDest) * 100));
+                      return (
+                        <div key={i} className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-bold text-gray-700">
+                            <span>{dest.country}</span>
+                            <span className="font-mono text-gray-600 font-bold">{dest.count}</span>
+                          </div>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary rounded-full transition-all duration-300" 
+                              style={{ width: `${barWidth}%` }} 
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+              </div>
+              <div className="kpi-card p-4 shadow-sm">
+                  <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Briefcase size={16} /> {t('workersBySector')}</p>
+                  <div className="space-y-3.5">
+                    {sortedPartnerSectors.slice(0, 5).map((sec, i) => (
                       <div key={i} className="space-y-1">
                         <div className="flex justify-between text-[11px] font-bold text-gray-700">
-                          <span>{dest.country}</span>
-                          <span className="font-mono text-gray-500">{dest.count}</span>
+                          <span>{sec.name}</span>
+                          <span className="font-mono text-gray-600 font-bold">{sec.value}%</span>
                         </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-primary-dark rounded-full" style={{ width: `${(val / maxMigrationDest) * 100}%` }} />
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary rounded-full transition-all duration-300" 
+                            style={{ width: `${(sec.value / maxPartnerSector) * 100}%` }} 
+                          />
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+              </div>
             </div>
-            <div className="kpi-card p-4 shadow-sm">
-                <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Briefcase size={16} /> {t('workersBySector')}</p>
-                <div className="space-y-4">
-                  {data.workforceStats.topSectors.slice(0, 5).map((sec, i) => (
-                    <div key={i} className="space-y-1">
-                      <div className="flex justify-between text-[11px] font-bold text-gray-700">
-                        <span>{sec.name}</span>
-                        <span className="font-mono text-gray-500">{sec.value}</span>
-                      </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-primary-dark rounded-full" style={{ width: `${(sec.value / maxPartnerSector) * 100}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 shadow-sm">
+              <h4 className="text-sm font-bold text-primary-dark uppercase mb-4 flex items-center gap-2"><Hammer size={18} /> {t('availableSkills')}</h4>
+              <div className="flex flex-wrap gap-3">
+                  {(data.workforceStats?.availableSkills || []).slice(0, 12).map((skill, i) => (<span key={i} className="bg-white border border-primary/20 text-primary-dark px-4 py-2 rounded-xl text-sm font-bold shadow-sm">{skill}</span>))}
+              </div>
+              <p className="text-[9px] text-gray-400 mt-4 italic">{t('skillsDisclaimer')}</p>
             </div>
-          </div>
-          <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 shadow-sm">
-            <h4 className="text-sm font-bold text-primary-dark uppercase mb-4 flex items-center gap-2"><Hammer size={18} /> {t('availableSkills')}</h4>
-            <div className="flex flex-wrap gap-3">
-                {data.workforceStats.availableSkills.slice(0, 12).map((skill, i) => (<span key={i} className="bg-white border border-primary/20 text-primary-dark px-4 py-2 rounded-xl text-sm font-bold shadow-sm">{skill}</span>))}
-            </div>
-            <p className="text-[9px] text-gray-400 mt-4 italic">{t('skillsDisclaimer')}</p>
-          </div>
-        </PageContainer>
+          </PageContainer>
+        )}
 
         {/* REMAINING PAGES: INTERACTIONS, POINTS, AGREEMENTS, DELEGATIONS */}
-        {interactionChunks.map((chunk, cIdx) => (
+        {data.sectionVisibility?.interactions !== false && interactionChunks.map((chunk, cIdx) => (
           <PageContainer key={`int-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-            <SectionHeader icon={Handshake} title={`${t('relationshipSummary')}${interactionChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} />
+            <SectionHeader 
+              icon={Handshake} 
+              title={`${t('relationshipSummary')}${interactionChunks.length > 1 ? ` (${cIdx + 1})` : ''}`} 
+              compact 
+            />
             <div className="flex flex-col gap-2 mt-2">
               {chunk.map((item, idx) => (
                 <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50 shadow-sm flex flex-col avoid-break">
@@ -988,7 +1235,8 @@ export default function PrintView() {
           </PageContainer>
         ))}
 
-        {pointsChunks.map((chunk, cIdx) => {
+        {/* DISCUSSION POINTS */}
+        {data.sectionVisibility?.discussionPoints !== false && pointsChunks.map((chunk, cIdx) => {
           // Dynamic title with page numbers (e.g., "محاور النقاش", "محاور النقاش 2")
           const pageTitle = cIdx === 0 
             ? t('pointsDiscussion') 
@@ -997,7 +1245,7 @@ export default function PrintView() {
           return (
             <PageContainer key={`pts-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
               <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-              <SectionHeader icon={MessageSquare} title={pageTitle} />
+              <SectionHeader icon={MessageSquare} title={pageTitle} compact />
               <div className="flex flex-col gap-2 mt-2">
                 {chunk.map((point, idx) => (
                   <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break">
@@ -1013,7 +1261,8 @@ export default function PrintView() {
           );
         })}
 
-        {updatesChunks.map((chunk, cIdx) => {
+        {/* PREVIOUS UPDATES */}
+        {data.sectionVisibility?.previousUpdates !== false && updatesChunks.map((chunk, cIdx) => {
           const pageTitle = cIdx === 0 
             ? t('previousAgreementsAndUpdates') 
             : `${t('previousAgreementsAndUpdates')} ${cIdx + 1}`;
@@ -1021,7 +1270,7 @@ export default function PrintView() {
           return (
             <PageContainer key={`upd-${cIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
               <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-              <SectionHeader icon={CheckCircle} title={pageTitle} />
+              <SectionHeader icon={CheckCircle} title={pageTitle} compact />
               <div className="flex flex-col gap-2 mt-2">
                 {chunk.map((point, idx) => (
                   <div key={idx} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-xl shadow-sm avoid-break">
@@ -1037,10 +1286,11 @@ export default function PrintView() {
           );
         })}
 
-        {agreementChunks.length > 0 ? agreementChunks.map((chunk, pIdx) => (
+        {/* BILATERAL AGREEMENTS */}
+        {data.sectionVisibility?.agreements !== false && (agreementChunks.length > 0 ? agreementChunks.map((chunk, pIdx) => (
           <PageContainer key={`agr-${pIdx}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-            <SectionHeader icon={FileText} title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${pIdx + 1})` : ''}`} />
+            <SectionHeader icon={FileText} title={`${t('keyAgreements')}${agreementChunks.length > 1 ? ` (${pIdx + 1})` : ''}`} compact />
             <div className="space-y-3 mt-4">
               {chunk.map((agreement, idx) => {
                 const statusInfo = getAgreementStatusDisplay(agreement);
@@ -1057,39 +1307,149 @@ export default function PrintView() {
         )) : (
           <PageContainer footer={<DefaultFooter />}>
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-            <SectionHeader icon={FileText} title={t('sectionAgreements')} />
+            <SectionHeader icon={FileText} title={t('sectionAgreements')} compact />
             <div className="text-center py-40 text-gray-300 border-2 border-dashed rounded-3xl opacity-50"><p className="font-bold uppercase tracking-widest">{t('noAgreements')}</p></div>
           </PageContainer>
-        )}
+        ))}
 
-        <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
-          <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-          <SectionHeader icon={Users} title={t('sectionDelegation')} />
-          <div className="grid grid-cols-1 gap-8 mt-4">
-            <div className="avoid-break">
-                <div className="flex items-center gap-4 mb-4 border-b-2 border-primary pb-2"><img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto" alt="UAE" /><p className="text-xs font-extrabold uppercase text-primary tracking-[0.2em]">{t('uaeDelegation')}</p></div>
-                <div className="grid grid-cols-1 gap-4">
-                  {data.delegations.uae.slice(0, 1).map((d) => (
-                      <div key={d.id} className="flex gap-8 items-start p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 shadow-sm">
-                        <div className="w-36 h-48 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-lg">{d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}</div>
-                        <div className="flex-1 pt-1"><p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p><p className="text-sm font-bold text-primary uppercase mb-3 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>{renderRichText(d.bio)}</div>
-                      </div>
-                  ))}
+        {/* DELEGATIONS SECTION */}
+        {data.sectionVisibility?.delegation !== false && (() => {
+          const uaeList = data.delegations?.uae || [];
+          const partnerList = data.delegations?.partner || [];
+          
+          // Helper to render meeting badge for a delegate
+          const renderMeetingBadge = (d: any) => {
+            const hasMet = !!d.metBefore || !!(d.meetingYear || d.meetingLocation);
+            if (hasMet) {
+              const details = [
+                d.meetingYear ? (isRTL ? `عام ${d.meetingYear}` : `Year ${d.meetingYear}`) : null,
+                d.meetingLocation ? (isRTL ? `المكان: ${d.meetingLocation}` : `Location: ${d.meetingLocation}`) : null
+              ].filter(Boolean).join(' • ');
+
+              return (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-300 rounded-lg text-xs font-bold text-emerald-900 mb-2.5 shadow-2xs">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0"></span>
+                  <span className="font-extrabold text-emerald-800">
+                    {isRTL ? 'تم اللقاء به مسبقاً:' : 'Previously Met:'}
+                  </span>
+                  <span className="text-emerald-950 font-semibold">
+                    {details || (isRTL ? 'نعم' : 'Yes')}
+                  </span>
                 </div>
-            </div>
-            <div className="avoid-break pt-2">
-                <div className="flex items-center gap-4 mb-4 border-b-2 border-accent pb-2"><img src={data.flagUrl || `https://flagcdn.com/w40/${data.country.toLowerCase().includes('india')?'in':'ph'}.png`} className="h-5 w-auto" alt={data.country} /><p className="text-xs font-extrabold uppercase text-accent tracking-[0.2em]">{t('partnerDelegation')}</p></div>
-                <div className="grid grid-cols-1 gap-4">
-                  {data.delegations.partner.slice(0, 1).map((d) => (
-                      <div key={d.id} className="flex gap-8 items-start p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100 shadow-sm">
-                        <div className="w-36 h-48 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-lg">{d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}</div>
-                        <div className="flex-1 pt-1"><p className="text-2xl font-serif font-bold text-gray-900 mb-1">{d.name}</p><p className="text-sm font-bold text-accent uppercase mb-3 tracking-[0.15em] border-b border-accent/10 pb-1 inline-block">{d.title}</p>{renderRichText(d.bio)}</div>
-                      </div>
-                  ))}
-                </div>
-            </div>
-          </div>
-        </PageContainer>
+              );
+            }
+            return (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-lg text-[11px] font-semibold text-gray-600 mb-2.5">
+                <span className="w-2 h-2 rounded-full bg-gray-400 shrink-0"></span>
+                <span>{isRTL ? 'لم يتم اللقاء به مسبقاً (أول لقاء رسمي)' : 'First Official Meeting'}</span>
+              </div>
+            );
+          };
+
+          // Primary delegation page
+          const pages: Array<{
+            uae: typeof uaeList;
+            partner: typeof partnerList;
+            isFirstPage: boolean;
+          }> = [];
+
+          pages.push({
+            uae: uaeList.slice(0, 1),
+            partner: partnerList.slice(0, 1),
+            isFirstPage: true
+          });
+
+          // Subsequent pages for additional delegates
+          const remainingUae = uaeList.slice(1);
+          const remainingPartner = partnerList.slice(1);
+
+          let uIdx = 0;
+          let pIdx = 0;
+          while (uIdx < remainingUae.length || pIdx < remainingPartner.length) {
+            const pageUae: typeof uaeList = [];
+            const pagePartner: typeof partnerList = [];
+            let count = 0;
+
+            while (count < 2 && (uIdx < remainingUae.length || pIdx < remainingPartner.length)) {
+              if (uIdx < remainingUae.length) {
+                pageUae.push(remainingUae[uIdx++]);
+                count++;
+              }
+              if (count < 2 && pIdx < remainingPartner.length) {
+                pagePartner.push(remainingPartner[pIdx++]);
+                count++;
+              }
+            }
+
+            pages.push({
+              uae: pageUae,
+              partner: pagePartner,
+              isFirstPage: false
+            });
+          }
+
+          return pages.map((pageData, pIndex) => (
+            <PageContainer key={`delegation-page-${pIndex}`} footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+              <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
+              <SectionHeader 
+                icon={Users} 
+                title={pageData.isFirstPage ? t('sectionDelegation') : `${t('sectionDelegation')} (${isRTL ? 'تابع' : 'Continued'})`} 
+                compact 
+              />
+              <div className="grid grid-cols-1 gap-6 mt-4">
+                {pageData.uae.length > 0 && (
+                  <div className="avoid-break">
+                    <div className="flex items-center gap-4 mb-3 border-b-2 border-primary pb-2">
+                      <img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto" alt="UAE" />
+                      <p className="text-xs font-extrabold uppercase text-primary tracking-[0.2em]">{t('uaeDelegation')}</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      {pageData.uae.map((d) => (
+                        <div key={d.id} className="flex gap-6 items-start p-5 bg-gray-50 rounded-[1.25rem] border border-gray-100 shadow-sm">
+                          <div className="w-32 h-44 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-md">
+                            {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}
+                          </div>
+                          <div className="flex-1 pt-0.5">
+                            <p className="text-xl font-serif font-bold text-gray-900 mb-0.5">{d.name}</p>
+                            <p className="text-xs font-bold text-primary uppercase mb-2 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>
+                            {renderRichText(d.bio)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {pageData.partner.length > 0 && (
+                  <div className="avoid-break pt-1">
+                    <div className="flex items-center gap-4 mb-3 border-b-2 border-accent pb-2">
+                      <img src={data.flagUrl || `https://flagcdn.com/w40/${(data.country || '').toLowerCase().includes('india')?'in':'ph'}.png`} className="h-5 w-auto" alt={data.country} />
+                      <p className="text-xs font-extrabold uppercase text-accent tracking-[0.2em]">{t('partnerDelegation')}</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      {pageData.partner.map((d) => (
+                        <div key={d.id} className="flex gap-6 items-start p-5 bg-gray-50 rounded-[1.25rem] border border-gray-100 shadow-sm">
+                          <div className="w-32 h-44 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-md">
+                            {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}
+                          </div>
+                          <div className="flex-1 pt-0.5">
+                            <p className="text-xl font-serif font-bold text-gray-900 mb-0.5">{d.name}</p>
+                            <div className="mb-2">
+                              <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] border-b border-accent/10 pb-0.5 inline-block">{d.title}</p>
+                            </div>
+                            {/* WHERE & WHEN WE MET DISPLAY */}
+                            {renderMeetingBadge(d)}
+                            {renderRichText(d.bio)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </PageContainer>
+          ));
+        })()}
       </div>
     </div>
   );
