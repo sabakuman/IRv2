@@ -4,7 +4,7 @@ import { PageContainer, HeaderBand } from './PrintUI';
 import { 
   Calendar, Mail, FileText, Users, AlertTriangle, 
   CheckCircle, ArrowRightLeft, ShieldAlert, TrendingUp, 
-  Building, Clock, Briefcase, Hash, Info, Layers, ExternalLink, UserCheck
+  Building, Clock, Briefcase, Hash, Info, Layers, ExternalLink, UserCheck, Edit3
 } from 'lucide-react';
 
 interface ExecutiveBriefPageProps {
@@ -14,6 +14,7 @@ interface ExecutiveBriefPageProps {
   isRTL: boolean;
   t: (key: any) => string;
   footer?: React.ReactNode;
+  onEditAttentionNotes?: () => void;
 }
 
 export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
@@ -22,7 +23,8 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
   combinedTotalWorkers,
   isRTL,
   t,
-  footer
+  footer,
+  onEditAttentionNotes
 }) => {
   const summaryText = (data.summary || '').trim();
 
@@ -272,50 +274,10 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
 
   // -------------------------------------------------------------
   // 9. REQUIRES ATTENTION (ملاحظات وتنبيهات تتطلب الانتباه قبل الاجتماع)
-  // User input from data.attentionNotes (max 4), or data-grounded fallback
+  // Only displayed if the user explicitly provided attention notes. If empty, it is completely removed.
   // -------------------------------------------------------------
-  const userAttentionNotes = (data.attentionNotes || []).filter(n => n && n.trim().length > 0);
-  let finalAttentionNotes: string[] = [];
-
-  if (userAttentionNotes.length > 0) {
-    finalAttentionNotes = userAttentionNotes.slice(0, 4);
-  } else {
-    // Data-grounded fallback flags
-    if (leadDelegate && (!leadDelegate.metBefore || !leadDelegate.meetingYear)) {
-      const name = leadDelegate.name || (isRTL ? 'رئيس الوفد المقابل' : 'Lead Delegate');
-      const title = leadDelegate.title ? ` (${leadDelegate.title})` : '';
-      finalAttentionNotes.push(
-        isRTL 
-          ? `عضو جديد في الوفد المقابل: يشارك ${name}${title} في المباحثات الرسمية للمرة الأولى دون لقاءات سابقة مسجلة.`
-          : `First-time counterpart: ${name}${title} joins official bilateral talks for the first time with no prior meetings on record.`
-      );
-    }
-
-    if (correspondence && correspondence.status === 'awaiting_reply') {
-      const subject = correspondence.subject || correspondence.ref || (isRTL ? 'مراسلة رسمية' : 'Official correspondence');
-      finalAttentionNotes.push(
-        isRTL
-          ? `مراسلة بانتظار الرد: موضوع "${subject}" (${correspondence.ref || ''}) ما زال بانتظار الإفادة والمتابعة من الجانب المقابل.`
-          : `Correspondence awaiting reply: "${subject}" (${correspondence.ref || ''}) remains pending response from partner ministry.`
-      );
-    } else if ((data.bilateralAgreements || []).some(a => a.status === 'pending')) {
-      const pendingAgr = (data.bilateralAgreements || []).find(a => a.status === 'pending');
-      finalAttentionNotes.push(
-        isRTL
-          ? `مشروع اتفاقية قيد المراجعة: "${pendingAgr?.title || ''}" قيد الاستكمال والمراجعة تمهيداً للتوقيع أو التجديد.`
-          : `Pending Agreement: "${pendingAgr?.title || ''}" is under ministerial review awaiting finalization.`
-      );
-    }
-
-    const complaintsCount = parseInt(data.uaeWorkforceStats?.mohre?.laborComplaintsUnderReview || '0', 10);
-    if (complaintsCount > 0) {
-      finalAttentionNotes.push(
-        isRTL
-          ? `ملف الشكاوى العمالية: تسجيل ${complaintsCount} شكوى عمالية قيد النظر تتطلب التنسيق لتسريع تسويتها ودياً وقضائياً.`
-          : `Labour Complaints: ${complaintsCount} individual complaints remain under review, warranting bilateral coordination.`
-      );
-    }
-  }
+  const userAttentionNotes = (data.attentionNotes || []).filter(n => typeof n === 'string' && n.trim().length > 0);
+  const finalAttentionNotes: string[] = userAttentionNotes.slice(0, 4);
 
   return (
     <PageContainer footer={footer} className="shadow-xl print:shadow-none mb-8 print:mb-0">
@@ -594,36 +556,55 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
         </div>
 
         {/* 6. PENDING MATTERS (المواضيع تحت المراجعة) - Expanded to 8 cols */}
-        <div className="col-span-8 border border-gray-200 bg-gray-50/70 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between">
+        <div 
+          className="col-span-8 border border-gray-200 bg-gray-50/70 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between"
+          style={{ color: '#111827', forcedColorAdjust: 'none' }}
+        >
           <div>
             <div className="flex items-center justify-between border-b border-gray-200 pb-1.5 mb-2">
               <div className="flex items-center gap-1.5">
-                <Layers size={13} className="text-primary" />
-                <h4 className="text-[10.5px] font-black text-gray-900 uppercase">
+                <Layers size={13} className="text-primary" style={{ color: '#162e4a' }} />
+                <h4 
+                  className="text-[10.5px] font-black uppercase"
+                  style={{ color: '#111827', WebkitTextFillColor: '#111827' }}
+                >
                   {isRTL ? 'المواضيع تحت المراجعة' : 'Matters Under Review'}
                 </h4>
               </div>
               {pendingItems.length > 0 ? (
-                <span className="text-[8.5px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
-                  {pendingItems.length} {isRTL ? 'ملفات للمتابعة' : 'Pending Files'}
+                <span 
+                  className="text-[8.5px] font-bold px-2 py-0.5 rounded border"
+                  style={{ color: '#78350f', backgroundColor: '#fef3c7', borderColor: '#fde68a' }}
+                >
+                  {Math.min(2, pendingItems.length)} {isRTL ? 'ملفات للمتابعة' : 'Pending Files'}
                 </span>
               ) : (
-                <span className="text-[8.5px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-200">
+                <span 
+                  className="text-[8.5px] font-bold px-2 py-0.5 rounded border"
+                  style={{ color: '#065f46', backgroundColor: '#d1fae5', borderColor: '#a7f3d0' }}
+                >
                   {isRTL ? 'مستقرة' : 'All Clear'}
                 </span>
               )}
             </div>
 
             {pendingItems.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {pendingItems.slice(0, 6).map((item, i) => (
-                  <div key={i} className="bg-white border border-gray-200 rounded-lg p-2 text-[10px] shadow-2xs flex flex-col justify-between">
+              <div className="grid grid-cols-2 gap-2.5">
+                {pendingItems.slice(0, 2).map((item, i) => (
+                  <div 
+                    key={i} 
+                    className="border border-gray-200 rounded-lg p-2.5 shadow-2xs flex flex-col justify-between min-h-[64px] overflow-visible"
+                    style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                  >
                     <div>
-                      <div className="flex items-start justify-between gap-1 mb-1">
-                        <p className="font-black text-gray-900 leading-snug line-clamp-2">
+                      <div className="flex items-start justify-between gap-1.5 mb-1.5">
+                        <p 
+                          className="pending-matter-title text-[11px] leading-snug break-words overflow-visible"
+                          style={{ color: '#111827', WebkitTextFillColor: '#111827', fontWeight: 800 }}
+                        >
                           {item.matter}
                         </p>
-                        <span className={`px-1.5 py-0.2 text-[8px] font-bold rounded shrink-0 border ${
+                        <span className={`px-1.5 py-0.5 text-[8px] font-bold rounded shrink-0 border ${
                           item.status === 'urgent' || item.status === 'عاجل'
                             ? 'bg-rose-50 text-rose-800 border-rose-200'
                             : item.status === 'in_coordination' || item.status === 'قيد التنسيق'
@@ -642,8 +623,12 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
                         </span>
                       </div>
                     </div>
-                    <div className="pt-1 mt-1 border-t border-gray-100 flex items-center justify-between text-[8.5px]">
-                      <span className="text-primary-dark font-bold truncate max-w-[85%]" title={item.dept}>
+                    <div className="pt-1.5 mt-1 border-t border-gray-100 flex items-center justify-between text-[9px]">
+                      <span 
+                        className="pending-matter-dept truncate max-w-[85%]" 
+                        title={item.dept}
+                        style={{ color: '#162e4a', WebkitTextFillColor: '#162e4a', fontWeight: 700 }}
+                      >
                         {item.dept}
                       </span>
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -660,7 +645,10 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="bg-white border border-emerald-200 rounded-lg p-3 text-center text-emerald-800 text-[10.5px] font-bold">
+              <div 
+                className="border border-emerald-200 rounded-lg p-3 text-center text-[10.5px] font-bold"
+                style={{ backgroundColor: '#ffffff', color: '#065f46', WebkitTextFillColor: '#065f46' }}
+              >
                 {isRTL ? 'لا توجد مواضيع تحت المراجعة — كافة الملفات مستقرة ومنسقة' : 'No matters under review — all tracks are aligned'}
               </div>
             )}
@@ -672,36 +660,44 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
         </div>
       </div>
 
-      {/* 9. REQUIRES ATTENTION (Up to 4 points with user input or smart fallback) */}
-      <div className="border border-amber-300/80 bg-amber-50/40 rounded-xl p-2.5">
-        <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[10.5px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
-            <ShieldAlert size={14} className="text-amber-600" />
-            {isRTL ? 'ملاحظات وتنبيهات تتطلب الانتباه قبل الاجتماع' : 'Critical Pre-Meeting Attention Flags'}
-          </p>
-          <span className="text-[8.5px] font-bold bg-amber-200/70 text-amber-900 px-2 py-0.5 rounded">
-            {finalAttentionNotes.length} {isRTL ? 'تنبيهات' : 'Flags'}
-          </span>
-        </div>
+      {/* 9. REQUIRES ATTENTION (Only rendered when user-defined flags exist, otherwise completely removed) */}
+      {finalAttentionNotes.length > 0 && (
+        <div className="border border-amber-300/80 bg-amber-50/40 rounded-xl p-2.5 mt-2">
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-[10.5px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+              <ShieldAlert size={14} className="text-amber-600" />
+              {isRTL ? 'ملاحظات وتنبيهات تتطلب الانتباه قبل الاجتماع' : 'Critical Pre-Meeting Attention Flags'}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[8.5px] font-bold bg-amber-200/70 text-amber-900 px-2 py-0.5 rounded">
+                {finalAttentionNotes.length} {isRTL ? 'تنبيهات' : 'Flags'}
+              </span>
+              {onEditAttentionNotes && (
+                <button
+                  type="button"
+                  onClick={onEditAttentionNotes}
+                  className="no-print text-[9px] font-bold text-amber-900 hover:text-amber-950 bg-amber-200/80 hover:bg-amber-300 px-2 py-0.5 rounded border border-amber-300 transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                  title={isRTL ? 'تعديل التنبيهات في صفحة التحرير' : 'Edit flags in edit page'}
+                >
+                  <Edit3 size={10} />
+                  <span>{isRTL ? 'تعديل' : 'Edit'}</span>
+                </button>
+              )}
+            </div>
+          </div>
 
-        {finalAttentionNotes.length > 0 ? (
           <div className="grid grid-cols-2 gap-2">
             {finalAttentionNotes.slice(0, 4).map((flag, idx) => (
               <div key={idx} className="flex items-start gap-1.5 bg-white border border-amber-200/90 rounded-lg p-2 text-[10px] leading-snug">
                 <span className="w-4 h-4 rounded-full bg-amber-500 text-white font-black text-[8.5px] flex items-center justify-center shrink-0 mt-0.5">
                   {idx + 1}
                 </span>
-                <span className="font-bold text-gray-900 line-clamp-2">{flag}</span>
+                <span className="font-bold text-gray-900 break-words" style={{ color: '#111827' }}>{flag}</span>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="bg-white border border-emerald-200 rounded-lg p-2 text-[10.5px] text-emerald-800 font-bold flex items-center gap-1.5">
-            <CheckCircle size={14} className="text-emerald-600 shrink-0" />
-            <span>{isRTL ? 'لا توجد تنبيهات استثنائية أو مخاطر عالقة تستدعي التدخل العاجل استناداً للبيانات الحالية.' : 'No exceptional critical flags identified based on verified input data.'}</span>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </PageContainer>
   );
 };

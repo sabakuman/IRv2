@@ -188,4 +188,55 @@
     background: hsl(var(--primary));
     opacity: 0.18;
   }
+
+  /* ===============================
+     REPORT & PRINT ROOT COLOR HARDENING
+     Ensures text is ALWAYS high-contrast dark on white/light pages
+     regardless of device OS, browser dark-mode settings, or Chrome color overrides
+  ================================ */
+  .report-root,
+  .report-root .page-break,
+  .report-root .page-container,
+  .page-break {
+    color: #111827 !important;
+    background-color: #ffffff !important;
+    color-scheme: light !important;
+    forced-color-adjust: none !important;
+  }
+
+  /* Matters Under Review & Attention Notes specific color hardening */
+  .pending-matter-title {
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+    font-weight: 800 !important;
+  }
+
+  .pending-matter-dept {
+    color: #162e4a !important;
+    -webkit-text-fill-color: #162e4a !important;
+    font-weight: 700 !important;
+  }
+
+  .rich-text-content,
+  .rich-text-content p,
+  .rich-text-content ul,
+  .rich-text-content li,
+  .rich-text-content span,
+  .rich-text-content div {
+    color: #1f2937 !important;
+    -webkit-text-fill-color: #1f2937 !important;
+  }
+
+  .rich-text-content strong,
+  .rich-text-content b {
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+    font-weight: 700;
+  }
+
+  .rich-text-content em,
+  .rich-text-content i {
+    color: #374151 !important;
+    -webkit-text-fill-color: #374151 !important;
+  }
 }

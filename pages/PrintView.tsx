@@ -9,7 +9,7 @@ import {
   Printer, X, AlertTriangle, ShieldAlert,
   GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
   ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer,
-  ExternalLink, Clock, Phone, Percent, CheckCircle
+  ExternalLink, Clock, Phone, Percent, CheckCircle, Edit3
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { ExecutiveBriefPage } from '../components/ExecutiveBriefPage';
@@ -30,8 +30,8 @@ const formatDate = (dateStr: string) => {
 
 const renderRichText = (text: string, sizeClass: string = "text-[12px]") => {
   if (!text) return null;
-  let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 font-bold">$1</strong>');
+  processed = processed.replace(/\*(.*?)\*/g, '<em class="text-gray-700 italic">$1</em>');
   const lines = processed.split('\n');
   const result: React.ReactNode[] = [];
   let inList = false;
@@ -43,14 +43,14 @@ const renderRichText = (text: string, sizeClass: string = "text-[12px]") => {
       listItems.push(trimmed.substring(2));
     } else {
       if (inList) {
-        result.push(<ul key={`list-${i}`} className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
+        result.push(<ul key={`list-${i}`} className="list-disc mb-1 ms-6 text-gray-800">{listItems.map((item, idx) => (<li key={idx} className="text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
         inList = false;
       }
-      if (trimmed) { result.push(<p key={i} className="mb-1" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
+      if (trimmed) { result.push(<p key={i} className="mb-1 text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
     }
   });
-  if (inList) { result.push(<ul key="list-final" className="list-disc mb-1 ms-6">{listItems.map((item, idx) => (<li key={idx} dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
-  return <div className={`rich-text-content ${sizeClass} leading-[1.5] overflow-visible`}>{result.length > 0 ? result : text}</div>;
+  if (inList) { result.push(<ul key="list-final" className="list-disc mb-1 ms-6 text-gray-800">{listItems.map((item, idx) => (<li key={idx} className="text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
+  return <div className={`rich-text-content ${sizeClass} text-gray-800 leading-[1.5] overflow-visible`}>{result.length > 0 ? result : text}</div>;
 };
 
 // Helper for clickable references with specific logic for Ministry/CBUAE
@@ -252,7 +252,8 @@ export default function PrintView() {
     relatedNews: rawData.relatedNews || [],
     keyIssues: rawData.keyIssues || [],
     recommendations: rawData.recommendations || [],
-    pendingMatters: rawData.pendingMatters || []
+    pendingMatters: rawData.pendingMatters || [],
+    attentionNotes: rawData.attentionNotes || []
   };
 
   const isRTL = language === 'ar';
@@ -731,6 +732,13 @@ export default function PrintView() {
       </style>
 
       <div className={`fixed top-6 z-50 flex gap-3 no-print p-2 rounded-2xl bg-white/80 backdrop-blur-md shadow-2xl border border-white/20 ${isRTL ? 'left-6' : 'right-6'}`}>
+         <button 
+           onClick={() => navigate(`/wizard/${report.id}`)} 
+           className="bg-white text-primary hover:bg-gray-50 border border-primary/20 px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm font-bold active:scale-95"
+           title={isRTL ? 'تعديل التقرير في صفحة المعالج' : 'Edit Report in Wizard'}
+         >
+            <Edit3 size={17} /> {isRTL ? 'تعديل التقرير' : 'Edit Report'}
+         </button>
          <button onClick={() => window.print()} className="bg-primary text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-primary-dark transition-all flex items-center gap-2 text-sm font-bold active:scale-95">
             <Printer size={18} /> {t('printNow')}
          </button>
@@ -783,6 +791,7 @@ export default function PrintView() {
           isRTL={isRTL}
           t={t}
           footer={<DefaultFooter />}
+          onEditAttentionNotes={() => navigate(`/wizard/${report.id}`)}
         />
 
         {/* PAGE 3: PROFILE & ECONOMY */}

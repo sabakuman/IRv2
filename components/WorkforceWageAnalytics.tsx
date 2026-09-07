@@ -192,7 +192,7 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
       partnerValue: Number(s.partnerValue || 0)
     }))
     .sort((a, b) => b.uaeValue - a.uaeValue)
-    .slice(0, 11);
+    .slice(0, 5);
 
   const maxSalaryVal = Math.max(
     ...sortedSalarySectors.flatMap(s => [s.uaeValue, s.partnerValue]),
@@ -202,29 +202,29 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
   const countryDisplayName = translateCountryName(data.country);
 
   return (
-    <div className="border border-gray-300 bg-white rounded-lg p-3.5 shadow-2xs relative my-2 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="border border-gray-300 bg-white rounded-lg p-2.5 shadow-2xs relative my-1 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* ========================================================= */}
       {/* TOP HEADER & MAIN LEGEND                                   */}
       {/* ========================================================= */}
-      <div className="flex items-start justify-between border-b border-gray-200 pb-1.5 mb-2 relative">
+      <div className="flex items-center justify-between border-b border-gray-200 pb-1 mb-1.5 relative">
         {/* Child 1: Title on the RIGHT in RTL, LEFT in LTR */}
-        <div>
-          <span className="text-[8.5px] font-mono font-bold text-gray-400 tracking-widest uppercase block leading-tight">
+        <div className="flex items-center gap-2">
+          <span className="text-[7.5px] font-mono font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded tracking-wider uppercase leading-none">
             MOHRE × ICP
           </span>
-          <h3 className="text-[13.2px] font-black text-gray-900 tracking-tight leading-none mt-0.5">
+          <h3 className="text-[11px] font-extrabold text-gray-900 tracking-tight leading-tight">
             {isRTL ? 'توزيع العاملين ونطاقات الأجور' : 'Workforce Distribution & Wage Ranges'}
           </h3>
         </div>
 
         {/* Child 2: Legend on the LEFT in RTL, RIGHT in LTR */}
-        <div className="flex items-center gap-3 text-[8px] font-bold text-gray-700 pt-0.5">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-[1px] bg-[#162e4a] inline-block shadow-2xs"></span>
+        <div className="flex items-center gap-2.5 text-[7.5px] font-bold text-gray-700">
+          <div className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-[1px] bg-[#162e4a] inline-block shadow-2xs"></span>
             <span>{isRTL ? 'وزارة الموارد البشرية MOHRE' : 'MOHRE'}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-[1px] bg-[#bfdbfe] border border-[#3b82f6] inline-block shadow-2xs"></span>
+          <div className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-[1px] bg-[#bfdbfe] border border-[#3b82f6] inline-block shadow-2xs"></span>
             <span>{isRTL ? 'الهيئة الاتحادية للهوية ICP' : 'ICP'}</span>
           </div>
         </div>
@@ -281,16 +281,16 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
             const icpPct = Math.max(1.5, Math.min(100, (e.icp / maxIcpEmirate) * 100));
 
             return (
-              <div key={idx} className="flex items-center gap-2 text-[8px]">
+              <div key={idx} className="flex items-center gap-2 text-[8.5px]">
                 {/* Child 1 (Right in RTL): Emirate Label with explicit fixed 80px width */}
-                <span className="w-[80px] shrink-0 text-start text-[8px] font-extrabold text-gray-800 leading-none truncate" title={translateEmirate(e.name)}>
+                <span className="w-[80px] shrink-0 text-start text-[8.5px] font-extrabold text-gray-800 leading-none truncate" title={translateEmirate(e.name)}>
                   {translateEmirate(e.name)}
                 </span>
 
                 {/* Child 2 (Middle): Bars track (bars grow from right to left in RTL, starting at identical line) */}
-                <div className="flex-1 bg-[#f1f5f9] h-[13px] rounded-[2px] p-[1px] flex flex-col justify-between overflow-hidden">
+                <div className="flex-1 bg-[#f1f5f9] h-[14px] rounded-[2px] p-[1px] flex flex-col justify-between overflow-hidden">
                   {/* MOHRE Bar */}
-                  <div className="w-full flex justify-start h-[4.8px]">
+                  <div className="w-full flex justify-start h-[5.2px]">
                     <div
                       style={{ width: `${mohrePct}%` }}
                       className="h-full bg-[#162e4a] rounded-[1px] transition-all duration-300"
@@ -299,7 +299,7 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
                   </div>
 
                   {/* ICP Bar */}
-                  <div className="w-full flex justify-start h-[4.8px]">
+                  <div className="w-full flex justify-start h-[5.2px]">
                     <div
                       style={{ width: `${icpPct}%` }}
                       className="h-full bg-[#bfdbfe] border border-[#3b82f6] rounded-[1px] transition-all duration-300"
@@ -309,9 +309,9 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
                 </div>
 
                 {/* Child 3 (Left in RTL): Numeric values aligned with sub-header */}
-                <div className="w-[96px] shrink-0 flex items-center gap-1.5 font-mono text-[7.5px] font-bold">
-                  <span className="w-[48px] shrink-0 text-center text-gray-900 font-bold leading-none">{formatCompactNumber(e.mohre)}</span>
-                  <span className="w-[42px] shrink-0 text-center text-gray-600 font-medium leading-none">{formatCompactNumber(e.icp)}</span>
+                <div className="w-[96px] shrink-0 flex items-center gap-1.5 font-mono text-[9px]">
+                  <span className="w-[48px] shrink-0 text-center text-gray-900 font-extrabold leading-none">{formatCompactNumber(e.mohre)}</span>
+                  <span className="w-[42px] shrink-0 text-center text-gray-700 font-bold leading-none">{formatCompactNumber(e.icp)}</span>
                 </div>
               </div>
             );
@@ -347,14 +347,14 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
               const isOther = s.name === 'أخرى' || s.name === 'Other';
 
               return (
-                <div key={idx} className="flex items-center gap-1.5 text-[7.5px]">
+                <div key={idx} className="flex items-center gap-1.5 text-[8px]">
                   {/* Child 1 (Right): Sector name with guaranteed fixed width */}
                   <span className="w-28 shrink-0 text-start font-bold text-gray-800 truncate leading-tight" title={s.name}>
                     {s.name}
                   </span>
 
                   {/* Child 2 (Middle): Bar track (starts at exact same point, grows from right to left in RTL) */}
-                  <div className="flex-1 bg-[#f1f5f9] h-[10.5px] rounded-[1px] overflow-hidden flex justify-start">
+                  <div className="flex-1 bg-[#f1f5f9] h-[11.5px] rounded-[1px] overflow-hidden flex justify-start">
                     <div
                       style={{
                         width: `${pct}%`,
@@ -368,7 +368,7 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
                   </div>
 
                   {/* Child 3 (Left): Number */}
-                  <span className="w-[32px] shrink-0 text-center font-mono font-bold text-gray-700 leading-none">
+                  <span className="w-[34px] shrink-0 text-center font-mono font-bold text-gray-800 text-[8.5px] leading-none">
                     {formatCompactNumber(s.value)}
                   </span>
                 </div>
@@ -401,14 +401,14 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
               const isOther = s.name === 'أخرى' || s.name === 'Other';
 
               return (
-                <div key={idx} className="flex items-center gap-1.5 text-[7.5px]">
+                <div key={idx} className="flex items-center gap-1.5 text-[8px]">
                   {/* Child 1 (Right): Sector name with guaranteed fixed width */}
                   <span className="w-28 shrink-0 text-start font-bold text-gray-800 truncate leading-tight" title={s.name}>
                     {s.name}
                   </span>
 
                   {/* Child 2 (Middle): Bar track (starts at exact same point, grows from right to left in RTL) */}
-                  <div className="flex-1 bg-[#f1f5f9] h-[10.5px] rounded-[1px] overflow-hidden flex justify-start">
+                  <div className="flex-1 bg-[#f1f5f9] h-[11.5px] rounded-[1px] overflow-hidden flex justify-start">
                     <div
                       style={{
                         width: `${pct}%`,
@@ -422,7 +422,7 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
                   </div>
 
                   {/* Child 3 (Left): Number */}
-                  <span className="w-[32px] shrink-0 text-center font-mono font-bold text-gray-700 leading-none">
+                  <span className="w-[34px] shrink-0 text-center font-mono font-bold text-gray-800 text-[8.5px] leading-none">
                     {formatCompactNumber(s.value)}
                   </span>
                 </div>
@@ -433,26 +433,28 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
       </div>
 
       {/* ========================================================= */}
-      {/* SECTION 3: MEDIAN SALARY COMPARISON (11 SECTORS)          */}
+      {/* SECTION 3: MEDIAN SALARY COMPARISON (5 KEY SECTORS)        */}
       {/* ========================================================= */}
       <div>
         {/* Section Title */}
-        <div className="flex items-center justify-between mb-1 px-0.5">
+        <div className="flex items-center justify-between mb-1.5 px-0.5">
           {/* Child 1 (Right): Title */}
-          <h4 className="text-[10.2px] font-bold text-gray-800 leading-tight">
+          <h4 className="text-[10.5px] font-extrabold text-gray-900 leading-tight">
             {isRTL ? 'وسيط الرواتب مقابل وسيط سوق العمل حسب القطاع' : 'Median Wage vs Market Median by Sector'}
           </h4>
 
           {/* Child 2 (Left): Meta */}
-          <div className="flex items-center gap-1.5 text-[7px] font-mono text-gray-400">
-            <span>{sortedSalarySectors.length} {isRTL ? 'قطاعات رئيسية' : 'Key Sectors'}</span>
+          <div className="flex items-center gap-1.5 text-[7.5px] font-mono text-gray-500 font-bold">
+            <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+              {sortedSalarySectors.length} {isRTL ? 'قطاعات رئيسية' : 'Key Sectors'}
+            </span>
           </div>
         </div>
 
         {/* Sub-header: Column labels aligned EXACTLY above the rows and numbers */}
-        <div className="flex items-center gap-2 text-[7.5px] font-bold text-gray-500 mb-0.5 px-0.5">
-          {/* Child 1 (Right): Sector label with fixed 108px width (w-[108px]) identical to rows */}
-          <span className="w-[108px] shrink-0 text-start font-bold text-gray-700 text-[8px]">
+        <div className="flex items-center gap-2 text-[7.5px] font-bold text-gray-500 mb-1 px-0.5">
+          {/* Child 1 (Right): Sector label with fixed 115px width */}
+          <span className="w-[115px] shrink-0 text-start font-extrabold text-gray-700 text-[8px]">
             {isRTL ? 'القطاع' : 'Sector'}
           </span>
 
@@ -465,7 +467,7 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
           </div>
 
           {/* Child 3 (Left): The 3 Column Headers directly above the 3 numbers */}
-          <div className="w-[168px] shrink-0 flex items-center gap-1.5 font-mono text-[7px] font-bold">
+          <div className="w-[168px] shrink-0 flex items-center gap-1.5 font-mono text-[7.5px] font-bold">
             {/* 1. وسيط السوق (Market median) */}
             <span
               className="w-[56px] shrink-0 text-center text-[#162e4a] font-bold bg-slate-100/90 py-0.5 rounded-[2px] border border-slate-300/80 leading-none truncate px-1"
@@ -489,24 +491,24 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
           </div>
         </div>
 
-        {/* Wage Comparison Rows (Up to 11 Sectors) - Perfectly Aligned Bars */}
-        <div className="space-y-1">
+        {/* Wage Comparison Rows (5 Key Sectors) - Perfectly Aligned Bars & Enforced Font Size */}
+        <div className="space-y-1.5">
           {sortedSalarySectors.map((s, idx) => {
             const uaePct = Math.max(2, Math.min(100, (s.uaeValue / maxSalaryVal) * 100));
             const partnerPct = Math.max(2, Math.min(100, (s.partnerValue / maxSalaryVal) * 100));
             const ratioPct = s.uaeValue > 0 ? Math.round((s.partnerValue / s.uaeValue) * 100) : 0;
 
             return (
-              <div key={idx} className="flex items-center gap-2 text-[7.5px]">
-                {/* Child 1 (Right): Sector Name with exact fixed 108px width */}
-                <span className="w-[108px] shrink-0 text-start text-[8px] font-extrabold text-gray-800 leading-tight truncate" title={s.name}>
+              <div key={idx} className="flex items-center gap-2 text-[8.5px]">
+                {/* Child 1 (Right): Sector Name with exact fixed 115px width */}
+                <span className="w-[115px] shrink-0 text-start text-[8.5px] font-extrabold text-gray-800 leading-tight truncate" title={s.name}>
                   {s.name}
                 </span>
 
                 {/* Child 2 (Middle): Bars track - guaranteed to start at the EXACT same point for every row */}
-                <div className="flex-1 bg-[#f1f5f9] h-[12px] rounded-[2px] p-[1px] flex flex-col justify-between overflow-hidden">
+                <div className="flex-1 bg-[#f1f5f9] h-[14px] rounded-[2px] p-[1px] flex flex-col justify-between overflow-hidden">
                   {/* Market Wage Bar */}
-                  <div className="w-full flex justify-start h-[4.4px]">
+                  <div className="w-full flex justify-start h-[5.2px]">
                     <div
                       style={{ width: `${uaePct}%` }}
                       className="h-full bg-[#162e4a] rounded-[1px] transition-all duration-300"
@@ -515,7 +517,7 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
                   </div>
 
                   {/* Nationality Wage Bar */}
-                  <div className="w-full flex justify-start h-[4.4px]">
+                  <div className="w-full flex justify-start h-[5.2px]">
                     <div
                       style={{ width: `${partnerPct}%` }}
                       className="h-full bg-[#bfdbfe] border border-[#3b82f6] rounded-[1px] transition-all duration-300"
@@ -524,20 +526,20 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
                   </div>
                 </div>
 
-                {/* Child 3 (Left): The 3 Numbers matching the headers directly above */}
-                <div className="w-[168px] shrink-0 flex items-center gap-1.5 font-mono text-[7.5px] font-bold">
+                {/* Child 3 (Left): The 3 Numbers matching the headers directly above - Bigger font */}
+                <div className="w-[168px] shrink-0 flex items-center gap-1.5 font-mono text-[9.5px]">
                   {/* 1. وسيط السوق */}
-                  <span className="w-[56px] shrink-0 text-center text-gray-900 font-bold leading-none">
+                  <span className="w-[56px] shrink-0 text-center text-[#162e4a] font-black leading-none">
                     {Number(s.uaeValue).toLocaleString()}
                   </span>
 
                   {/* 2. عمالة الدولة الشريكة */}
-                  <span className="w-[64px] shrink-0 text-center text-gray-800 font-semibold leading-none">
+                  <span className="w-[64px] shrink-0 text-center text-[#2563eb] font-black leading-none">
                     {Number(s.partnerValue).toLocaleString()}
                   </span>
 
                   {/* 3. النسبة */}
-                  <span className="w-[36px] shrink-0 text-center text-gray-500 font-medium leading-none">
+                  <span className="w-[36px] shrink-0 text-center text-gray-700 font-bold leading-none text-[9px]">
                     {ratioPct}%
                   </span>
                 </div>

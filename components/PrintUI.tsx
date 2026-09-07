@@ -16,13 +16,16 @@ export const PageContainer: React.FC<{
   className = "",
   contentClassName = "px-12 pt-8 pb-28"
 }) => (
-  <div className={`w-[210mm] h-[297mm] bg-white mx-auto flex flex-col page-break relative overflow-hidden ${className}`}>
+  <div 
+    className={`w-[210mm] h-[297mm] bg-white text-gray-900 mx-auto flex flex-col page-break relative overflow-hidden report-root ${className}`}
+    style={{ colorScheme: 'light', color: '#111827', backgroundColor: '#ffffff' }}
+  >
     {/* Optimized safe-zone: pb-28 (7rem / 112px) is used to balance 
         content density and footer safety. */}
     <div className={`flex-1 overflow-visible ${contentClassName}`}>{children}</div>
 
     {footer && (
-      <div className="absolute bottom-6 left-12 right-12 h-16 flex flex-col justify-end bg-white">
+      <div className="absolute bottom-6 left-12 right-12 h-16 flex flex-col justify-end bg-white" style={{ backgroundColor: '#ffffff' }}>
         {footer}
       </div>
     )}

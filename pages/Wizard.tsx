@@ -6,6 +6,7 @@ import { ReportData, EMPTY_REPORT_DATA, Report, Delegate, NewsItem, PendingMatte
 import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
 import { PendingMattersEditor } from '../components/PendingMattersEditor';
+import { AttentionNotesEditor } from '../components/AttentionNotesEditor';
 import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink, Mail, Layers, Eye, Check } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
@@ -996,51 +997,12 @@ export default function Wizard() {
                 </div>
 
                 {/* 5. Requires Attention (ملاحظات وتنبيهات تتطلب الانتباه قبل الاجتماع - Max 4 items) */}
-                <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4 shadow-2xs">
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
-                      <ShieldAlert size={15} className="text-amber-600" />
-                      {isRTL ? 'ملاحظات وتنبيهات تتطلب الانتباه قبل الاجتماع (بحد أقصى 4 بنود)' : 'Pre-Meeting Attention Notes (Max 4 Items)'}
-                    </h5>
-                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded">
-                      {(data.attentionNotes || []).length}/4
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">
-                    {isRTL 
-                      ? 'أدخل حتى 4 نقاط جوهرية تستدعي انتباه معالي الوزير أو رئيس الوفد قبل الاجتماع (في حال تركها فارغة، يستخرج النظام تلقائياً التنبيهات من البيانات المسجلة).' 
-                      : 'Enter up to 4 critical points requiring attention before the meeting (if left empty, the brief auto-generates flags from data).'}
-                  </p>
-
-                  <div className="space-y-2">
-                    {[0, 1, 2, 3].map((noteIdx) => {
-                      const currentNotes = data.attentionNotes || [];
-                      const noteValue = currentNotes[noteIdx] || '';
-                      return (
-                        <div key={noteIdx} className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-amber-500 text-white font-black text-[10px] flex items-center justify-center shrink-0">
-                            {noteIdx + 1}
-                          </span>
-                          <input
-                            type="text"
-                            maxLength={125}
-                            className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-400/40"
-                            placeholder={isRTL ? `التنبيه ${noteIdx + 1} (بحد أقصى 125 حرف)...` : `Attention flag ${noteIdx + 1} (max 125 chars)...`}
-                            value={noteValue}
-                            onChange={(e) => {
-                              const updated = [...currentNotes];
-                              updated[noteIdx] = e.target.value;
-                              setData({
-                                ...data,
-                                attentionNotes: updated
-                              });
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <AttentionNotesEditor
+                  attentionNotes={data.attentionNotes || []}
+                  onChange={(notes) => setData(prev => ({ ...prev, attentionNotes: notes }))}
+                  isRTL={isRTL}
+                  reportData={data}
+                />
 
                 {/* 6. Pending Matters (المواضيع تحت المراجعة - Matters Under Review) */}
                 <div className="mt-5">
@@ -2033,6 +1995,14 @@ export default function Wizard() {
                  showAutoImport={(data.previousAgreementsAndUpdates || []).length > 0 || (data.bilateralAgreements || []).some(a => a.status === 'pending')}
                />
              </div>
+             <div className="space-y-4 pt-6 border-t">
+               <AttentionNotesEditor
+                 attentionNotes={data.attentionNotes || []}
+                 onChange={(notes) => setData(prev => ({ ...prev, attentionNotes: notes }))}
+                 isRTL={isRTL}
+                 reportData={data}
+               />
+             </div>
              <div className="pt-6 border-t">
                <div className="flex justify-between items-center mb-4">
                  <h4 className="font-bold flex items-center gap-2"><Newspaper size={18} /> {t('relatedNews')}</h4>
@@ -2134,6 +2104,14 @@ export default function Wizard() {
                 </Card>
              ))}
              <Button variant="outline" onClick={() => setData({...data, bilateralAgreements: [...data.bilateralAgreements, { title: '', date: '', status: 'active', summary: '' }]})}>+ Add Agreement</Button>
+             <div className="space-y-4 pt-6 border-t">
+               <AttentionNotesEditor
+                 attentionNotes={data.attentionNotes || []}
+                 onChange={(notes) => setData(prev => ({ ...prev, attentionNotes: notes }))}
+                 isRTL={isRTL}
+                 reportData={data}
+               />
+             </div>
           </div>
         );
       case 6:
