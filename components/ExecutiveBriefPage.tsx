@@ -231,18 +231,18 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
 
   const pendingItems: PendingMatterItem[] = [];
 
-  if (Array.isArray(data.pendingMatters)) {
+  if (Array.isArray(data.pendingMatters) && data.pendingMatters.length > 0) {
     data.pendingMatters.forEach(item => {
-      if (item.matter && item.matter.trim()) {
+      if (item && item.matter && item.matter.trim()) {
         pendingItems.push({
           id: item.id,
           matter: item.matter.trim(),
           dept: item.dept?.trim() || (isRTL ? 'إدارة العلاقات الدولية' : 'International Relations'),
-          status: item.status
+          status: item.status || 'pending'
         });
       }
     });
-  } else {
+  } else if (!data.pendingMatters) {
     (data.previousAgreementsAndUpdates || []).forEach(item => {
       let dept = isRTL ? 'إدارة العلاقات الدولية' : 'International Relations';
       const combined = `${item.title} ${item.content}`.toLowerCase();

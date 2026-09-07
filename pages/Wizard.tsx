@@ -6,7 +6,7 @@ import { ReportData, EMPTY_REPORT_DATA, Report, Delegate, NewsItem, PendingMatte
 import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
 import { PendingMattersEditor } from '../components/PendingMattersEditor';
-import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink, Mail, Layers } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink, Mail, Layers, Eye, Check } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 
@@ -80,6 +80,8 @@ export default function Wizard() {
   const [isFetchingAI, setIsFetchingAI] = useState(false);
   const [isFetchingNews, setIsFetchingNews] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [data, setData] = useState<ReportData>(EMPTY_REPORT_DATA);
   const [reportTitle, setReportTitle] = useState('');
 
@@ -489,19 +491,34 @@ export default function Wizard() {
     }));
   };
 
-  const handleSave = async (status: 'draft' | 'completed' = 'draft') => {
-    const reportId = id || `r-${uuidv4().slice(0, 8)}`;
-    const newReport: Report = { 
-      id: reportId, 
-      userId: user?.id || 'u-admin', 
-      title: reportTitle || `Report for ${data.country || 'Unknown'}`, 
-      status, 
-      updatedAt: new Date().toISOString(), 
-      data 
-    };
-    await MockService.saveReport(newReport);
-    if (status === 'completed') navigate('/dashboard');
-    else if (!id) navigate(`/wizard/${reportId}`);
+  const handleSave = async (status: 'draft' | 'completed' = 'draft', shouldViewReport = false) => {
+    setIsSaving(true);
+    try {
+      const reportId = id || `r-${uuidv4().slice(0, 8)}`;
+      const newReport: Report = { 
+        id: reportId, 
+        userId: user?.id || 'u-admin', 
+        title: reportTitle || `Report for ${data.country || 'Unknown'}`, 
+        status, 
+        updatedAt: new Date().toISOString(), 
+        data 
+      };
+      await MockService.saveReport(newReport);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3500);
+
+      if (shouldViewReport) {
+        navigate(`/print/${reportId}?lang=${language}`);
+      } else if (status === 'completed') {
+        navigate('/dashboard');
+      } else if (!id) {
+        navigate(`/wizard/${reportId}`);
+      }
+    } catch (err) {
+      console.error('Save report failed:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (loading) return <div className="h-96 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
@@ -1029,7 +1046,7 @@ export default function Wizard() {
                 <div className="mt-5">
                   <PendingMattersEditor
                     pendingMatters={data.pendingMatters || []}
-                    onChange={(matters) => setData({ ...data, pendingMatters: matters })}
+                    onChange={(matters) => setData(prev => ({ ...prev, pendingMatters: matters }))}
                     isRTL={isRTL}
                     onAutoImport={handleAutoImportPendingMatters}
                     showAutoImport={(data.previousAgreementsAndUpdates || []).length > 0 || (data.bilateralAgreements || []).some(a => a.status === 'pending')}
@@ -2010,7 +2027,7 @@ export default function Wizard() {
              <div className="space-y-4 pt-6 border-t">
                <PendingMattersEditor
                  pendingMatters={data.pendingMatters || []}
-                 onChange={(matters) => setData({ ...data, pendingMatters: matters })}
+                 onChange={(matters) => setData(prev => ({ ...prev, pendingMatters: matters }))}
                  isRTL={isRTL}
                  onAutoImport={handleAutoImportPendingMatters}
                  showAutoImport={(data.previousAgreementsAndUpdates || []).length > 0 || (data.bilateralAgreements || []).some(a => a.status === 'pending')}
@@ -2213,7 +2230,73 @@ export default function Wizard() {
 
   return (
     <div className="max-w-5xl mx-auto pb-20">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 mt-10">
+      {/* Top Header Controls & Feedback */}
+      <div className="mt-6 mb-4 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+            {data.country ? data.country.substring(0, 2).toUpperCase() : <Globe size={20} />}
+          </div>
+          <div>
+            <h2 className="font-serif font-bold text-gray-900 dark:text-white text-base">
+              {reportTitle || (data.country ? `تقرير ${data.country}` : (isRTL ? 'إعداد التقرير الدبلوماسي' : 'Diplomatic Report Wizard'))}
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+              <span>{isRTL ? 'الخطوة' : 'Step'} {currentStep + 1} {isRTL ? 'من' : 'of'} {STEPS.length}: {STEPS[currentStep]?.label}</span>
+              {saveSuccess && (
+                <span className="text-emerald-600 font-bold flex items-center gap-1 animate-in fade-in">
+                  <Check size={14} /> {isRTL ? 'تم الحفظ وتحديث البيانات' : 'Saved & Updated'}
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled={isSaving}
+            onClick={() => handleSave('draft')}
+            className="flex items-center gap-1.5"
+          >
+            {isSaving ? <Loader2 size={15} className="animate-spin text-primary" /> : <Save size={15} />}
+            <span>{isRTL ? 'حفظ مسودة' : 'Save Draft'}</span>
+          </Button>
+
+          <Button 
+            variant="primary" 
+            size="sm"
+            disabled={isSaving}
+            onClick={() => handleSave('draft', true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5"
+            title={isRTL ? 'حفظ وعرض التقرير الكامل والملخص التنفيذي' : 'Save and View Executive Report'}
+          >
+            <Eye size={15} />
+            <span>{isRTL ? 'معاينة التقرير' : 'View Report'}</span>
+          </Button>
+        </div>
+      </div>
+
+      {saveSuccess && (
+        <div className="mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle size={16} className="text-emerald-600 shrink-0" />
+            <span>
+              {isRTL
+                ? 'تم حفظ كافة بيانات التقرير بما فيها "المواضيع تحت المراجعة" بنجاح.'
+                : 'Report data including "Matters Under Review" saved successfully.'}
+            </span>
+          </div>
+          <button 
+            onClick={() => handleSave('draft', true)} 
+            className="underline font-black hover:text-emerald-900 ms-4 shrink-0"
+          >
+            {isRTL ? 'فتح التقرير الآن ←' : 'Open Report Now →'}
+          </button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 mt-2">
         <div className="space-y-3">
           {STEPS.map((step, idx) => (
             <button key={step.id} onClick={() => setCurrentStep(idx)} className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left ${idx === currentStep ? 'bg-primary text-white shadow-xl translate-x-2' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
@@ -2239,8 +2322,27 @@ export default function Wizard() {
           </Card>
           <div className="flex justify-between items-center pt-6">
             <Button variant="ghost" onClick={() => setCurrentStep(Math.max(0, currentStep - 1))} disabled={currentStep === 0}><ArrowLeft size={18} /> {t('back')}</Button>
-            <div className="flex gap-4">
-              <Button variant="outline" onClick={() => handleSave('draft')}><Save size={18} /> {t('save')}</Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                disabled={isSaving}
+                onClick={() => handleSave('draft')}
+              >
+                {isSaving ? <Loader2 size={16} className="animate-spin text-primary" /> : <Save size={18} />}
+                {t('save')}
+              </Button>
+              
+              <Button 
+                variant="outline"
+                disabled={isSaving}
+                onClick={() => handleSave('draft', true)}
+                className="text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                title={isRTL ? 'حفظ وعرض التقرير' : 'Save & View Report'}
+              >
+                <Eye size={18} />
+                {isRTL ? 'حفظ ومعاينة التقرير' : 'Save & View'}
+              </Button>
+
               {currentStep < STEPS.length - 1 ? (
                 <Button onClick={() => setCurrentStep(currentStep + 1)} className="px-10">{t('next')} <ArrowRight size={18} /></Button>
               ) : (

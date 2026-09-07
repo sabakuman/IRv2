@@ -368,21 +368,33 @@ export const INITIAL_DUMMY_REPORT = {
 };
 
 export function seedInitialReport(db) {
-  const stmt = db.prepare("INSERT OR REPLACE INTO reports (id, userId, title, status, updatedAt, data) VALUES (?, ?, ?, ?, ?, ?)");
-  stmt.run(
-    INITIAL_DUMMY_REPORT.id,
-    INITIAL_DUMMY_REPORT.userId,
-    INITIAL_DUMMY_REPORT.title,
-    INITIAL_DUMMY_REPORT.status,
-    INITIAL_DUMMY_REPORT.updatedAt,
-    JSON.stringify(INITIAL_DUMMY_REPORT.data),
-    function(insertErr) {
-      if (insertErr) {
-        console.error("[SEED REPORT] Failed to seed/sync dummy report:", insertErr.message);
-      } else {
-        console.log("[SEED REPORT] Successfully seeded/synced dummy report:", INITIAL_DUMMY_REPORT.id);
-      }
+  // Check if reports table already contains any report
+  db.get("SELECT id FROM reports LIMIT 1", [], (err, row) => {
+    if (err) {
+      console.error("[SEED REPORT] Error checking existing reports:", err.message);
+      return;
     }
-  );
-  stmt.finalize();
+    // Only insert initial seed data if table is completely empty
+    if (!row) {
+      const stmt = db.prepare("INSERT INTO reports (id, userId, title, status, updatedAt, data) VALUES (?, ?, ?, ?, ?, ?)");
+      stmt.run(
+        INITIAL_DUMMY_REPORT.id,
+        INITIAL_DUMMY_REPORT.userId,
+        INITIAL_DUMMY_REPORT.title,
+        INITIAL_DUMMY_REPORT.status,
+        INITIAL_DUMMY_REPORT.updatedAt,
+        JSON.stringify(INITIAL_DUMMY_REPORT.data),
+        function(insertErr) {
+          if (insertErr) {
+            console.error("[SEED REPORT] Failed to seed dummy report:", insertErr.message);
+          } else {
+            console.log("[SEED REPORT] Successfully seeded initial report into empty database:", INITIAL_DUMMY_REPORT.id);
+          }
+        }
+      );
+      stmt.finalize();
+    } else {
+      console.log("[SEED REPORT] Database already populated. Skipping seed to protect user modifications; database.sqlite will not be updated.");
+    }
+  });
 }

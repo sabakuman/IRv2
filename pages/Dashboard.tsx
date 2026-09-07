@@ -238,7 +238,7 @@ export default function Dashboard() {
                  )}
               </div>
             )}
-         </Card>
+          </Card>
       </div>
     </div>
   );

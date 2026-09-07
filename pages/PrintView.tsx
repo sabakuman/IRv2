@@ -251,7 +251,8 @@ export default function PrintView() {
     customSections: rawData.customSections || [],
     relatedNews: rawData.relatedNews || [],
     keyIssues: rawData.keyIssues || [],
-    recommendations: rawData.recommendations || []
+    recommendations: rawData.recommendations || [],
+    pendingMatters: rawData.pendingMatters || []
   };
 
   const isRTL = language === 'ar';
