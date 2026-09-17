@@ -7,7 +7,7 @@ import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
 import { PendingMattersEditor } from '../components/PendingMattersEditor';
 import { AttentionNotesEditor } from '../components/AttentionNotesEditor';
-import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink, Mail, Layers, Eye, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink, Mail, Layers, Eye, Check, ArrowUpDown } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 
@@ -1868,15 +1868,290 @@ export default function Wizard() {
                />
              </div>
              <div className="space-y-4">
-                <h4 className="font-bold flex items-center gap-2"><Calendar size={18} /> {t('recentInteractions')}</h4>
+                {/* Header with Title, Explanation, and Sorting Controls */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                  <div>
+                    <h4 className="font-bold flex items-center gap-2 text-base text-gray-900 dark:text-gray-100">
+                      <Calendar size={18} className="text-primary" /> 
+                      {isRTL ? 'مواضيع ملخص العلاقة (Relationship Summary)' : 'Relationship Summary Topics'}
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {isRTL 
+                        ? 'تصنيف المواضيع (حكومة الإمارات، وزارة الموارد البشرية، أخرى) وتحديد نوع الاجتماع وترتيبها حسب التاريخ والفئة والنوع.' 
+                        : 'Categorize topics (UAE GOV, MOHRE, OTHER), define meeting types, and arrange by date and category.'}
+                    </p>
+                  </div>
+                  
+                  {/* Sort Order Selector & Quick Sort Button */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg text-xs">
+                      <span className="text-[11px] font-bold text-gray-500 px-1">{isRTL ? 'الترتيب:' : 'Sort:'}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const getCategoryRankForSort = (cat?: string) => {
+                            const c = (cat || '').toUpperCase().trim();
+                            if (c === 'UAE GOV' || c.includes('UAE') || c.includes('GOV') || c.includes('حكومة')) return 1;
+                            if (c === 'MOHRE' || c.includes('MOHRE') || c.includes('وزارة') || c.includes('موارد')) return 2;
+                            return 3;
+                          };
+                          const sorted = [...data.recentInteractions].sort((a, b) => {
+                            const dateCompare = (b.date || '').localeCompare(a.date || '');
+                            if (dateCompare !== 0) return dateCompare;
+                            const catRankA = getCategoryRankForSort(a.category);
+                            const catRankB = getCategoryRankForSort(b.category);
+                            if (catRankA !== catRankB) return catRankA - catRankB;
+                            return (a.type || '').localeCompare(b.type || '');
+                          });
+                          setData({
+                            ...data,
+                            interactionSortOrder: 'date_category',
+                            recentInteractions: sorted
+                          });
+                        }}
+                        className={`px-2 py-1 rounded text-xs font-bold transition-colors ${
+                          (data.interactionSortOrder || 'date_category') === 'date_category'
+                            ? 'bg-white dark:bg-gray-700 text-primary shadow-xs'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
+                        }`}
+                      >
+                        {isRTL ? '📅 التاريخ ثم الفئة والنوع' : '📅 Date then Category'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const getCategoryRankForSort = (cat?: string) => {
+                            const c = (cat || '').toUpperCase().trim();
+                            if (c === 'UAE GOV' || c.includes('UAE') || c.includes('GOV') || c.includes('حكومة')) return 1;
+                            if (c === 'MOHRE' || c.includes('MOHRE') || c.includes('وزارة') || c.includes('موارد')) return 2;
+                            return 3;
+                          };
+                          const sorted = [...data.recentInteractions].sort((a, b) => {
+                            const catRankA = getCategoryRankForSort(a.category);
+                            const catRankB = getCategoryRankForSort(b.category);
+                            if (catRankA !== catRankB) return catRankA - catRankB;
+                            const dateCompare = (b.date || '').localeCompare(a.date || '');
+                            if (dateCompare !== 0) return dateCompare;
+                            return (a.type || '').localeCompare(b.type || '');
+                          });
+                          setData({
+                            ...data,
+                            interactionSortOrder: 'category_date',
+                            recentInteractions: sorted
+                          });
+                        }}
+                        className={`px-2 py-1 rounded text-xs font-bold transition-colors ${
+                          data.interactionSortOrder === 'category_date'
+                            ? 'bg-white dark:bg-gray-700 text-primary shadow-xs'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900'
+                        }`}
+                      >
+                        {isRTL ? '🏛️ الفئة ثم التاريخ' : '🏛️ Category then Date'}
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const getCategoryRankForSort = (cat?: string) => {
+                          const c = (cat || '').toUpperCase().trim();
+                          if (c === 'UAE GOV' || c.includes('UAE') || c.includes('GOV') || c.includes('حكومة')) return 1;
+                          if (c === 'MOHRE' || c.includes('MOHRE') || c.includes('وزارة') || c.includes('موارد')) return 2;
+                          return 3;
+                        };
+                        const isCatFirst = data.interactionSortOrder === 'category_date';
+                        const sorted = [...data.recentInteractions].sort((a, b) => {
+                          if (isCatFirst) {
+                            const catRankA = getCategoryRankForSort(a.category);
+                            const catRankB = getCategoryRankForSort(b.category);
+                            if (catRankA !== catRankB) return catRankA - catRankB;
+                            const dateCompare = (b.date || '').localeCompare(a.date || '');
+                            if (dateCompare !== 0) return dateCompare;
+                            return (a.type || '').localeCompare(b.type || '');
+                          }
+                          const dateCompare = (b.date || '').localeCompare(a.date || '');
+                          if (dateCompare !== 0) return dateCompare;
+                          const catRankA = getCategoryRankForSort(a.category);
+                          const catRankB = getCategoryRankForSort(b.category);
+                          if (catRankA !== catRankB) return catRankA - catRankB;
+                          return (a.type || '').localeCompare(b.type || '');
+                        });
+                        setData({ ...data, recentInteractions: sorted });
+                      }}
+                      className="px-2.5 py-1 text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary rounded-lg border border-primary/20 transition-colors flex items-center gap-1"
+                      title={isRTL ? 'إعادة ترتيب القائمة الآن' : 'Re-sort list now'}
+                    >
+                      <ArrowUpDown size={12} />
+                      {isRTL ? 'ترتيب فوري' : 'Sort Now'}
+                    </button>
+                  </div>
+                </div>
                 {data.recentInteractions.map((item, idx) => (
-                   <Card key={item.id} className="p-4 relative">
-                      <button onClick={() => setData({...data, recentInteractions: data.recentInteractions.filter(ri => ri.id !== item.id)})} className="absolute top-2 right-2 text-gray-300 hover:text-red-500"><X size={16} /></button>
-                      <div className="grid grid-cols-2 gap-4 mb-4"><Input value={item.title} label="Title" onChange={e => { const list = [...data.recentInteractions]; list[idx].title = e.target.value; setData({...data, recentInteractions: list}); }} /><Input value={item.date} type="date" label="Date" onChange={e => { const list = [...data.recentInteractions]; list[idx].date = e.target.value; setData({...data, recentInteractions: list}); }} /></div>
-                      <RichTextarea label="Details" value={item.details} onChange={(val: string) => { const list = [...data.recentInteractions]; list[idx].details = val; setData({...data, recentInteractions: list}); }} />
+                   <Card key={item.id} className="p-4 relative border border-gray-200 dark:border-gray-700 shadow-sm">
+                      <button 
+                        onClick={() => setData({...data, recentInteractions: data.recentInteractions.filter(ri => ri.id !== item.id)})} 
+                        className="absolute top-3 right-3 text-gray-300 hover:text-red-500 transition-colors p-1"
+                        title="Delete"
+                      >
+                        <X size={16} />
+                      </button>
+
+                      {/* 1. Category Selection: UAE GOV | MOHRE | OTHER */}
+                      <div className="mb-3 pr-6">
+                        <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-1.5">
+                          {isRTL ? 'فئة الموضوع (Category):' : 'Topic Category:'}
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { key: 'UAE GOV', label: isRTL ? 'حكومة الإمارات (UAE GOV)' : 'UAE GOV', color: 'bg-amber-100 text-amber-950 border-amber-400 ring-2 ring-amber-300 font-black' },
+                            { key: 'MOHRE', label: isRTL ? 'وزارة الموارد البشرية (MOHRE)' : 'MOHRE', color: 'bg-[#162e4a] text-white border-[#162e4a] ring-2 ring-primary/50 font-black' },
+                            { key: 'OTHER', label: isRTL ? 'جهة أخرى (OTHER)' : 'OTHER', color: 'bg-slate-200 text-slate-900 border-slate-400 ring-2 ring-slate-300 font-bold' },
+                          ].map(cat => {
+                            const isSelected = (item.category || 'MOHRE') === cat.key;
+                            return (
+                              <button
+                                key={cat.key}
+                                type="button"
+                                onClick={() => {
+                                  const list = [...data.recentInteractions];
+                                  list[idx].category = cat.key;
+                                  setData({ ...data, recentInteractions: list });
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all text-center ${
+                                  isSelected 
+                                    ? `${cat.color} shadow-xs scale-[1.02]`
+                                    : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100'
+                                }`}
+                              >
+                                {cat.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 2. Type & Meeting Type Selection */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-1">
+                            {isRTL ? 'نوع النشاط (Type)' : 'Activity Type'}
+                          </label>
+                          <select
+                            value={item.type || 'Meeting'}
+                            onChange={e => {
+                              const val = e.target.value;
+                              const list = [...data.recentInteractions];
+                              list[idx].type = val;
+                              if (val === 'Meeting' && !list[idx].meetingType) {
+                                list[idx].meetingType = isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting';
+                              }
+                              setData({ ...data, recentInteractions: list });
+                            }}
+                            className="w-full px-3 py-1.5 text-sm rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none"
+                          >
+                            <option value="Meeting">{isRTL ? 'Meeting (اجتماع / لقاء)' : 'Meeting'}</option>
+                            <option value="Visit">{isRTL ? 'Visit (زيارة رسمية)' : 'Visit'}</option>
+                            <option value="Session">{isRTL ? 'Session (جلسة عمل)' : 'Session'}</option>
+                            <option value="Phone Call">{isRTL ? 'Phone Call (مكالمة هاتفية)' : 'Phone Call'}</option>
+                            <option value="Correspondence">{isRTL ? 'Correspondence (مراسلة)' : 'Correspondence'}</option>
+                            <option value="Other">{isRTL ? 'Other (أخرى)' : 'Other'}</option>
+                          </select>
+                        </div>
+
+                        {/* Meeting Type bubble: user requested a tiny bubble next to meeting showing meeting type */}
+                        <div>
+                          <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-1 flex items-center justify-between">
+                            <span>{isRTL ? 'نوع اللقاء (الفقاعة بجانب كلمة Meeting):' : 'Meeting Type (Bubble next to Meeting):'}</span>
+                            <span className="text-[10px] text-blue-700 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.2 rounded font-extrabold border border-blue-200">
+                              {isRTL ? 'فقاعة خاصة' : 'Special Bubble'}
+                            </span>
+                          </label>
+                          <div className="flex gap-2">
+                            <select
+                              value={
+                                ['اللجنة المشتركة (JCM)', 'اللجنة الوزارية / الفنية (TCM)', 'اجتماع ثنائي', 'اجتماع تشاوري', 'قمة وزارية', 'Joint Committee (JCM)', 'Ministerial / Technical (TCM)', 'Bilateral Meeting', 'Consultation Session', 'Ministerial Summit'].includes(item.meetingType || '')
+                                  ? item.meetingType
+                                  : (item.meetingType ? 'custom' : (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'))
+                              }
+                              onChange={e => {
+                                const val = e.target.value;
+                                const list = [...data.recentInteractions];
+                                if (val === 'custom') {
+                                  list[idx].meetingType = '';
+                                } else {
+                                  list[idx].meetingType = val;
+                                }
+                                setData({ ...data, recentInteractions: list });
+                              }}
+                              className="w-1/2 px-2.5 py-1.5 text-xs rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none"
+                            >
+                              <option value="اللجنة المشتركة (JCM)">اللجنة المشتركة (JCM)</option>
+                              <option value="اللجنة الوزارية / الفنية (TCM)">اللجنة الوزارية / الفنية (TCM)</option>
+                              <option value="اجتماع ثنائي">اجتماع ثنائي</option>
+                              <option value="اجتماع تشاوري">اجتماع تشاوري</option>
+                              <option value="قمة وزارية">قمة وزارية</option>
+                              <option value="custom">{isRTL ? 'نوع مخصص...' : 'Custom type...'}</option>
+                            </select>
+                            <input
+                              type="text"
+                              placeholder={isRTL ? 'أو اكتب نص الفقاعة...' : 'Or type bubble text...'}
+                              value={item.meetingType || ''}
+                              onChange={e => {
+                                const list = [...data.recentInteractions];
+                                list[idx].meetingType = e.target.value;
+                                setData({ ...data, recentInteractions: list });
+                              }}
+                              className="w-1/2 px-2.5 py-1.5 text-xs rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Title & Date */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                        <div className="md:col-span-2">
+                          <Input 
+                            value={item.title} 
+                            label={isRTL ? 'عنوان الموضوع / الاجتماع' : 'Topic / Meeting Title'} 
+                            onChange={e => { const list = [...data.recentInteractions]; list[idx].title = e.target.value; setData({...data, recentInteractions: list}); }} 
+                          />
+                        </div>
+                        <div>
+                          <Input 
+                            value={item.date} 
+                            type="date" 
+                            label={isRTL ? 'التاريخ' : 'Date'} 
+                            onChange={e => { const list = [...data.recentInteractions]; list[idx].date = e.target.value; setData({...data, recentInteractions: list}); }} 
+                          />
+                        </div>
+                      </div>
+
+                      {/* 4. Details */}
+                      <RichTextarea 
+                        label={isRTL ? 'التفاصيل ومحاور اللقاء' : 'Details & Summary'} 
+                        value={item.details} 
+                        onChange={(val: string) => { const list = [...data.recentInteractions]; list[idx].details = val; setData({...data, recentInteractions: list}); }} 
+                      />
                    </Card>
                 ))}
-                <Button variant="outline" onClick={() => setData({...data, recentInteractions: [...data.recentInteractions, { id: uuidv4(), title: '', date: '', type: 'Meeting', details: '' }]})}>+ Add Interaction</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    const newItem: any = { 
+                      id: uuidv4(), 
+                      title: '', 
+                      date: new Date().toISOString().split('T')[0], 
+                      category: 'MOHRE',
+                      type: 'Meeting', 
+                      meetingType: isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting',
+                      details: '' 
+                    };
+                    setData({...data, recentInteractions: [...data.recentInteractions, newItem]});
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Plus size={16} /> {isRTL ? '+ إضافة موضوع / لقاء جديد' : '+ Add Interaction'}
+                </Button>
              </div>
 
              {/* Last Official Correspondence Editor */}

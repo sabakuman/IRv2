@@ -54,6 +54,9 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
   const meetingCoverage = hasUserMeeting ? (userMeeting?.coverage || '') : (fallbackMeeting?.details || '');
 
   const getMeetingTypeDisplay = (typeStr: string = '', titleStr: string = '') => {
+    if (!hasUserMeeting && fallbackMeeting?.meetingType) {
+      return fallbackMeeting.meetingType;
+    }
     const combined = `${typeStr} ${titleStr}`.toLowerCase();
     if (combined.includes('jcm') || combined.includes('joint committee') || combined.includes('مشتركة')) {
       return isRTL ? 'اللجنة المشتركة (JCM)' : 'Joint Committee (JCM)';

@@ -200,14 +200,18 @@ export const INITIAL_DUMMY_REPORT = {
         id: 'int-1',
         title: 'UAE-India Joint Committee on Manpower and Labour Affairs',
         date: '2024-05-18',
-        type: 'Joint Committee Session',
+        category: 'MOHRE',
+        type: 'Meeting',
+        meetingType: 'اللجنة المشتركة (JCM)',
         details: 'Deliberated on skills harmonization framework, pre-departure verification systems, and digital integration for dispute resolution.'
       },
       {
         id: 'int-2',
         title: 'High-Level Bilateral Labor Consultation Session',
         date: '2023-11-22',
-        type: 'Ministerial Summit',
+        category: 'UAE GOV',
+        type: 'Meeting',
+        meetingType: 'قمة وزارية',
         details: 'Reviewed digital contract authentication and worker welfare protection mechanisms across all Emirates.'
       }
     ],

@@ -70,7 +70,9 @@ export interface RecentInteraction {
   id: string;
   title: string;
   date: string;
-  type: string; // e.g., "Visit", "Phone Call", "Meeting"
+  type: string; // e.g., "Meeting", "Visit", "Phone Call", "Correspondence"
+  meetingType?: string; // e.g., "اللجنة المشتركة (JCM)", "اللجنة الوزارية / الفنية (TCM)", "اجتماع ثنائي", "أخرى"
+  category?: 'UAE GOV' | 'MOHRE' | 'OTHER' | string;
   details: string; // Summary of the interaction
 }
 
@@ -212,6 +214,7 @@ export interface ReportData {
 
   // Section 5: Interactions & News (NEW)
   recentInteractions: RecentInteraction[];
+  interactionSortOrder?: 'date_category' | 'category_date';
   pointsOfDiscussion: PointOfDiscussion[];
   previousAgreementsAndUpdates?: PointOfDiscussion[];
   relatedNews: NewsItem[];

@@ -655,8 +655,34 @@ export default function PrintView() {
   const POINTS_CHUNK_SIZE = 3; // Discussion points are text-heavy, limit to 3 per page
   const AGR_CHUNK_SIZE = 6;
 
-  // --- SORT RELATIONSHIP SUMMARY (RECENT INTERACTIONS) BY DATE DESCENDING (NEWEST FIRST) ---
-  const sortedInteractions = [...(data.recentInteractions || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  // Helper for Category Rank: UAE GOV (1), MOHRE (2), OTHER (3)
+  const getCategoryRank = (cat?: string) => {
+    const c = (cat || '').toUpperCase().trim();
+    if (c === 'UAE GOV' || c.includes('UAE') || c.includes('GOV') || c.includes('حكومة')) return 1;
+    if (c === 'MOHRE' || c.includes('MOHRE') || c.includes('وزارة') || c.includes('موارد')) return 2;
+    return 3; // OTHER
+  };
+
+  // --- SORT RELATIONSHIP SUMMARY (RECENT INTERACTIONS) BY DATE AND CATEGORY & TYPE ---
+  const sortOrder = data.interactionSortOrder || 'date_category';
+  const sortedInteractions = [...(data.recentInteractions || [])].sort((a, b) => {
+    if (sortOrder === 'category_date') {
+      const catRankA = getCategoryRank(a.category);
+      const catRankB = getCategoryRank(b.category);
+      if (catRankA !== catRankB) return catRankA - catRankB;
+      const dateCompare = (b.date || '').localeCompare(a.date || '');
+      if (dateCompare !== 0) return dateCompare;
+      return (a.type || '').localeCompare(b.type || '');
+    }
+
+    // Default: Sort by Date descending (newest first), then by Category rank (UAE GOV -> MOHRE -> OTHER), then Type
+    const dateCompare = (b.date || '').localeCompare(a.date || '');
+    if (dateCompare !== 0) return dateCompare;
+    const catRankA = getCategoryRank(a.category);
+    const catRankB = getCategoryRank(b.category);
+    if (catRankA !== catRankB) return catRankA - catRankB;
+    return (a.type || '').localeCompare(b.type || '');
+  });
 
   const interactionChunks = [];
   for (let i = 0; i < sortedInteractions.length; i += INT_CHUNK_SIZE) {
@@ -720,6 +746,66 @@ export default function PrintView() {
 
     // Default fallback (Green for active is the safest default per logic)
     return { label: isRTL ? 'ساري' : 'Active', class: 'bg-green-100 text-green-800 border-green-200' };
+  };
+
+  /**
+   * Helper for Category Display in Relationship Summary (ملخص العلاقة)
+   * Handles UAE GOV, MOHRE, and OTHER
+   */
+  const getCategoryDisplay = (cat?: string) => {
+    const rank = getCategoryRank(cat);
+    if (rank === 1) {
+      return {
+        label: isRTL ? 'حكومة الإمارات' : 'UAE GOV',
+        shortLabel: 'UAE GOV',
+        badgeClass: 'bg-amber-100/90 text-amber-950 border-amber-300 font-black shadow-2xs'
+      };
+    }
+    if (rank === 2) {
+      return {
+        label: isRTL ? 'وزارة الموارد البشرية (MOHRE)' : 'MOHRE',
+        shortLabel: 'MOHRE',
+        badgeClass: 'bg-[#162e4a] text-white border-[#162e4a] font-black shadow-2xs'
+      };
+    }
+    return {
+      label: isRTL ? 'جهة أخرى (OTHER)' : 'OTHER',
+      shortLabel: 'OTHER',
+      badgeClass: 'bg-slate-200 text-slate-800 border-slate-300 font-bold shadow-2xs'
+    };
+  };
+
+  /**
+   * Helper for Meeting Type Bubble:
+   * "u know where it says meeting i jjust want another tiny buble next to it showing what is the meeting type so more of type not catogory"
+   */
+  const getMeetingTypeBubble = (item: any) => {
+    if (item.meetingType && item.meetingType.trim()) {
+      return item.meetingType.trim();
+    }
+    const combined = `${item.type || ''} ${item.title || ''}`.toLowerCase();
+    if (combined.includes('jcm') || combined.includes('joint committee') || combined.includes('مشتركة')) {
+      return isRTL ? 'اللجنة المشتركة (JCM)' : 'Joint Committee (JCM)';
+    }
+    if (combined.includes('tcm') || combined.includes('technical') || combined.includes('ministerial') || combined.includes('فنية') || combined.includes('وزارية')) {
+      return isRTL ? 'اللجنة الوزارية / الفنية (TCM)' : 'Ministerial / Technical (TCM)';
+    }
+    if (combined.includes('consultation') || combined.includes('تشاور')) {
+      return isRTL ? 'اجتماع تشاوري' : 'Consultation Session';
+    }
+    if (combined.includes('bilateral') || combined.includes('ثنائي')) {
+      return isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting';
+    }
+    if (combined.includes('summit') || combined.includes('قمة')) {
+      return isRTL ? 'قمة وزارية' : 'Ministerial Summit';
+    }
+    const isMeeting = (item.type || '').toLowerCase().includes('meet') || 
+                      (item.type || '').includes('اجتماع') || 
+                      (item.type || '').includes('لقاء');
+    if (isMeeting) {
+      return isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting';
+    }
+    return null;
   };
 
   return (
@@ -1232,10 +1318,37 @@ export default function PrintView() {
             />
             <div className="flex flex-col gap-2 mt-2">
               {chunk.map((item, idx) => (
-                <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50 shadow-sm flex flex-col avoid-break">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <span className="text-[8px] font-bold uppercase text-primary bg-primary/5 px-2 py-0.5 rounded">{item.type}</span>
-                      <span className="text-[8px] font-mono text-gray-400">{formatDate(item.date)}</span>
+                <div key={idx} className="border border-gray-200/80 rounded-xl p-3 bg-white shadow-2xs flex flex-col avoid-break">
+                    <div className="flex justify-between items-center mb-1.5 gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {/* 1. Category Badge: UAE GOV, MOHRE, OTHER */}
+                        {(() => {
+                          const catInfo = getCategoryDisplay(item.category);
+                          return (
+                            <span className={`text-[8.5px] uppercase px-2 py-0.5 rounded border tracking-wider ${catInfo.badgeClass}`}>
+                              {catInfo.label}
+                            </span>
+                          );
+                        })()}
+
+                        {/* 2. Type Badge: e.g. Meeting / اجتماع */}
+                        <span className="text-[8px] font-bold uppercase text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+                          {item.type || (isRTL ? 'اجتماع' : 'Meeting')}
+                        </span>
+
+                        {/* 3. Tiny bubble next to it showing what is the meeting type! */}
+                        {(() => {
+                          const meetingBubble = getMeetingTypeBubble(item);
+                          if (!meetingBubble) return null;
+                          return (
+                            <span className="text-[7.5px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-900 border border-blue-200 shadow-2xs inline-flex items-center gap-1">
+                              <span className="w-1 h-1 rounded-full bg-blue-500 inline-block"></span>
+                              {meetingBubble}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <span className="text-[9px] font-mono text-gray-500 font-bold shrink-0">{formatDate(item.date)}</span>
                     </div>
                     <p className="text-[12.5px] font-bold text-gray-900 mb-0.5 leading-tight">{item.title}</p>
                     {renderRichText(item.details)}
