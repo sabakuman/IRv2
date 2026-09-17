@@ -121,9 +121,16 @@ export default function PrintView() {
   }, [language, setLanguage]);
 
   useEffect(() => {
-    if (id) {
-      setLoading(true);
-      setError(false);
+    if (!id) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(false);
+    
+    const fetchLatestReport = () => {
       MockService.getReportById(id)
         .then(r => {
           if (r && r.data) {
@@ -140,10 +147,42 @@ export default function PrintView() {
         .finally(() => {
           setLoading(false);
         });
-    } else {
-      setError(true);
-      setLoading(false);
-    }
+    };
+
+    fetchLatestReport();
+
+    // Live sync: Whenever user edits and saves in Wizard, automatically update the report view!
+    const onWindowFocus = () => {
+      fetchLatestReport();
+    };
+    const onStorageChange = (e: StorageEvent) => {
+      if (e.key === 'report_updated_at' && e.newValue?.startsWith(id)) {
+        fetchLatestReport();
+      }
+    };
+
+    window.addEventListener('focus', onWindowFocus);
+    window.addEventListener('storage', onStorageChange);
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        bc = new BroadcastChannel('report_sync_channel');
+        bc.onmessage = (ev) => {
+          if (ev.data?.reportId === id && ev.data?.report) {
+            setReport(ev.data.report);
+          } else {
+            fetchLatestReport();
+          }
+        };
+      }
+    } catch (e) {}
+
+    return () => {
+      window.removeEventListener('focus', onWindowFocus);
+      window.removeEventListener('storage', onStorageChange);
+      if (bc) bc.close();
+    };
   }, [id]);
 
   if (loading) {
@@ -763,7 +802,7 @@ export default function PrintView() {
     }
     if (rank === 2) {
       return {
-        label: isRTL ? 'وزارة الموارد البشرية (MOHRE)' : 'MOHRE',
+        label: isRTL ? 'وزارة الموارد البشرية و التوطين (MOHRE)' : 'MOHRE',
         shortLabel: 'MOHRE',
         badgeClass: 'bg-[#162e4a] text-white border-[#162e4a] font-black shadow-2xs'
       };
@@ -846,7 +885,9 @@ export default function PrintView() {
               <div className={`mb-12 border-accent py-6 ${isRTL ? 'border-r-[8px] pr-12' : 'border-l-[8px] pl-12'}`}>
                 <div className="flex items-center gap-4 mb-8 opacity-60">
                   <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto" alt="UAE" />
-                  <span className="text-sm font-bold uppercase tracking-[0.2em] text-primary">UAE • MOHRE</span>
+                  <span className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
+                    {isRTL ? 'الإمارات • وزارة الموارد البشرية و التوطين' : 'UAE • MOHRE'}
+                  </span>
                 </div>
                 <h1 className="text-[64px] font-serif font-extrabold text-gray-900 leading-[1.1] mb-4">{t('loginTitle')}</h1>
                 <p className="text-2xl text-gray-500 font-light uppercase tracking-wider">{t('strategicOverview')}</p>

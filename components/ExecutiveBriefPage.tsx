@@ -54,8 +54,11 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
   const meetingCoverage = hasUserMeeting ? (userMeeting?.coverage || '') : (fallbackMeeting?.details || '');
 
   const getMeetingTypeDisplay = (typeStr: string = '', titleStr: string = '') => {
-    if (!hasUserMeeting && fallbackMeeting?.meetingType) {
-      return fallbackMeeting.meetingType;
+    if (hasUserMeeting && userMeeting?.type && userMeeting.type.trim()) {
+      return userMeeting.type.trim();
+    }
+    if (!hasUserMeeting && fallbackMeeting?.meetingType && fallbackMeeting.meetingType.trim()) {
+      return fallbackMeeting.meetingType.trim();
     }
     const combined = `${typeStr} ${titleStr}`.toLowerCase();
     if (combined.includes('jcm') || combined.includes('joint committee') || combined.includes('مشتركة')) {
@@ -373,7 +376,7 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
           <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-2 flex flex-col justify-between shadow-2xs">
             <div className="flex items-center justify-between mb-0.5">
               <span className="text-[9.5px] font-extrabold text-primary-dark leading-tight">
-                {isRTL ? 'مذكرة تفاهم موقعة مع الوزارة؟' : 'MOU Signed with MOHRE?'}
+                {isRTL ? 'مذكرة تفاهم موقعة مع وزارة الموارد البشرية و التوطين؟' : 'MOU Signed with MOHRE?'}
               </span>
               <div className="w-5 h-5 rounded-md bg-white border border-blue-200 flex items-center justify-center text-primary shrink-0">
                 <FileText size={11} />

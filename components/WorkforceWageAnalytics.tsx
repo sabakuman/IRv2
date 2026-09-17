@@ -221,7 +221,7 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
         <div className="flex items-center gap-2.5 text-[7.5px] font-bold text-gray-700">
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-[1px] bg-[#162e4a] inline-block shadow-2xs"></span>
-            <span>{isRTL ? 'وزارة الموارد البشرية MOHRE' : 'MOHRE'}</span>
+            <span>{isRTL ? 'وزارة الموارد البشرية و التوطين (MOHRE)' : 'MOHRE'}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-[1px] bg-[#bfdbfe] border border-[#3b82f6] inline-block shadow-2xs"></span>
@@ -328,7 +328,7 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
           <div className="flex items-center justify-between mb-1 pb-0.5 border-b border-gray-100 text-[7px]">
             <div>
               <h4 className="font-bold text-gray-800 leading-tight text-[9.2px]">
-                {isRTL ? 'العمالة حسب القطاع MOHRE' : 'Workforce by Sector (MOHRE)'}
+                {isRTL ? 'العمالة حسب القطاع (وزارة الموارد البشرية و التوطين MOHRE)' : 'Workforce by Sector (MOHRE)'}
               </h4>
               <p className="text-[6.5px] text-gray-400 leading-none mt-0.5">
                 {isRTL

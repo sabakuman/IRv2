@@ -83,8 +83,20 @@ export default function Wizard() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [lastSavedMessage, setLastSavedMessage] = useState<string | null>(null);
   const [data, setData] = useState<ReportData>(EMPTY_REPORT_DATA);
   const [reportTitle, setReportTitle] = useState('');
+
+  const broadcastSync = (reportId: string, updatedReport?: Report) => {
+    try {
+      localStorage.setItem('report_updated_at', `${reportId}_${Date.now()}`);
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('report_sync_channel');
+        bc.postMessage({ reportId, report: updatedReport, timestamp: Date.now() });
+        setTimeout(() => bc.close(), 100);
+      }
+    } catch (e) {}
+  };
 
   const getEmirateVal = (source: 'mohre' | 'icp', emirateId: string): number => {
     const list = data?.uaeWorkforceStats?.[source]?.byEmirate || [];
@@ -492,34 +504,55 @@ export default function Wizard() {
     }));
   };
 
-  const handleSave = async (status: 'draft' | 'completed' = 'draft', shouldViewReport = false) => {
-    setIsSaving(true);
+  const handleSave = async (
+    status: 'draft' | 'completed' = 'draft', 
+    shouldViewReport = false,
+    customData?: ReportData,
+    silent = false,
+    customMessage?: string
+  ) => {
+    if (!silent) setIsSaving(true);
     try {
+      const dataToSave = customData || data;
       const reportId = id || `r-${uuidv4().slice(0, 8)}`;
       const newReport: Report = { 
         id: reportId, 
         userId: user?.id || 'u-admin', 
-        title: reportTitle || `Report for ${data.country || 'Unknown'}`, 
+        title: reportTitle || `Report for ${dataToSave.country || 'Unknown'}`, 
         status, 
         updatedAt: new Date().toISOString(), 
-        data 
+        data: dataToSave 
       };
       await MockService.saveReport(newReport);
+      broadcastSync(reportId, newReport);
+
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3500);
+      if (customMessage) {
+        setLastSavedMessage(customMessage);
+      } else {
+        setLastSavedMessage(isRTL ? 'تم حفظ التغييرات وانعكست في التقرير فوراً' : 'Changes saved & reflected in report');
+      }
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setLastSavedMessage(null);
+      }, 4000);
 
       if (shouldViewReport) {
         navigate(`/print/${reportId}?lang=${language}`);
       } else if (status === 'completed') {
         navigate('/dashboard');
       } else if (!id) {
-        navigate(`/wizard/${reportId}`);
+        navigate(`/wizard/${reportId}`, { replace: true });
       }
     } catch (err) {
       console.error('Save report failed:', err);
     } finally {
-      setIsSaving(false);
+      if (!silent) setIsSaving(false);
     }
+  };
+
+  const saveSilently = async (updatedData: ReportData, message?: string) => {
+    await handleSave('draft', false, updatedData, true, message);
   };
 
   if (loading) return <div className="h-96 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
@@ -723,7 +756,7 @@ export default function Wizard() {
                 <div className="bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-5 shadow-2xs">
                   <h5 className="text-xs font-bold text-primary mb-3 flex items-center gap-2">
                     <FileText size={15} />
-                    {isRTL ? 'هل توجد مذكرة تفاهم موقعة مع الوزارة؟' : 'MoU Signed with MOHRE?'}
+                    {isRTL ? 'هل توجد مذكرة تفاهم موقعة مع وزارة الموارد البشرية و التوطين (MOHRE)؟' : 'MoU Signed with MOHRE?'}
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="space-y-1">
@@ -733,13 +766,17 @@ export default function Wizard() {
                       <select
                         className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
                         value={data.mouSignedWithMohre?.signed === true || data.mouSignedWithMohre?.signed === 'yes' ? 'yes' : (data.mouSignedWithMohre?.signed === false || data.mouSignedWithMohre?.signed === 'no' ? 'no' : '')}
-                        onChange={e => setData({
-                          ...data,
-                          mouSignedWithMohre: {
-                            ...(data.mouSignedWithMohre || {}),
-                            signed: e.target.value === 'yes' ? 'yes' : (e.target.value === 'no' ? 'no' : undefined)
-                          }
-                        })}
+                        onChange={e => {
+                          const updated = {
+                            ...data,
+                            mouSignedWithMohre: {
+                              ...(data.mouSignedWithMohre || {}),
+                              signed: e.target.value === 'yes' ? 'yes' : (e.target.value === 'no' ? 'no' : undefined)
+                            }
+                          };
+                          setData(updated);
+                          saveSilently(updated, isRTL ? 'تم حفظ حالة مذكرة التفاهم في التقرير' : 'MOU status saved');
+                        }}
                       >
                         <option value="">{isRTL ? '— غير محدد (تلقائي) —' : '— Auto-detect —'}</option>
                         <option value="yes">{isRTL ? 'نعم (موقعة)' : 'Yes (Signed)'}</option>
@@ -792,10 +829,37 @@ export default function Wizard() {
 
                 {/* 3. Last Meeting (اللقاء الأخير) */}
                 <div className="bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-5 shadow-2xs">
-                  <h5 className="text-xs font-bold text-primary mb-3 flex items-center gap-2">
-                    <Calendar size={15} />
-                    {isRTL ? 'اللقاء الأخير' : 'Last Meeting'}
-                  </h5>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
+                    <h5 className="text-xs font-bold text-primary flex items-center gap-2">
+                      <Calendar size={15} />
+                      {isRTL ? 'اللقاء الأخير' : 'Last Meeting'}
+                    </h5>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await handleSave('draft', false, data, false, isRTL ? 'تم حفظ وتحديث بيانات اللقاء الأخير في التقرير فوراً' : 'Last meeting details saved to report');
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold bg-primary text-white hover:bg-primary-dark rounded-lg shadow-2xs transition-all"
+                        title={isRTL ? 'حفظ التعديلات في التقرير' : 'Save changes to report'}
+                      >
+                        <Save size={13} />
+                        {isRTL ? 'حفظ اللقاء في التقرير' : 'Save Meeting to Report'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await handleSave('draft', true, data, false);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-lg transition-all"
+                        title={isRTL ? 'معاينة في التقرير' : 'View in Report'}
+                      >
+                        <ExternalLink size={13} />
+                        {isRTL ? 'معاينة في التقرير ↗' : 'View in Report ↗'}
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                     <div className="space-y-1">
                       <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
@@ -805,13 +869,17 @@ export default function Wizard() {
                         type="date"
                         className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
                         value={data.lastMeeting?.date || ''}
-                        onChange={e => setData({
-                          ...data,
-                          lastMeeting: {
-                            ...(data.lastMeeting || {}),
-                            date: e.target.value
-                          }
-                        })}
+                        onChange={e => {
+                          const updated = {
+                            ...data,
+                            lastMeeting: {
+                              ...(data.lastMeeting || {}),
+                              date: e.target.value
+                            }
+                          };
+                          setData(updated);
+                          saveSilently(updated, isRTL ? 'تم حفظ تاريخ اللقاء في التقرير' : 'Meeting date saved');
+                        }}
                       />
                     </div>
 
@@ -822,13 +890,18 @@ export default function Wizard() {
                       <select
                         className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
                         value={data.lastMeeting?.type || ''}
-                        onChange={e => setData({
-                          ...data,
-                          lastMeeting: {
-                            ...(data.lastMeeting || {}),
-                            type: e.target.value
-                          }
-                        })}
+                        onChange={e => {
+                          const val = e.target.value;
+                          const updated = {
+                            ...data,
+                            lastMeeting: {
+                              ...(data.lastMeeting || {}),
+                              type: val
+                            }
+                          };
+                          setData(updated);
+                          saveSilently(updated, isRTL ? `تم حفظ نوع اللقاء "${val}" في التقرير فوراً` : `Meeting type "${val}" saved to report`);
+                        }}
                       >
                         <option value="">{isRTL ? '— اختر النوع —' : '— Select Type —'}</option>
                         <option value="اللجنة المشتركة (JCM)">{isRTL ? 'اللجنة المشتركة (JCM)' : 'Joint Committee (JCM)'}</option>
@@ -854,6 +927,9 @@ export default function Wizard() {
                             title: e.target.value
                           }
                         })}
+                        onBlur={() => {
+                          saveSilently(data, isRTL ? 'تم حفظ مسمى اللقاء في التقرير' : 'Meeting title saved');
+                        }}
                       />
                     </div>
                   </div>
@@ -1475,7 +1551,7 @@ export default function Wizard() {
                     </h5>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {isRTL 
-                        ? 'إدخال بيانات العاملين لكل إمارة من خلال مصدري البيانات: وزارة الموارد البشرية (MOHRE) والهيئة الاتحادية للهوية (ICP)' 
+                        ? 'إدخال بيانات العاملين لكل إمارة من خلال مصدري البيانات: وزارة الموارد البشرية و التوطين (MOHRE) والهيئة الاتحادية للهوية (ICP)' 
                         : 'Two data inputs per emirate from both official sources: MOHRE and ICP'}
                     </p>
                   </div>
@@ -1537,7 +1613,7 @@ export default function Wizard() {
                             <div className="flex items-center justify-between mb-1">
                               <label className="text-[11px] font-bold text-[#0284c7] flex items-center gap-1">
                                 <span className="w-2 h-2 rounded-full bg-[#0284c7]"></span>
-                                {isRTL ? 'وزارة الموارد البشرية (MOHRE)' : 'MOHRE (Private Sector)'}
+                                {isRTL ? 'وزارة الموارد البشرية و التوطين (MOHRE)' : 'MOHRE (Private Sector)'}
                               </label>
                             </div>
                             <input
@@ -1877,13 +1953,36 @@ export default function Wizard() {
                     </h4>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {isRTL 
-                        ? 'تصنيف المواضيع (حكومة الإمارات، وزارة الموارد البشرية، أخرى) وتحديد نوع الاجتماع وترتيبها حسب التاريخ والفئة والنوع.' 
-                        : 'Categorize topics (UAE GOV, MOHRE, OTHER), define meeting types, and arrange by date and category.'}
+                        ? 'تصنيف المواضيع (حكومة الإمارات، وزارة الموارد البشرية و التوطين، جهة أخرى) وتحديد فقاعة نوع اللقاء، وتنعكس التعديلات في التقرير فوراً.' 
+                        : 'Categorize topics (UAE GOV, MOHRE, OTHER), set meeting type bubble, instantly reflected in report.'}
                     </p>
                   </div>
                   
-                  {/* Sort Order Selector & Quick Sort Button */}
+                  {/* Top Action Buttons & Sort Controls */}
                   <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSave('draft', false, data, false, isRTL ? 'تم حفظ وتحديث مواضيع ملخص العلاقة في التقرير بنجاح' : 'Topics updated in report');
+                      }}
+                      className="px-3 py-1.5 text-xs font-bold bg-primary text-white hover:bg-primary-dark rounded-lg shadow-2xs transition-all flex items-center gap-1.5"
+                      title={isRTL ? 'حفظ فوري في التقرير' : 'Save to Report'}
+                    >
+                      <Save size={13} />
+                      {isRTL ? 'حفظ التعديلات في التقرير فوراً' : 'Save to Report Now'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSave('draft', true, data, false);
+                      }}
+                      className="px-2.5 py-1.5 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-lg transition-all flex items-center gap-1.5"
+                      title={isRTL ? 'معاينة في التقرير' : 'View in Report'}
+                    >
+                      <ExternalLink size={13} />
+                      {isRTL ? 'معاينة في التقرير ↗' : 'View in Report ↗'}
+                    </button>
+
                     <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg text-xs">
                       <span className="text-[11px] font-bold text-gray-500 px-1">{isRTL ? 'الترتيب:' : 'Sort:'}</span>
                       <button
@@ -1903,11 +2002,13 @@ export default function Wizard() {
                             if (catRankA !== catRankB) return catRankA - catRankB;
                             return (a.type || '').localeCompare(b.type || '');
                           });
-                          setData({
+                          const updated = {
                             ...data,
-                            interactionSortOrder: 'date_category',
+                            interactionSortOrder: 'date_category' as const,
                             recentInteractions: sorted
-                          });
+                          };
+                          setData(updated);
+                          saveSilently(updated, isRTL ? 'تم ترتيب المواضيع حسب التاريخ والفئة وحفظها' : 'Topics sorted and saved');
                         }}
                         className={`px-2 py-1 rounded text-xs font-bold transition-colors ${
                           (data.interactionSortOrder || 'date_category') === 'date_category'
@@ -1934,11 +2035,13 @@ export default function Wizard() {
                             if (dateCompare !== 0) return dateCompare;
                             return (a.type || '').localeCompare(b.type || '');
                           });
-                          setData({
+                          const updated = {
                             ...data,
-                            interactionSortOrder: 'category_date',
+                            interactionSortOrder: 'category_date' as const,
                             recentInteractions: sorted
-                          });
+                          };
+                          setData(updated);
+                          saveSilently(updated, isRTL ? 'تم ترتيب المواضيع حسب الفئة والتاريخ وحفظها' : 'Topics sorted and saved');
                         }}
                         className={`px-2 py-1 rounded text-xs font-bold transition-colors ${
                           data.interactionSortOrder === 'category_date'
@@ -1976,7 +2079,9 @@ export default function Wizard() {
                           if (catRankA !== catRankB) return catRankA - catRankB;
                           return (a.type || '').localeCompare(b.type || '');
                         });
-                        setData({ ...data, recentInteractions: sorted });
+                        const updated = { ...data, recentInteractions: sorted };
+                        setData(updated);
+                        saveSilently(updated, isRTL ? 'تم إعادة ترتيب القائمة وتحديث التقرير فوراً' : 'List re-sorted & saved');
                       }}
                       className="px-2.5 py-1 text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary rounded-lg border border-primary/20 transition-colors flex items-center gap-1"
                       title={isRTL ? 'إعادة ترتيب القائمة الآن' : 'Re-sort list now'}
@@ -1989,7 +2094,12 @@ export default function Wizard() {
                 {data.recentInteractions.map((item, idx) => (
                    <Card key={item.id} className="p-4 relative border border-gray-200 dark:border-gray-700 shadow-sm">
                       <button 
-                        onClick={() => setData({...data, recentInteractions: data.recentInteractions.filter(ri => ri.id !== item.id)})} 
+                        onClick={() => {
+                          const updatedList = data.recentInteractions.filter(ri => ri.id !== item.id);
+                          const updated = { ...data, recentInteractions: updatedList };
+                          setData(updated);
+                          saveSilently(updated, isRTL ? 'تم حذف الموضوع وتحديث التقرير' : 'Item removed');
+                        }} 
                         className="absolute top-3 right-3 text-gray-300 hover:text-red-500 transition-colors p-1"
                         title="Delete"
                       >
@@ -2004,7 +2114,7 @@ export default function Wizard() {
                         <div className="grid grid-cols-3 gap-2">
                           {[
                             { key: 'UAE GOV', label: isRTL ? 'حكومة الإمارات (UAE GOV)' : 'UAE GOV', color: 'bg-amber-100 text-amber-950 border-amber-400 ring-2 ring-amber-300 font-black' },
-                            { key: 'MOHRE', label: isRTL ? 'وزارة الموارد البشرية (MOHRE)' : 'MOHRE', color: 'bg-[#162e4a] text-white border-[#162e4a] ring-2 ring-primary/50 font-black' },
+                            { key: 'MOHRE', label: isRTL ? 'وزارة الموارد البشرية و التوطين (MOHRE)' : 'MOHRE', color: 'bg-[#162e4a] text-white border-[#162e4a] ring-2 ring-primary/50 font-black' },
                             { key: 'OTHER', label: isRTL ? 'جهة أخرى (OTHER)' : 'OTHER', color: 'bg-slate-200 text-slate-900 border-slate-400 ring-2 ring-slate-300 font-bold' },
                           ].map(cat => {
                             const isSelected = (item.category || 'MOHRE') === cat.key;
@@ -2015,7 +2125,9 @@ export default function Wizard() {
                                 onClick={() => {
                                   const list = [...data.recentInteractions];
                                   list[idx].category = cat.key;
-                                  setData({ ...data, recentInteractions: list });
+                                  const updated = { ...data, recentInteractions: list };
+                                  setData(updated);
+                                  saveSilently(updated, isRTL ? `تم حفظ الفئة "${cat.label}" في التقرير فوراً` : `Category saved to report`);
                                 }}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all text-center ${
                                   isSelected 
@@ -2045,7 +2157,9 @@ export default function Wizard() {
                               if (val === 'Meeting' && !list[idx].meetingType) {
                                 list[idx].meetingType = isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting';
                               }
-                              setData({ ...data, recentInteractions: list });
+                              const updated = { ...data, recentInteractions: list };
+                              setData(updated);
+                              saveSilently(updated, isRTL ? `تم حفظ نوع النشاط "${val}" في التقرير فوراً` : `Type "${val}" saved to report`);
                             }}
                             className="w-full px-3 py-1.5 text-sm rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none"
                           >
@@ -2081,7 +2195,11 @@ export default function Wizard() {
                                 } else {
                                   list[idx].meetingType = val;
                                 }
-                                setData({ ...data, recentInteractions: list });
+                                const updated = { ...data, recentInteractions: list };
+                                setData(updated);
+                                if (val !== 'custom') {
+                                  saveSilently(updated, isRTL ? `تم حفظ نوع اللقاء "${val}" في التقرير فوراً` : `Meeting type "${val}" saved to report`);
+                                }
                               }}
                               className="w-1/2 px-2.5 py-1.5 text-xs rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none"
                             >
@@ -2101,6 +2219,9 @@ export default function Wizard() {
                                 list[idx].meetingType = e.target.value;
                                 setData({ ...data, recentInteractions: list });
                               }}
+                              onBlur={() => {
+                                saveSilently(data, isRTL ? `تم حفظ نوع اللقاء "${item.meetingType}" في التقرير فوراً` : 'Meeting type bubble saved');
+                              }}
                               className="w-1/2 px-2.5 py-1.5 text-xs rounded-lg border dark:bg-gray-800 dark:border-gray-700 outline-none"
                             />
                           </div>
@@ -2114,6 +2235,9 @@ export default function Wizard() {
                             value={item.title} 
                             label={isRTL ? 'عنوان الموضوع / الاجتماع' : 'Topic / Meeting Title'} 
                             onChange={e => { const list = [...data.recentInteractions]; list[idx].title = e.target.value; setData({...data, recentInteractions: list}); }} 
+                            onBlur={() => {
+                              saveSilently(data, isRTL ? 'تم حفظ عنوان الموضوع في التقرير' : 'Topic title saved');
+                            }}
                           />
                         </div>
                         <div>
@@ -2121,7 +2245,13 @@ export default function Wizard() {
                             value={item.date} 
                             type="date" 
                             label={isRTL ? 'التاريخ' : 'Date'} 
-                            onChange={e => { const list = [...data.recentInteractions]; list[idx].date = e.target.value; setData({...data, recentInteractions: list}); }} 
+                            onChange={e => { 
+                              const list = [...data.recentInteractions]; 
+                              list[idx].date = e.target.value; 
+                              const updated = { ...data, recentInteractions: list };
+                              setData(updated);
+                              saveSilently(updated, isRTL ? 'تم حفظ التاريخ في التقرير' : 'Date saved');
+                            }} 
                           />
                         </div>
                       </div>
@@ -2131,7 +2261,31 @@ export default function Wizard() {
                         label={isRTL ? 'التفاصيل ومحاور اللقاء' : 'Details & Summary'} 
                         value={item.details} 
                         onChange={(val: string) => { const list = [...data.recentInteractions]; list[idx].details = val; setData({...data, recentInteractions: list}); }} 
+                        onBlur={() => {
+                          saveSilently(data, isRTL ? 'تم حفظ تفاصيل الموضوع في التقرير' : 'Topic details saved');
+                        }}
                       />
+
+                      {/* Card Instant Save Action Bar */}
+                      <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                          <span className="font-semibold">{isRTL ? 'معاينة الفقاعة في التقرير:' : 'Bubble preview:'}</span>
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200">
+                            {item.meetingType || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting')}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await handleSave('draft', false, data, false, isRTL ? 'تم حفظ هذا البند وانعكس في التقرير فوراً ✓' : 'Topic saved & reflected in report ✓');
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-all"
+                          title={isRTL ? 'حفظ هذا البند في التقرير فوراً' : 'Save this item to report'}
+                        >
+                          <Save size={13} />
+                          {isRTL ? 'حفظ هذا البند في التقرير' : 'Save Item to Report'}
+                        </button>
+                      </div>
                    </Card>
                 ))}
                 <Button 
@@ -2146,7 +2300,9 @@ export default function Wizard() {
                       meetingType: isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting',
                       details: '' 
                     };
-                    setData({...data, recentInteractions: [...data.recentInteractions, newItem]});
+                    const updated = {...data, recentInteractions: [...data.recentInteractions, newItem]};
+                    setData(updated);
+                    saveSilently(updated, isRTL ? 'تمت إضافة بند جديد وحفظه' : 'New topic added and saved');
                   }}
                   className="flex items-center gap-2"
                 >
@@ -2535,9 +2691,9 @@ export default function Wizard() {
           <div className="flex items-center gap-2">
             <CheckCircle size={16} className="text-emerald-600 shrink-0" />
             <span>
-              {isRTL
-                ? 'تم حفظ كافة بيانات التقرير بما فيها "المواضيع تحت المراجعة" بنجاح.'
-                : 'Report data including "Matters Under Review" saved successfully.'}
+              {lastSavedMessage || (isRTL
+                ? 'تم حفظ كافة بيانات التقرير وتحديثها في التقرير التنفيذي فوراً.'
+                : 'Report data saved & updated in executive report immediately.')}
             </span>
           </div>
           <button 
@@ -2552,7 +2708,14 @@ export default function Wizard() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 mt-2">
         <div className="space-y-3">
           {STEPS.map((step, idx) => (
-            <button key={step.id} onClick={() => setCurrentStep(idx)} className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left ${idx === currentStep ? 'bg-primary text-white shadow-xl translate-x-2' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+            <button 
+              key={step.id} 
+              onClick={() => {
+                saveSilently(data);
+                setCurrentStep(idx);
+              }} 
+              className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left ${idx === currentStep ? 'bg-primary text-white shadow-xl translate-x-2' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+            >
               <step.icon size={20} /><span className="text-sm font-bold uppercase tracking-wider">{step.label}</span>
             </button>
           ))}
@@ -2574,7 +2737,16 @@ export default function Wizard() {
             {renderStep()}
           </Card>
           <div className="flex justify-between items-center pt-6">
-            <Button variant="ghost" onClick={() => setCurrentStep(Math.max(0, currentStep - 1))} disabled={currentStep === 0}><ArrowLeft size={18} /> {t('back')}</Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                saveSilently(data);
+                setCurrentStep(Math.max(0, currentStep - 1));
+              }} 
+              disabled={currentStep === 0}
+            >
+              <ArrowLeft size={18} /> {t('back')}
+            </Button>
             <div className="flex items-center gap-3">
               <Button 
                 variant="outline" 
@@ -2597,7 +2769,15 @@ export default function Wizard() {
               </Button>
 
               {currentStep < STEPS.length - 1 ? (
-                <Button onClick={() => setCurrentStep(currentStep + 1)} className="px-10">{t('next')} <ArrowRight size={18} /></Button>
+                <Button 
+                  onClick={() => {
+                    saveSilently(data);
+                    setCurrentStep(currentStep + 1);
+                  }} 
+                  className="px-10"
+                >
+                  {t('next')} <ArrowRight size={18} />
+                </Button>
               ) : (
                 <Button onClick={() => handleSave('completed')} className="bg-green-600 hover:bg-green-700 px-10">{t('finish')} <CheckCircle size={18} /></Button>
               )}
