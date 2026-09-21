@@ -267,6 +267,7 @@ export interface ReportData {
     category?: 'MOHRE' | 'UAE GOV' | 'OTHER' | string;
   };
   executiveBriefMeetingIds?: string[]; // Multiple topic IDs selected from Relationship Summary to feature in Executive Brief
+  executiveBriefMeetings?: RecentInteraction[]; // Customized meeting items specific to Executive Brief (Main Page), independent of Relationship Summary
   attentionNotes?: string[];
   pendingMatters?: PendingMatter[];
   pointsToFocusOn?: string[];

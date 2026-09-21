@@ -6,6 +6,100 @@ import {
   MapPin, Clock, ArrowUpRight, Award, ShieldCheck, Tag, Mail
 } from 'lucide-react';
 
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  return `${d}/${m}/${y}`;
+};
+
+const getCategoryRank = (cat?: string) => {
+  const c = (cat || '').toUpperCase().trim();
+  if (c === 'UAE GOV' || c.includes('UAE') || c.includes('GOV') || c.includes('حكومة')) return 1;
+  if (c === 'MOHRE' || c.includes('MOHRE') || c.includes('وزارة') || c.includes('موارد')) return 2;
+  return 3; // OTHER
+};
+
+const getCategoryDisplay = (cat?: string, isRTL: boolean = true) => {
+  const rank = getCategoryRank(cat);
+  if (rank === 1) {
+    return {
+      label: isRTL ? 'حكومة الإمارات' : 'UAE GOV',
+      shortLabel: 'UAE GOV',
+      badgeClass: 'bg-amber-100/90 text-amber-950 border-amber-300 font-black shadow-2xs'
+    };
+  }
+  if (rank === 2) {
+    return {
+      label: isRTL ? 'وزارة الموارد البشرية و التوطين (MOHRE)' : 'MOHRE',
+      shortLabel: 'MOHRE',
+      badgeClass: 'bg-[#162e4a] text-white border-[#162e4a] font-black shadow-2xs'
+    };
+  }
+  return {
+    label: isRTL ? 'جهة أخرى (OTHER)' : 'OTHER',
+    shortLabel: 'OTHER',
+    badgeClass: 'bg-slate-200 text-slate-800 border-slate-300 font-bold shadow-2xs'
+  };
+};
+
+const getMeetingTypeBubble = (item: any, isRTL: boolean = true) => {
+  if (item.meetingType && item.meetingType.trim()) {
+    return item.meetingType.trim();
+  }
+  const combined = `${item.type || ''} ${item.title || ''}`.toLowerCase();
+  if (combined.includes('jcm') || combined.includes('joint committee') || combined.includes('مشتركة')) {
+    return isRTL ? 'اللجنة المشتركة (JCM)' : 'Joint Committee (JCM)';
+  }
+  if (combined.includes('tcm') || combined.includes('technical') || combined.includes('ministerial') || combined.includes('فنية') || combined.includes('وزارية')) {
+    return isRTL ? 'اللجنة الوزارية / الفنية (TCM)' : 'Ministerial / Technical (TCM)';
+  }
+  if (combined.includes('consultation') || combined.includes('تشاور')) {
+    return isRTL ? 'اجتماع تشاوري' : 'Consultation Session';
+  }
+  if (combined.includes('bilateral') || combined.includes('ثنائي')) {
+    return isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting';
+  }
+  if (combined.includes('summit') || combined.includes('قمة')) {
+    return isRTL ? 'قمة وزارية' : 'Ministerial Summit';
+  }
+  const isMeeting = (item.type || '').toLowerCase().includes('meet') || 
+                    (item.type || '').includes('اجتماع') || 
+                    (item.type || '').includes('لقاء');
+  if (isMeeting) {
+    return isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting';
+  }
+  return null;
+};
+
+const renderRichText = (text: string, sizeClass: string = "text-[11.5px]") => {
+  if (!text) return null;
+  let processed = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 font-bold">$1</strong>');
+  processed = processed.replace(/\*(.*?)\*/g, '<em class="text-gray-700 italic">$1</em>');
+  const lines = processed.split('\n');
+  const result: React.ReactNode[] = [];
+  let inList = false;
+  let listItems: string[] = [];
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('- ')) {
+      if (!inList) { inList = true; listItems = []; }
+      listItems.push(trimmed.substring(2));
+    } else {
+      if (inList) {
+        result.push(<ul key={`list-${i}`} className="list-disc mb-1 ms-6 text-gray-800">{listItems.map((item, idx) => (<li key={idx} className="text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: item }} />))}</ul>);
+        inList = false;
+      }
+      if (trimmed) { result.push(<p key={i} className="mb-0.5 text-gray-800 leading-relaxed font-serif" dangerouslySetInnerHTML={{ __html: processed.includes('\n') ? line : processed }} />); }
+    }
+  });
+  if (inList) { result.push(<ul key="list-final" className="list-disc mb-1 ms-6 text-gray-800">{listItems.map((item, idx) => (<li key={idx} className="text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: item }} />))}</ul>); }
+  return <div className={`rich-text-content ${sizeClass} text-gray-800 leading-[1.5] overflow-visible font-serif`}>{result.length > 0 ? result : text}</div>;
+};
+
 interface ExecutiveBriefPageProps {
   report: Report;
   data: ReportData;
@@ -65,10 +159,13 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
     : defaultFocusPoints;
 
   // 2. LAST MEETINGS ("آخر اللقاءات والاجتماعات مع X Country")
-  // Extract and sort meetings from data.executiveBriefMeetingIds or data.recentInteractions
+  // Extract and sort meetings from data.executiveBriefMeetings, data.executiveBriefMeetingIds, or data.recentInteractions
   let finalMeetings: RecentInteraction[] = [];
 
-  if (data.executiveBriefMeetingIds && data.executiveBriefMeetingIds.length > 0) {
+  if (data.executiveBriefMeetings && data.executiveBriefMeetings.length > 0) {
+    // 1st Priority: Dedicated Executive Brief meetings (custom title/body specific to main page)
+    finalMeetings = data.executiveBriefMeetings.map(m => ({ ...m }));
+  } else if (data.executiveBriefMeetingIds && data.executiveBriefMeetingIds.length > 0) {
     const map = new Map((data.recentInteractions || []).map(i => [i.id, i]));
     for (const id of data.executiveBriefMeetingIds) {
       const found = map.get(id);
@@ -78,8 +175,8 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
     }
   }
 
-  // If user entered a specific data.lastMeeting and it's not in finalMeetings, handle it
-  if (data.lastMeeting && (data.lastMeeting.title || data.lastMeeting.date)) {
+  // If user entered a specific data.lastMeeting and executiveBriefMeetings was NOT set, handle it
+  if ((!data.executiveBriefMeetings || data.executiveBriefMeetings.length === 0) && data.lastMeeting && (data.lastMeeting.title || data.lastMeeting.date)) {
     const featuredItem: RecentInteraction = {
       id: 'featured-last-meeting',
       date: data.lastMeeting.date || new Date().toISOString().split('T')[0],
@@ -130,7 +227,12 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
       .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   }
 
-  const sortedMeetings = finalMeetings;
+  // Arrange ALWAYS by the latest to the oldest (chronological descending date)
+  const sortedMeetings = [...finalMeetings].sort((a, b) => {
+    const dateCompare = (b.date || '').localeCompare(a.date || '');
+    if (dateCompare !== 0) return dateCompare;
+    return (b.id || '').localeCompare(a.id || '');
+  });
 
   // Visibility flags:
   const isPointsVisible = data.sectionVisibility?.executiveBriefPoints !== false && data.sectionVisibility?.briefPointsToFocus !== false;
@@ -156,7 +258,7 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
           title={isRTL ? 'الإحاطة التنفيذية' : 'Executive Briefing'} 
           compact 
         />
-        <p className="text-xs sm:text-[13px] font-semibold text-gray-800 dark:text-gray-200 mt-1.5 pr-1 leading-snug">
+        <p className="text-[14.5px] sm:text-[15.5px] font-bold text-gray-900 dark:text-gray-100 mt-2 pr-1 leading-relaxed font-serif">
           {data.meetingGoal || (isRTL 
             ? `موجز استراتيجي عالي المستوى لأهم الرسائل المعتمدة وأحدث اللقاءات والمراسلات الرسمية مع ${countryDisplayName}`
             : `High-level strategic overview of key focus messages, recent meetings, and official correspondence with ${countryDisplayName}`)}
@@ -238,64 +340,64 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
                   </div>
 
                   {sortedMeetings.length > 0 ? (
-                    <div className="space-y-2">
-                      {sortedMeetings.slice(0, (data.executiveBriefMeetingIds && data.executiveBriefMeetingIds.length > 0) 
+                    <div className="space-y-2.5">
+                      {sortedMeetings.slice(0, ((data.executiveBriefMeetings && data.executiveBriefMeetings.length > 0) || (data.executiveBriefMeetingIds && data.executiveBriefMeetingIds.length > 0))
                         ? Math.min(sortedMeetings.length, bothVisible ? (sortedMeetings.length >= 3 ? 3 : 2) : 4) 
                         : (bothVisible ? 2 : 3)
                       ).map((meeting, idx) => {
-                        const meetingCategory = (meeting.category || 'MOHRE').toUpperCase();
-                        const isMohre = meetingCategory.includes('MOHRE') || meetingCategory.includes('وزارة');
-                        const isUaeGov = meetingCategory.includes('UAE') || meetingCategory.includes('GOV') || meetingCategory.includes('حكومة');
-                        
                         return (
                           <div 
                             key={meeting.id || `brief-meeting-${idx}`} 
-                            className="p-2.5 rounded-xl bg-gray-50/70 border border-gray-200/80 hover:border-accent/40 transition-all flex flex-col justify-between"
+                            className="border border-gray-200/80 rounded-xl p-3 bg-white shadow-2xs flex flex-col avoid-break hover:border-accent/40 transition-all"
                           >
-                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-gray-200/70">
-                              <div className="flex flex-wrap items-center gap-2">
-                                {/* Date Badge */}
-                                <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-gray-200 text-[10.5px] font-mono font-bold text-gray-900 shadow-2xs">
-                                  <Clock size={11} className="text-primary" />
-                                  <span>{meeting.date || '—'}</span>
-                                </div>
+                            <div className="flex justify-between items-center mb-1.5 gap-2">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {/* 1. Category Badge: UAE GOV, MOHRE, OTHER */}
+                                {(() => {
+                                  const catInfo = getCategoryDisplay(meeting.category, isRTL);
+                                  return (
+                                    <span className={`text-[8.5px] uppercase px-2 py-0.5 rounded border tracking-wider ${catInfo.badgeClass}`}>
+                                      {catInfo.label}
+                                    </span>
+                                  );
+                                })()}
 
-                                {/* Meeting Title near date and time */}
-                                <span className="text-[12px] font-bold text-gray-950 font-serif leading-tight">
-                                  {meeting.title || (isRTL ? 'مباحثات ثنائية في شؤون العمل' : 'Bilateral Labour Discussions')}
+                                {/* 2. Type Badge: e.g. Meeting / اجتماع */}
+                                <span className="text-[8px] font-bold uppercase text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+                                  {meeting.type || (isRTL ? 'اجتماع' : 'Meeting')}
                                 </span>
 
-                                {/* Meeting Type Bubble */}
-                                <span className="px-2 py-0.5 rounded text-[9.5px] font-extrabold bg-blue-50 text-blue-800 border border-blue-200">
-                                  {meeting.meetingType || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting')}
-                                </span>
+                                {/* 3. Tiny bubble next to it showing what is the meeting type */}
+                                {(() => {
+                                  const meetingBubble = getMeetingTypeBubble(meeting, isRTL);
+                                  if (!meetingBubble) return null;
+                                  return (
+                                    <span className="text-[7.5px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-900 border border-blue-200 shadow-2xs inline-flex items-center gap-1">
+                                      <span className="w-1 h-1 rounded-full bg-blue-500 inline-block"></span>
+                                      {meetingBubble}
+                                    </span>
+                                  );
+                                })()}
 
-                                {/* Category Tag */}
-                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-black border ${
-                                  isUaeGov 
-                                    ? 'bg-amber-50 text-amber-900 border-amber-300'
-                                    : isMohre
-                                      ? 'bg-slate-900 text-white border-slate-900'
-                                      : 'bg-gray-200 text-gray-800 border-gray-300'
-                                }`}>
-                                  {isUaeGov ? 'UAE GOV' : isMohre ? 'MOHRE' : 'OTHER'}
-                                </span>
+                                {/* Latest indicator if first meeting */}
+                                {idx === 0 && (
+                                  <span className="text-[7.5px] font-black text-emerald-800 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 rounded shadow-2xs inline-flex items-center gap-0.5">
+                                    <Sparkles size={8} className="text-emerald-600 shrink-0" />
+                                    <span>{isRTL ? 'الأحدث' : 'Latest'}</span>
+                                  </span>
+                                )}
                               </div>
 
-                              {idx === 0 && (
-                                <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 rounded">
-                                  {isRTL ? 'أحدث لقاء رسمي' : 'Latest Meeting'}
-                                </span>
-                              )}
+                              <span className="text-[9px] font-mono text-gray-500 font-bold shrink-0">
+                                {formatDate(meeting.date)}
+                              </span>
                             </div>
 
-                            {meeting.details && (
-                              <div className="pt-0.5">
-                                <p className="text-[11.5px] font-semibold text-gray-900 leading-relaxed font-serif">
-                                  {meeting.details.replace(/[*#]/g, '')}
-                                </p>
-                              </div>
-                            )}
+                            <p className="text-[12.5px] font-bold text-gray-900 mb-0.5 leading-tight font-serif">
+                              {meeting.title}
+                            </p>
+
+                            {meeting.details && renderRichText(meeting.details, "text-[11.5px]")}
                           </div>
                         );
                       })}

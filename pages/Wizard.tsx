@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { ReportData, EMPTY_REPORT_DATA, Report, Delegate, NewsItem, PendingMatter } from '../types';
+import { ReportData, EMPTY_REPORT_DATA, Report, Delegate, NewsItem, PendingMatter, RecentInteraction } from '../types';
 import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
 import { PendingMattersEditor } from '../components/PendingMattersEditor';
 import { AttentionNotesEditor } from '../components/AttentionNotesEditor';
-import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink, Mail, Layers, Eye, Check, ArrowUpDown, SlidersHorizontal, ChevronDown, ChevronUp, Target, Trash2, Star } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, RotateCcw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink, Mail, Layers, Eye, Check, ArrowUpDown, SlidersHorizontal, ChevronDown, ChevronUp, Target, Trash2, Star } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 
@@ -1307,104 +1307,207 @@ export default function Wizard() {
 
                   {/* ======================================================== */}
                   {/* MULTI-TOPIC IMPORT & SELECTION FROM RELATIONSHIP SUMMARY */}
+                  {/* (DECOUPLED: EDITS HERE DO NOT OVERWRITE THE ACTUAL MEETINGS PAGE) */}
                   {/* ======================================================== */}
                   {(() => {
-                    // Safe interactions list with guaranteed IDs
-                    const interactions = (data.recentInteractions || []).map((it, idx) => ({
+                    // 1. Full source list of interactions from Relationship Summary (Page 5), arranged latest to oldest
+                    const rawInteractions = [...(data.recentInteractions || [])];
+                    rawInteractions.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+                    const interactions: RecentInteraction[] = rawInteractions.map((it, idx) => ({
                       ...it,
                       id: it.id || `topic-${idx}-${it.date || 'd'}-${(it.title || '').slice(0, 8)}`
                     }));
 
-                    // Current selected IDs for Executive Brief
-                    const selectedTopicIds: string[] = data.executiveBriefMeetingIds !== undefined
-                      ? data.executiveBriefMeetingIds
-                      : (() => {
-                          if (data.lastMeeting?.title) {
-                            const match = interactions.find(it => it.title === data.lastMeeting?.title || (it.date && it.date === data.lastMeeting?.date));
-                            if (match?.id) return [match.id];
-                          }
-                          return interactions.slice(0, 2).map(it => it.id).filter(Boolean);
-                        })();
+                    // 2. Active Executive Brief meetings (Page 2 specific)
+                    let currentBriefMeetings: RecentInteraction[] = [];
 
-                    // Helper to toggle a topic selection
+                    if (data.executiveBriefMeetings && data.executiveBriefMeetings.length > 0) {
+                      currentBriefMeetings = [...data.executiveBriefMeetings];
+                    } else if (data.executiveBriefMeetingIds && data.executiveBriefMeetingIds.length > 0) {
+                      const map = new Map(interactions.map(it => [it.id, it]));
+                      for (const id of data.executiveBriefMeetingIds) {
+                        const found = map.get(id);
+                        if (found) currentBriefMeetings.push({ ...found });
+                      }
+                    } else {
+                      currentBriefMeetings = interactions.slice(0, 2).map(it => ({ ...it }));
+                      if (currentBriefMeetings.length === 0 && data.lastMeeting?.title) {
+                        currentBriefMeetings.push({
+                          id: uuidv4(),
+                          date: data.lastMeeting.date || new Date().toISOString().split('T')[0],
+                          type: data.lastMeeting.type || 'Meeting',
+                          meetingType: data.lastMeeting.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
+                          title: data.lastMeeting.title || '',
+                          category: data.lastMeeting.category || 'MOHRE',
+                          details: data.lastMeeting.coverage || ''
+                        });
+                      }
+                    }
+
+                    // Selected IDs tracked for UI checkmarks
+                    const selectedTopicIds = currentBriefMeetings.map(m => m.id);
+
+                    // Helper: toggle a topic from Relationship Summary
                     const handleToggleTopic = (topicId: string) => {
-                      const exists = selectedTopicIds.includes(topicId);
-                      let newIds = exists ? selectedTopicIds.filter(id => id !== topicId) : [...selectedTopicIds, topicId];
-                      
-                      // Keep lastMeeting in sync with the first selected topic if needed
-                      let updatedLastMeeting = data.lastMeeting;
-                      if (newIds.length > 0) {
-                        const firstItem = interactions.find(it => it.id === newIds[0]);
-                        if (firstItem && (!updatedLastMeeting || !updatedLastMeeting.title || (exists && updatedLastMeeting.title === interactions.find(it => it.id === topicId)?.title))) {
-                          updatedLastMeeting = {
-                            date: firstItem.date || '',
-                            type: firstItem.meetingType || firstItem.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
-                            title: firstItem.title || '',
-                            coverage: (firstItem.details || '').slice(0, 160),
-                            category: firstItem.category || 'MOHRE'
-                          };
-                        }
+                      const isSelected = selectedTopicIds.includes(topicId);
+                      let newBrief: RecentInteraction[];
+
+                      if (isSelected) {
+                        newBrief = currentBriefMeetings.filter(m => m.id !== topicId);
+                      } else {
+                        const sourceItem = interactions.find(it => it.id === topicId);
+                        if (!sourceItem) return;
+                        newBrief = [...currentBriefMeetings, { ...sourceItem }];
+                        // Arrange from latest to oldest date
+                        newBrief.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+                      }
+
+                      let updatedLast = data.lastMeeting;
+                      if (newBrief.length > 0) {
+                        const first = newBrief[0];
+                        updatedLast = {
+                          date: first.date || '',
+                          type: first.meetingType || first.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
+                          title: first.title || '',
+                          coverage: (first.details || '').slice(0, 160),
+                          category: first.category || 'MOHRE'
+                        };
                       }
 
                       const updated = {
                         ...data,
-                        executiveBriefMeetingIds: newIds,
-                        lastMeeting: updatedLastMeeting
+                        executiveBriefMeetings: newBrief,
+                        executiveBriefMeetingIds: newBrief.map(m => m.id),
+                        lastMeeting: updatedLast
                       };
                       setData(updated);
-                      saveSilently(updated, isRTL ? `تم تحديث المواضيع المختارة (${newIds.length})` : `Selected topics updated (${newIds.length})`);
+                      saveSilently(updated, isRTL ? `تم تحديث مواضيع الإحاطة (${newBrief.length})` : `Brief topics updated (${newBrief.length})`);
                     };
 
-                    // Helper to move a topic up or down
-                    const handleMoveTopic = (index: number, direction: 'up' | 'down') => {
-                      const newIds = [...selectedTopicIds];
-                      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-                      if (targetIndex < 0 || targetIndex >= newIds.length) return;
-                      const temp = newIds[index];
-                      newIds[index] = newIds[targetIndex];
-                      newIds[targetIndex] = temp;
-
-                      // Update lastMeeting to the new first topic
-                      const firstItem = interactions.find(it => it.id === newIds[0]);
-                      const updatedLastMeeting = firstItem ? {
-                        date: firstItem.date || '',
-                        type: firstItem.meetingType || firstItem.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
-                        title: firstItem.title || '',
-                        coverage: (firstItem.details || '').slice(0, 160),
-                        category: firstItem.category || 'MOHRE'
+                    // Helper: sort brief meetings by latest to oldest date
+                    const handleSortLatestToOldest = () => {
+                      const sorted = [...currentBriefMeetings].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+                      const first = sorted[0];
+                      const updatedLast = first ? {
+                        date: first.date || '',
+                        type: first.meetingType || first.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
+                        title: first.title || '',
+                        coverage: (first.details || '').slice(0, 160),
+                        category: first.category || 'MOHRE'
                       } : data.lastMeeting;
 
                       const updated = {
                         ...data,
-                        executiveBriefMeetingIds: newIds,
-                        lastMeeting: updatedLastMeeting
+                        executiveBriefMeetings: sorted,
+                        executiveBriefMeetingIds: sorted.map(m => m.id),
+                        lastMeeting: updatedLast
+                      };
+                      setData(updated);
+                      saveSilently(updated, isRTL ? 'تم ترتيب مواضيع الإحاطة من الأحدث إلى الأقدم' : 'Brief meetings sorted latest to oldest');
+                    };
+
+                    // Helper: move a topic up or down
+                    const handleMoveTopic = (index: number, direction: 'up' | 'down') => {
+                      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+                      if (targetIndex < 0 || targetIndex >= currentBriefMeetings.length) return;
+
+                      const newBrief = [...currentBriefMeetings];
+                      const temp = newBrief[index];
+                      newBrief[index] = newBrief[targetIndex];
+                      newBrief[targetIndex] = temp;
+
+                      const first = newBrief[0];
+                      const updatedLast = first ? {
+                        date: first.date || '',
+                        type: first.meetingType || first.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
+                        title: first.title || '',
+                        coverage: (first.details || '').slice(0, 160),
+                        category: first.category || 'MOHRE'
+                      } : data.lastMeeting;
+
+                      const updated = {
+                        ...data,
+                        executiveBriefMeetings: newBrief,
+                        executiveBriefMeetingIds: newBrief.map(m => m.id),
+                        lastMeeting: updatedLast
                       };
                       setData(updated);
                       saveSilently(updated, isRTL ? 'تم إعادة ترتيب مواضيع الإحاطة' : 'Topics reordered');
                     };
 
-                    // Helper to set a topic as the featured last meeting
-                    const handleSetAsFeatured = (topicId: string) => {
-                      const target = interactions.find(it => it.id === topicId);
-                      if (!target) return;
-                      
-                      // Move to front of selected IDs
-                      const restIds = selectedTopicIds.filter(id => id !== topicId);
-                      const newIds = [topicId, ...restIds];
+                    // Helper: set a meeting as featured
+                    const handleSetAsFeatured = (index: number) => {
+                      if (index === 0) return;
+                      const newBrief = [...currentBriefMeetings];
+                      const [target] = newBrief.splice(index, 1);
+                      newBrief.unshift(target);
+
+                      const updatedLast = {
+                        date: target.date || '',
+                        type: target.meetingType || target.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
+                        title: target.title || '',
+                        coverage: (target.details || '').slice(0, 160),
+                        category: target.category || 'MOHRE'
+                      };
 
                       const updated = {
                         ...data,
-                        executiveBriefMeetingIds: newIds,
-                        lastMeeting: {
-                          date: target.date || '',
-                          type: target.meetingType || target.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
-                          title: target.title || '',
-                          coverage: (target.details || '').slice(0, 160),
-                          category: target.category || 'MOHRE'
-                        }
+                        executiveBriefMeetings: newBrief,
+                        executiveBriefMeetingIds: newBrief.map(m => m.id),
+                        lastMeeting: updatedLast
                       };
                       setData(updated);
                       saveSilently(updated, isRTL ? `تم تعيين "${target.title}" كاللقاء الأخير المميز` : `Featured meeting set to "${target.title}"`);
+                    };
+
+                    // Helper: remove a meeting from executive brief
+                    const handleRemoveFromBrief = (index: number) => {
+                      const newBrief = currentBriefMeetings.filter((_, i) => i !== index);
+                      let updatedLast = data.lastMeeting;
+                      if (index === 0 && newBrief.length > 0) {
+                        const first = newBrief[0];
+                        updatedLast = {
+                          date: first.date || '',
+                          type: first.meetingType || first.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
+                          title: first.title || '',
+                          coverage: (first.details || '').slice(0, 160),
+                          category: first.category || 'MOHRE'
+                        };
+                      }
+                      const updated = {
+                        ...data,
+                        executiveBriefMeetings: newBrief,
+                        executiveBriefMeetingIds: newBrief.map(m => m.id),
+                        lastMeeting: updatedLast
+                      };
+                      setData(updated);
+                      saveSilently(updated, isRTL ? 'تمت إزالة اللقاء من الإحاطة' : 'Removed from Executive Brief');
+                    };
+
+                    // Helper: update field on a brief meeting (DECOUPLED FROM SOURCE LOG)
+                    const handleUpdateBriefMeeting = (idx: number, updates: Partial<RecentInteraction>) => {
+                      const newBrief = [...currentBriefMeetings];
+                      newBrief[idx] = { ...newBrief[idx], ...updates };
+
+                      let updatedLast = data.lastMeeting;
+                      if (idx === 0) {
+                        updatedLast = {
+                          ...(data.lastMeeting || {}),
+                          title: updates.title !== undefined ? updates.title : (newBrief[0].title || ''),
+                          date: updates.date !== undefined ? updates.date : (newBrief[0].date || ''),
+                          type: (updates.meetingType || updates.type) !== undefined ? (updates.meetingType || updates.type) : (newBrief[0].meetingType || newBrief[0].type || ''),
+                          category: updates.category !== undefined ? updates.category : (newBrief[0].category || 'MOHRE'),
+                          coverage: updates.details !== undefined ? updates.details : (newBrief[0].details || '')
+                        };
+                      }
+
+                      const updated = {
+                        ...data,
+                        executiveBriefMeetings: newBrief,
+                        executiveBriefMeetingIds: newBrief.map(m => m.id),
+                        lastMeeting: updatedLast
+                      };
+                      setData(updated);
                     };
 
                     return (
@@ -1431,18 +1534,32 @@ export default function Wizard() {
 
                               <button
                                 type="button"
+                                onClick={handleSortLatestToOldest}
+                                className="px-2 py-1 text-[10.5px] font-bold rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 flex items-center gap-1 shadow-2xs"
+                                title={isRTL ? 'ترتيب المواضيع المختارة من الأحدث إلى الأقدم' : 'Sort selected topics latest to oldest'}
+                              >
+                                <span>⏱️</span>
+                                <span>{isRTL ? 'ترتيب: الأحدث للأقدم' : 'Sort: Latest to Oldest'}</span>
+                              </button>
+
+                              <button
+                                type="button"
                                 onClick={() => {
-                                  const latest2 = interactions.slice(0, 2).map(it => it.id);
-                                  const firstItem = interactions.find(it => it.id === latest2[0]);
+                                  const latest2 = [...interactions].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 2);
+                                  const newBrief = latest2.map(it => {
+                                    const existing = currentBriefMeetings.find(m => m.id === it.id);
+                                    return existing || { ...it };
+                                  });
                                   const updated = {
                                     ...data,
-                                    executiveBriefMeetingIds: latest2,
-                                    lastMeeting: firstItem ? {
-                                      date: firstItem.date || '',
-                                      type: firstItem.meetingType || firstItem.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
-                                      title: firstItem.title || '',
-                                      coverage: (firstItem.details || '').slice(0, 160),
-                                      category: firstItem.category || 'MOHRE'
+                                    executiveBriefMeetings: newBrief,
+                                    executiveBriefMeetingIds: newBrief.map(m => m.id),
+                                    lastMeeting: newBrief[0] ? {
+                                      date: newBrief[0].date || '',
+                                      type: newBrief[0].meetingType || newBrief[0].type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
+                                      title: newBrief[0].title || '',
+                                      coverage: (newBrief[0].details || '').slice(0, 160),
+                                      category: newBrief[0].category || 'MOHRE'
                                     } : data.lastMeeting
                                   };
                                   setData(updated);
@@ -1456,17 +1573,21 @@ export default function Wizard() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const latest3 = interactions.slice(0, 3).map(it => it.id);
-                                  const firstItem = interactions.find(it => it.id === latest3[0]);
+                                  const latest3 = [...interactions].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 3);
+                                  const newBrief = latest3.map(it => {
+                                    const existing = currentBriefMeetings.find(m => m.id === it.id);
+                                    return existing || { ...it };
+                                  });
                                   const updated = {
                                     ...data,
-                                    executiveBriefMeetingIds: latest3,
-                                    lastMeeting: firstItem ? {
-                                      date: firstItem.date || '',
-                                      type: firstItem.meetingType || firstItem.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
-                                      title: firstItem.title || '',
-                                      coverage: (firstItem.details || '').slice(0, 160),
-                                      category: firstItem.category || 'MOHRE'
+                                    executiveBriefMeetings: newBrief,
+                                    executiveBriefMeetingIds: newBrief.map(m => m.id),
+                                    lastMeeting: newBrief[0] ? {
+                                      date: newBrief[0].date || '',
+                                      type: newBrief[0].meetingType || newBrief[0].type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
+                                      title: newBrief[0].title || '',
+                                      coverage: (newBrief[0].details || '').slice(0, 160),
+                                      category: newBrief[0].category || 'MOHRE'
                                     } : data.lastMeeting
                                   };
                                   setData(updated);
@@ -1480,21 +1601,33 @@ export default function Wizard() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const allIds = interactions.map(it => it.id);
-                                  const updated = { ...data, executiveBriefMeetingIds: allIds };
+                                  const sortedAll = [...interactions].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+                                  const newBrief = sortedAll.map(it => {
+                                    const existing = currentBriefMeetings.find(m => m.id === it.id);
+                                    return existing || { ...it };
+                                  });
+                                  const updated = {
+                                    ...data,
+                                    executiveBriefMeetings: newBrief,
+                                    executiveBriefMeetingIds: newBrief.map(m => m.id)
+                                  };
                                   setData(updated);
-                                  saveSilently(updated, isRTL ? 'تم تحديد جميع المواضيع' : 'All topics selected');
+                                  saveSilently(updated, isRTL ? 'تم تحديد جميع المواضيع مرتبة من الأحدث للأقدم' : 'All topics selected (latest to oldest)');
                                 }}
                                 className="px-2 py-1 text-[10.5px] font-bold rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/40"
                               >
                                 {isRTL ? 'تحديد الكل' : 'Select All'}
                               </button>
 
-                              {selectedTopicIds.length > 0 && (
+                              {currentBriefMeetings.length > 0 && (
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    const updated = { ...data, executiveBriefMeetingIds: [] };
+                                    const updated = {
+                                      ...data,
+                                      executiveBriefMeetings: [],
+                                      executiveBriefMeetingIds: []
+                                    };
                                     setData(updated);
                                     saveSilently(updated, isRTL ? 'تم إلغاء تحديد المواضيع' : 'Selection cleared');
                                   }}
@@ -1580,23 +1713,42 @@ export default function Wizard() {
 
                         {/* 2. Manager & Direct Editors for the Selected Topics */}
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between pb-1 border-b border-gray-200 dark:border-gray-700">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
                             <div>
-                              <span className="text-xs font-black text-gray-800 dark:text-gray-200">
-                                {isRTL ? 'المواضيع المختارة المعروضة في صفحة الإحاطة التنفيذية' : 'Selected Topics Displayed in Executive Brief'}
-                              </span>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-black text-gray-800 dark:text-gray-200">
+                                  {isRTL ? 'المواضيع المختارة المعروضة في صفحة الإحاطة التنفيذية' : 'Selected Topics Displayed in Executive Brief'}
+                                </span>
+                                <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded flex items-center gap-1">
+                                  <span>🛡️</span>
+                                  <span>{isRTL ? 'التعديل هنا لصفحة الإحاطة فقط (لا يغير سجل ملخص العلاقة)' : 'Edits here are for Brief only (original log unchanged)'}</span>
+                                </span>
+                              </div>
                               <p className="text-[10px] text-gray-500 mt-0.5">
                                 {isRTL 
-                                  ? 'يمكنك تعديل بيانات وتفاصيل أي لقاء هنا فوراً، واختيار اللقاء الأخير المميز وإعادة الترتيب:' 
-                                  : 'Edit any meeting details here, designate the featured latest meeting, and reorder:'}
+                                  ? 'يمكنك تعديل بيانات وتفاصيل أي لقاء هنا فوراً، واختيار اللقاء الأخير المميز وإعادة الترتيب من الأحدث للأقدم:' 
+                                  : 'Edit any meeting details here, designate the featured latest meeting, and sort from latest to oldest:'}
                               </p>
                             </div>
-                            <span className="text-[11px] font-bold text-gray-400">
-                              {selectedTopicIds.length} / {interactions.length} {isRTL ? 'مواضيع' : 'topics'}
-                            </span>
+                            <div className="flex items-center gap-2 flex-wrap shrink-0">
+                              <span className="text-[11px] font-bold text-gray-400">
+                                {selectedTopicIds.length} / {interactions.length} {isRTL ? 'مواضيع' : 'topics'}
+                              </span>
+                              {currentBriefMeetings.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={handleSortLatestToOldest}
+                                  className="px-2 py-1 text-[10.5px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded hover:bg-emerald-100 flex items-center gap-1 shadow-2xs"
+                                  title={isRTL ? 'ترتيب المواضيع المختارة تلقائياً من الأحدث إلى الأقدم حسب التاريخ' : 'Sort selected topics automatically latest to oldest by date'}
+                                >
+                                  <span>⏱️</span>
+                                  <span>{isRTL ? 'ترتيب من الأحدث للأقدم' : 'Sort: Latest to Oldest'}</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
 
-                          {selectedTopicIds.length === 0 ? (
+                          {currentBriefMeetings.length === 0 ? (
                             <div className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 text-center">
                               <p className="text-xs text-gray-500 mb-2">
                                 {isRTL 
@@ -1606,17 +1758,18 @@ export default function Wizard() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const latest2 = interactions.slice(0, 2).map(it => it.id);
-                                  const firstItem = interactions.find(it => it.id === latest2[0]);
+                                  const latest2 = interactions.slice(0, 2);
+                                  const newBrief = latest2.map(it => ({ ...it }));
                                   const updated = {
                                     ...data,
-                                    executiveBriefMeetingIds: latest2,
-                                    lastMeeting: firstItem ? {
-                                      date: firstItem.date || '',
-                                      type: firstItem.meetingType || firstItem.type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
-                                      title: firstItem.title || '',
-                                      coverage: (firstItem.details || '').slice(0, 160),
-                                      category: firstItem.category || 'MOHRE'
+                                    executiveBriefMeetings: newBrief,
+                                    executiveBriefMeetingIds: newBrief.map(m => m.id),
+                                    lastMeeting: newBrief[0] ? {
+                                      date: newBrief[0].date || '',
+                                      type: newBrief[0].meetingType || newBrief[0].type || (isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'),
+                                      title: newBrief[0].title || '',
+                                      coverage: (newBrief[0].details || '').slice(0, 160),
+                                      category: newBrief[0].category || 'MOHRE'
                                     } : data.lastMeeting
                                   };
                                   setData(updated);
@@ -1629,16 +1782,18 @@ export default function Wizard() {
                             </div>
                           ) : (
                             <div className="space-y-3">
-                              {selectedTopicIds.map((topicId, index) => {
-                                const targetIdx = interactions.findIndex(it => it.id === topicId);
-                                const item = targetIdx !== -1 ? interactions[targetIdx] : null;
-                                if (!item) return null;
-
-                                const isFeatured = data.lastMeeting?.title === item.title && (data.lastMeeting?.date === item.date || !data.lastMeeting?.date);
+                              {currentBriefMeetings.map((item, index) => {
+                                const isFeatured = index === 0;
+                                const sourceTopic = interactions.find(it => it.id === item.id);
+                                const isCustomized = sourceTopic && (
+                                  item.title !== sourceTopic.title || 
+                                  item.details !== sourceTopic.details || 
+                                  item.date !== sourceTopic.date
+                                );
 
                                 return (
                                   <div 
-                                    key={topicId} 
+                                    key={item.id || `brief-${index}`} 
                                     className={`p-3.5 rounded-xl border transition-all ${
                                       isFeatured 
                                         ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/60 shadow-2xs' 
@@ -1647,8 +1802,8 @@ export default function Wizard() {
                                   >
                                     {/* Card Action Header */}
                                     <div className="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2.5 border-b border-gray-200 dark:border-gray-700">
-                                      <div className="flex items-center gap-2">
-                                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-black flex items-center justify-center">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-black flex items-center justify-center shrink-0">
                                           {index + 1}
                                         </span>
                                         <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
@@ -1660,13 +1815,40 @@ export default function Wizard() {
                                             {isRTL ? '⭐ اللقاء الأخير المميز (الصفحة 2)' : '⭐ Featured Latest Meeting'}
                                           </span>
                                         )}
+                                        {isCustomized && (
+                                          <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                            {isRTL ? '✏️ مخصص للإحاطة فقط' : '✏️ Customized for Brief'}
+                                          </span>
+                                        )}
                                       </div>
 
                                       <div className="flex items-center gap-1.5 flex-wrap">
+                                        {isCustomized && sourceTopic && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              handleUpdateBriefMeeting(index, {
+                                                title: sourceTopic.title,
+                                                details: sourceTopic.details,
+                                                date: sourceTopic.date,
+                                                category: sourceTopic.category,
+                                                meetingType: sourceTopic.meetingType || sourceTopic.type,
+                                                type: sourceTopic.type
+                                              });
+                                              saveSilently(data, isRTL ? 'تمت استعادة النص الأصلي من سجل الاجتماعات' : 'Restored from original log');
+                                            }}
+                                            className="px-2 py-1 text-[10px] font-bold text-gray-600 hover:text-primary dark:text-gray-300 rounded border border-gray-300 dark:border-gray-600 flex items-center gap-1"
+                                            title={isRTL ? 'استعادة النص الأصلي من سجل الاجتماعات' : 'Restore from original log'}
+                                          >
+                                            <RotateCcw size={10} />
+                                            {isRTL ? 'استعادة الأصل' : 'Reset'}
+                                          </button>
+                                        )}
+
                                         {!isFeatured && (
                                           <button
                                             type="button"
-                                            onClick={() => handleSetAsFeatured(item.id)}
+                                            onClick={() => handleSetAsFeatured(index)}
                                             className="px-2 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 rounded border border-amber-300 dark:border-amber-800 flex items-center gap-1"
                                             title={isRTL ? 'جعله اللقاء الأخير المميز بالصفحة 2' : 'Set as Featured Meeting'}
                                           >
@@ -1686,7 +1868,7 @@ export default function Wizard() {
                                           </button>
                                         )}
 
-                                        {index < selectedTopicIds.length - 1 && (
+                                        {index < currentBriefMeetings.length - 1 && (
                                           <button
                                             type="button"
                                             onClick={() => handleMoveTopic(index, 'down')}
@@ -1699,7 +1881,7 @@ export default function Wizard() {
 
                                         <button
                                           type="button"
-                                          onClick={() => handleToggleTopic(item.id)}
+                                          onClick={() => handleRemoveFromBrief(index)}
                                           className="px-2 py-1 text-[10px] font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded border border-rose-200 dark:border-rose-900/60"
                                           title={isRTL ? 'إلغاء عرضه في الإحاطة التنفيذية' : 'Remove from Executive Brief'}
                                         >
@@ -1718,16 +1900,7 @@ export default function Wizard() {
                                           type="date"
                                           className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
                                           value={item.date || ''}
-                                          onChange={e => {
-                                            const newInteractions = [...interactions];
-                                            newInteractions[targetIdx] = { ...newInteractions[targetIdx], date: e.target.value };
-                                            let updatedLast = data.lastMeeting;
-                                            if (isFeatured) {
-                                              updatedLast = { ...(data.lastMeeting || {}), date: e.target.value };
-                                            }
-                                            const updated = { ...data, recentInteractions: newInteractions, lastMeeting: updatedLast };
-                                            setData(updated);
-                                          }}
+                                          onChange={e => handleUpdateBriefMeeting(index, { date: e.target.value })}
                                           onBlur={() => saveSilently(data, isRTL ? 'تم حفظ تاريخ اللقاء' : 'Meeting date saved')}
                                         />
                                       </div>
@@ -1740,16 +1913,8 @@ export default function Wizard() {
                                           className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
                                           value={item.category || 'MOHRE'}
                                           onChange={e => {
-                                            const val = e.target.value;
-                                            const newInteractions = [...interactions];
-                                            newInteractions[targetIdx] = { ...newInteractions[targetIdx], category: val };
-                                            let updatedLast = data.lastMeeting;
-                                            if (isFeatured) {
-                                              updatedLast = { ...(data.lastMeeting || {}), category: val };
-                                            }
-                                            const updated = { ...data, recentInteractions: newInteractions, lastMeeting: updatedLast };
-                                            setData(updated);
-                                            saveSilently(updated, isRTL ? `تم حفظ الجهة: ${val}` : 'Category saved');
+                                            handleUpdateBriefMeeting(index, { category: e.target.value as any });
+                                            saveSilently(data, isRTL ? `تم حفظ الجهة: ${e.target.value}` : 'Category saved');
                                           }}
                                         >
                                           <option value="MOHRE">{isRTL ? 'وزارة الموارد البشرية والتوطين (MOHRE)' : 'MOHRE'}</option>
@@ -1766,20 +1931,8 @@ export default function Wizard() {
                                           className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
                                           value={item.meetingType || item.type || ''}
                                           onChange={e => {
-                                            const val = e.target.value;
-                                            const newInteractions = [...interactions];
-                                            newInteractions[targetIdx] = { 
-                                              ...newInteractions[targetIdx], 
-                                              meetingType: val,
-                                              type: val 
-                                            };
-                                            let updatedLast = data.lastMeeting;
-                                            if (isFeatured) {
-                                              updatedLast = { ...(data.lastMeeting || {}), type: val };
-                                            }
-                                            const updated = { ...data, recentInteractions: newInteractions, lastMeeting: updatedLast };
-                                            setData(updated);
-                                            saveSilently(updated, isRTL ? `تم حفظ نوع اللقاء: ${val}` : 'Meeting type saved');
+                                            handleUpdateBriefMeeting(index, { meetingType: e.target.value, type: e.target.value });
+                                            saveSilently(data, isRTL ? `تم حفظ نوع اللقاء: ${e.target.value}` : 'Meeting type saved');
                                           }}
                                         >
                                           <option value="اجتماع ثنائي">{isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'}</option>
@@ -1792,22 +1945,14 @@ export default function Wizard() {
 
                                       <div className="space-y-1">
                                         <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                                          {isRTL ? 'مسمى اللقاء / الاجتماع' : 'Meeting Title'}
+                                          {isRTL ? 'مسمى اللقاء / الاجتماع (للإحاطة)' : 'Meeting Title (Executive Brief)'}
                                         </label>
                                         <input
                                           type="text"
-                                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
+                                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary font-bold"
                                           value={item.title || ''}
-                                          onChange={e => {
-                                            const newInteractions = [...interactions];
-                                            newInteractions[targetIdx] = { ...newInteractions[targetIdx], title: e.target.value };
-                                            let updatedLast = data.lastMeeting;
-                                            if (isFeatured) {
-                                              updatedLast = { ...(data.lastMeeting || {}), title: e.target.value };
-                                            }
-                                            setData({ ...data, recentInteractions: newInteractions, lastMeeting: updatedLast });
-                                          }}
-                                          onBlur={() => saveSilently(data, isRTL ? 'تم حفظ مسمى اللقاء' : 'Meeting title saved')}
+                                          onChange={e => handleUpdateBriefMeeting(index, { title: e.target.value })}
+                                          onBlur={() => saveSilently(data, isRTL ? 'تم حفظ مسمى اللقاء في الإحاطة' : 'Brief meeting title saved')}
                                         />
                                       </div>
                                     </div>
@@ -1815,28 +1960,20 @@ export default function Wizard() {
                                     <div className="space-y-1">
                                       <div className="flex items-center justify-between">
                                         <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                                          {isRTL ? 'موجز ما تم بحثه والاتفاق عليه' : 'Discussion & Outcomes Summary'}
+                                          {isRTL ? 'موجز ما تم بحثه والاتفاق عليه (خاص بصفحة الإحاطة)' : 'Discussion & Outcomes Summary (For Executive Brief Page)'}
                                         </label>
                                         <span className="text-[10px] text-gray-400">
-                                          {(item.details || '').length}/180 {isRTL ? 'حرف' : 'chars'}
+                                          {(item.details || '').length}/240 {isRTL ? 'حرف' : 'chars'}
                                         </span>
                                       </div>
                                       <textarea
                                         rows={2}
-                                        maxLength={180}
-                                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                                        placeholder={isRTL ? 'موجز مختصر للمباحثات وأهم النتائج...' : 'Brief discussion summary and outcomes...'}
+                                        maxLength={240}
+                                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary leading-relaxed font-serif"
+                                        placeholder={isRTL ? 'موجز مختصر للمباحثات وأهم النتائج خاص بصفحة الإحاطة...' : 'Brief discussion summary and outcomes for the Executive Brief page...'}
                                         value={item.details || ''}
-                                        onChange={e => {
-                                          const newInteractions = [...interactions];
-                                          newInteractions[targetIdx] = { ...newInteractions[targetIdx], details: e.target.value };
-                                          let updatedLast = data.lastMeeting;
-                                          if (isFeatured) {
-                                            updatedLast = { ...(data.lastMeeting || {}), coverage: e.target.value.slice(0, 160) };
-                                          }
-                                          setData({ ...data, recentInteractions: newInteractions, lastMeeting: updatedLast });
-                                        }}
-                                        onBlur={() => saveSilently(data, isRTL ? 'تم حفظ موجز اللقاء' : 'Meeting summary saved')}
+                                        onChange={e => handleUpdateBriefMeeting(index, { details: e.target.value })}
+                                        onBlur={() => saveSilently(data, isRTL ? 'تم حفظ موجز اللقاء في الإحاطة' : 'Brief meeting summary saved')}
                                       />
                                     </div>
                                   </div>
