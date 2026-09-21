@@ -264,7 +264,9 @@ export interface ReportData {
     type?: string;
     title?: string;
     coverage?: string;
+    category?: 'MOHRE' | 'UAE GOV' | 'OTHER' | string;
   };
+  executiveBriefMeetingIds?: string[]; // Multiple topic IDs selected from Relationship Summary to feature in Executive Brief
   attentionNotes?: string[];
   pendingMatters?: PendingMatter[];
   pointsToFocusOn?: string[];
@@ -284,6 +286,10 @@ export interface ReportData {
     // Page 2: الإحاطة التنفيذية
     briefPointsToFocus?: boolean;
     briefLastMeetings?: boolean;
+    briefLastCorrespondence?: boolean;
+    executiveBriefPoints?: boolean;
+    executiveBriefLastMeeting?: boolean;
+    executiveBriefLastCorrespondence?: boolean;
 
     // Page 3: Profile & Economy
     demographics?: boolean;
@@ -477,6 +483,10 @@ export const EMPTY_REPORT_DATA: ReportData = {
     delegation: true,
     briefPointsToFocus: true,
     briefLastMeetings: true,
+    briefLastCorrespondence: true,
+    executiveBriefPoints: true,
+    executiveBriefLastMeeting: true,
+    executiveBriefLastCorrespondence: true,
     demographics: true,
     economicLandscape: true,
     bilateralTrade: true,
