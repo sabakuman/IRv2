@@ -154,6 +154,7 @@ export interface UaeWorkforceData {
 export interface ReportData {
   reportDate?: string; // Date of the report/meeting
   reportMonthYear?: string; // Month and Year (Arabic/English or input from user)
+  meetingGoal?: string; // Goal / objective of the meeting (1-2 lines shown on Cover Page)
   flagUrl?: string; // Custom uploaded flag
 
   // Section 1: Country Profile & Diplomacy
@@ -266,7 +267,10 @@ export interface ReportData {
   };
   attentionNotes?: string[];
   pendingMatters?: PendingMatter[];
+  pointsToFocusOn?: string[];
   sectionVisibility?: {
+    cover?: boolean;
+    executiveBrief?: boolean;
     profileEconomy?: boolean;
     uaeWorkforce?: boolean;
     partnerWorkforce?: boolean;
@@ -275,6 +279,38 @@ export interface ReportData {
     previousUpdates?: boolean;
     agreements?: boolean;
     delegation?: boolean;
+
+    // Sub-sections inside pages:
+    // Page 2: الإحاطة التنفيذية
+    briefPointsToFocus?: boolean;
+    briefLastMeetings?: boolean;
+
+    // Page 3: Profile & Economy
+    demographics?: boolean;
+    economicLandscape?: boolean;
+    bilateralTrade?: boolean;
+    educationInsights?: boolean;
+
+    // Page 4: UAE Workforce
+    uaeWorkforceKpis?: boolean;
+    insuranceExposures?: boolean;
+    laborComplaints?: boolean;
+    threeYearTrend?: boolean;
+    emiratesDistribution?: boolean;
+    sectorsChart?: boolean;
+    salaryChart?: boolean;
+
+    // Page 5: Partner Workforce
+    partnerWorkforceKpis?: boolean;
+    migrationDestinations?: boolean;
+    partnerSectors?: boolean;
+    availableSkills?: boolean;
+
+    // Delegations
+    uaeDelegation?: boolean;
+    partnerDelegation?: boolean;
+
+    [key: string]: boolean | undefined;
   };
 }
 
@@ -298,6 +334,7 @@ export interface AuditLog {
 export const EMPTY_REPORT_DATA: ReportData = {
   reportDate: new Date().toISOString().split('T')[0],
   reportMonthYear: '',
+  meetingGoal: '',
   flagUrl: '',
   country: '',
   capital: '',
@@ -426,4 +463,36 @@ export const EMPTY_REPORT_DATA: ReportData = {
   summary: '',
   lastCorrespondence: undefined,
   pendingMatters: [],
+  pointsToFocusOn: [],
+  sectionVisibility: {
+    cover: true,
+    executiveBrief: true,
+    profileEconomy: true,
+    uaeWorkforce: true,
+    partnerWorkforce: true,
+    interactions: true,
+    discussionPoints: true,
+    previousUpdates: true,
+    agreements: true,
+    delegation: true,
+    briefPointsToFocus: true,
+    briefLastMeetings: true,
+    demographics: true,
+    economicLandscape: true,
+    bilateralTrade: true,
+    educationInsights: true,
+    uaeWorkforceKpis: true,
+    insuranceExposures: true,
+    laborComplaints: true,
+    threeYearTrend: true,
+    emiratesDistribution: true,
+    sectorsChart: true,
+    salaryChart: true,
+    partnerWorkforceKpis: true,
+    migrationDestinations: true,
+    partnerSectors: true,
+    availableSkills: true,
+    uaeDelegation: true,
+    partnerDelegation: true,
+  },
 };

@@ -9,7 +9,7 @@ import {
   Printer, X, AlertTriangle, ShieldAlert,
   GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
   ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer,
-  ExternalLink, Clock, Phone, Percent, CheckCircle, Edit3
+  ExternalLink, Clock, Phone, Percent, CheckCircle, Edit3, Target
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { ExecutiveBriefPage } from '../components/ExecutiveBriefPage';
@@ -874,103 +874,142 @@ export default function PrintView() {
 
       <div id="report-content" className="overflow-visible report-root">
         {/* PAGE 1: COVER */}
-        <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
-          <div className="absolute inset-0 opacity-[0.03] z-0 flex items-center justify-center pointer-events-none">
-              <svg viewBox="0 0 1000 500" className="w-[150%] h-auto text-primary fill-current">
-                <path d="M50,250 Q250,50 500,250 T950,250" stroke="currentColor" strokeWidth="2" fill="none" />
-                <path d="M0,0 L1000,500 M1000,0 L0,500" stroke="currentColor" strokeWidth="0.5" />
-              </svg>
-          </div>
-          <div className="flex-1 flex flex-col justify-center px-20 relative z-10">
-              <div className={`mb-12 border-accent py-6 ${isRTL ? 'border-r-[8px] pr-12' : 'border-l-[8px] pl-12'}`}>
-                <div className="flex items-center gap-4 mb-8 opacity-60">
-                  <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto" alt="UAE" />
-                  <span className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
-                    {isRTL ? 'الإمارات • وزارة الموارد البشرية و التوطين' : 'UAE • MOHRE'}
-                  </span>
+        {data.sectionVisibility?.cover !== false && (
+          <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
+            <div className="absolute inset-0 opacity-[0.03] z-0 flex items-center justify-center pointer-events-none">
+                <svg viewBox="0 0 1000 500" className="w-[150%] h-auto text-primary fill-current">
+                  <path d="M50,250 Q250,50 500,250 T950,250" stroke="currentColor" strokeWidth="2" fill="none" />
+                  <path d="M0,0 L1000,500 M1000,0 L0,500" stroke="currentColor" strokeWidth="0.5" />
+                </svg>
+            </div>
+            <div className="flex-1 flex flex-col justify-center px-20 relative z-10">
+                <div className={`mb-12 border-accent py-6 ${isRTL ? 'border-r-[8px] pr-12' : 'border-l-[8px] pl-12'}`}>
+                  <div className="flex items-center gap-4 mb-8 opacity-60">
+                    <img src="https://flagcdn.com/w40/ae.png" className="h-6 w-auto" alt="UAE" />
+                    <span className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
+                      {isRTL ? 'الإمارات • وزارة الموارد البشرية و التوطين' : 'UAE • MOHRE'}
+                    </span>
+                  </div>
+                  <h1 className="text-[64px] font-serif font-extrabold text-gray-900 leading-[1.1] mb-4">{t('loginTitle')}</h1>
+                  <p className="text-2xl text-gray-500 font-light uppercase tracking-wider">{t('strategicOverview')}</p>
                 </div>
-                <h1 className="text-[64px] font-serif font-extrabold text-gray-900 leading-[1.1] mb-4">{t('loginTitle')}</h1>
-                <p className="text-2xl text-gray-500 font-light uppercase tracking-wider">{t('strategicOverview')}</p>
-              </div>
-              <div className="bg-gray-50 rounded-3xl p-10 border border-gray-100 max-w-xl">
-                <div className="flex items-center gap-8 mb-8">
-                    <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${(data.country || '').toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" alt="flag" /></div>
-                    <div>
-                      <p className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1">{t('subjectMarket')}</p>
-                      <h2 className="text-4xl font-serif font-bold text-gray-900">{data.country}</h2>
-                    </div>
-                </div>
-                <div className="grid grid-cols-2 gap-8">
-                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('reference')}</p><p className="font-mono text-base text-gray-800">{report.id}</p></div>
-                    <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('date')}</p><p className="font-mono text-base text-gray-800">{data.reportDate}</p></div>
-                    <div className="col-span-2"><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('securityClass')}</p><span className="kpi-chip chip-restrict inline-flex items-center gap-2 px-3 py-1"><ShieldAlert size={12} /> {t('officialRestricted')}</span></div>
-                </div>
-              </div>
-          </div>
-          <div className="h-3 bg-primary w-full"></div>
-        </div>
+                <div className="bg-gray-50 rounded-3xl p-10 border border-gray-100 max-w-xl">
+                  <div className="flex items-center gap-8 mb-8">
+                      <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-white"><img src={data.flagUrl || `https://flagcdn.com/w320/${(data.country || '').toLowerCase().includes('philippines')?'ph':'in'}.png`} className="w-full h-full object-cover" alt="flag" /></div>
+                      <div>
+                        <p className="text-xs font-bold text-accent uppercase tracking-[0.2em] mb-1">{t('subjectMarket')}</p>
+                        <h2 className="text-4xl font-serif font-bold text-gray-900">{data.country}</h2>
+                      </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-8">
+                      <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('reference')}</p><p className="font-mono text-base text-gray-800">{report.id}</p></div>
+                      <div><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('date')}</p><p className="font-mono text-base text-gray-800">{data.reportDate}</p></div>
+                      <div className="col-span-2"><p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{t('securityClass')}</p><span className="kpi-chip chip-restrict inline-flex items-center gap-2 px-3 py-1"><ShieldAlert size={12} /> {t('officialRestricted')}</span></div>
+                  </div>
 
-        {/* PAGE 2: EXECUTIVE BRIEF (الملخص التنفيذي) */}
-        <ExecutiveBriefPage 
-          report={report}
-          data={data}
-          combinedTotalWorkers={combinedTotalWorkers}
-          isRTL={isRTL}
-          t={t}
-          footer={<DefaultFooter />}
-          onEditAttentionNotes={() => navigate(`/wizard/${report.id}`)}
-        />
+                  {/* Goal of the Meeting - هدف اللقاء */}
+                  {data.meetingGoal && data.meetingGoal.trim() && (
+                    <div className="mt-6 pt-5 border-t border-gray-200/80">
+                      <p className="text-[11px] font-black text-primary uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                        <Target size={15} className="text-primary shrink-0" />
+                        <span>{isRTL ? 'هدف اللقاء' : 'Goal of the Meeting'}</span>
+                      </p>
+                      <p className="text-[14px] font-bold text-gray-800 leading-relaxed line-clamp-2">
+                        {data.meetingGoal}
+                      </p>
+                    </div>
+                  )}
+                </div>
+            </div>
+            <div className="h-3 bg-primary w-full"></div>
+          </div>
+        )}
+
+        {/* PAGE 2: EXECUTIVE BRIEF (الإحاطة التنفيذية) */}
+        {data.sectionVisibility?.executiveBrief !== false && (
+          <ExecutiveBriefPage 
+            report={report}
+            data={data}
+            combinedTotalWorkers={combinedTotalWorkers}
+            isRTL={isRTL}
+            t={t}
+            footer={<DefaultFooter />}
+            onEditAttentionNotes={() => navigate(`/wizard/${report.id}`)}
+          />
+        )}
 
         {/* PAGE 3: PROFILE & ECONOMY */}
         {data.sectionVisibility?.profileEconomy !== false && (
           <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
-            <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact />
-          <div className="grid grid-cols-4 gap-3 mb-4">
-            <KPI icon={Landmark} label={t('capital')} value={data.capital} />
-            <KPI icon={Users} label={t('population')} value={data.population} sub={getSource('demo')} />
-            <KPI icon={Banknote} label={t('currency')} value={data.currency} />
-            <KPI icon={Building} label={t('hdi')} value={data.hdi} sub={getSource('demo')} />
-            <KPI icon={Shield} label={t('crimeRate')} value={data.crimeRate || 'N/A'} sub={getSource('demo')} />
-            <KPI icon={BookOpen} label={t('literacyRate')} value={data.literacyRate || 'N/A'} sub={getSource('demo')} />
-            <KPI icon={Building2} label={t('governmentType')} value={data.governmentType || 'N/A'} />
-            <KPI icon={Briefcase} label={t('workforceMinistry')} value={data.workforceMinistry || 'N/A'} />
-            <KPI icon={MessageSquare} label={t('officialLanguage')} value={data.officialLanguage || 'N/A'} />
-            <KPI icon={Plane} label={t('directFlight')} value={data.directFlight ? (isRTL ? 'نعم' : 'Yes') : (isRTL ? 'لا' : 'No')} />
-            <KPI icon={Users} label={t('totalWorkersInUae')} value={data.totalWorkersInUae || 'N/A'} />
-            <KPI icon={Percent} label={t('unemploymentRate')} value={data.unemploymentRate || 'N/A'} sub={getSource('demo')} />
-          </div>
-          <SectionHeader icon={TrendingUp} title={t('economicLandscape')} subtitle={t('tradeEducation')} compact />
-          <div className="grid grid-cols-4 gap-3 mb-4">
-            <KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats?.tipRank || '—'} tone="warn" sub={getSource('tip')} />
-            <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats?.inflation || '—'} sub={getSource('economy')} />
-            <KPI icon={Banknote} label={t('gdp')} value={data.gdp} sub={getSource('economy')} />
-            <KPI icon={ArrowRightLeft} label={isRTL ? "الحوالات السنوية من الإمارات" : "Annual Remittances from UAE"} value={data.economicStats?.remittancesFromUAE || 'N/A'} sub={getSource('cbuae')} />
-          </div>
-          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-4 shadow-sm">
-            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')} <span className="ms-2">{getSource('trade')}</span></h4>
-            <div className="grid grid-cols-2 gap-8">
-                <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الصادرات من الإمارات إلى (${data.country})` : `Imports to ${data.country} from the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats?.totalImportsFromUAE || '—'}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{Array.isArray(data.economicStats?.topImportProducts) ? data.economicStats.topImportProducts.join(', ') : (data.economicStats?.topImportProducts || '')}</p></div>
-                <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الواردات  إلى  الإمارات من (${data.country})` : `Exports from ${data.country} to the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats?.totalExportsToUAE || '—'}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{Array.isArray(data.economicStats?.topExportProducts) ? data.economicStats.topExportProducts.join(', ') : (data.economicStats?.topExportProducts || '')}</p></div>
-            </div>
-          </div>
-          <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact />
-          <div className="grid grid-cols-3 gap-3">
-            <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats?.higherEducationEnrollment || '—'} sub={getSource('edu')} />
-            <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats?.primaryEnrollment || '—'} sub={getSource('edu')} />
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center shadow-sm">
-              <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">{t('topUniversities')} <span className="ms-2">{getSource('edu')}</span></p>
-              <ul className="text-[11px] text-gray-700 leading-snug space-y-1">
-                {(data.educationStats?.topUniversities || []).slice(0, 5).map((u, i) => (
-                  <li key={i} className="flex gap-1.5 items-start">
-                    <span className="shrink-0 font-bold text-primary opacity-60">•</span>
-                    <span className="break-words leading-tight flex-1 font-medium">{u}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </PageContainer>
+            
+            {/* Demographics & Governance */}
+            {data.sectionVisibility?.demographics !== false && (
+              <>
+                <SectionHeader icon={Globe} title={t('sectionProfile')} subtitle={t('keyDemographics')} compact />
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  <KPI icon={Landmark} label={t('capital')} value={data.capital} />
+                  <KPI icon={Users} label={t('population')} value={data.population} sub={getSource('demo')} />
+                  <KPI icon={Banknote} label={t('currency')} value={data.currency} />
+                  <KPI icon={Building} label={t('hdi')} value={data.hdi} sub={getSource('demo')} />
+                  <KPI icon={Shield} label={t('crimeRate')} value={data.crimeRate || 'N/A'} sub={getSource('demo')} />
+                  <KPI icon={BookOpen} label={t('literacyRate')} value={data.literacyRate || 'N/A'} sub={getSource('demo')} />
+                  <KPI icon={Building2} label={t('governmentType')} value={data.governmentType || 'N/A'} />
+                  <KPI icon={Briefcase} label={t('workforceMinistry')} value={data.workforceMinistry || 'N/A'} />
+                  <KPI icon={MessageSquare} label={t('officialLanguage')} value={data.officialLanguage || 'N/A'} />
+                  <KPI icon={Plane} label={t('directFlight')} value={data.directFlight ? (isRTL ? 'نعم' : 'Yes') : (isRTL ? 'لا' : 'No')} />
+                  <KPI icon={Users} label={t('totalWorkersInUae')} value={data.totalWorkersInUae || 'N/A'} />
+                  <KPI icon={Percent} label={t('unemploymentRate')} value={data.unemploymentRate || 'N/A'} sub={getSource('demo')} />
+                </div>
+              </>
+            )}
+
+            {/* Economic Landscape */}
+            {data.sectionVisibility?.economicLandscape !== false && (
+              <>
+                <SectionHeader icon={TrendingUp} title={t('economicLandscape')} subtitle={t('tradeEducation')} compact />
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  <KPI icon={ShieldAlert} label={t('tipRankLabel')} value={data.economicStats?.tipRank || '—'} tone="warn" sub={getSource('tip')} />
+                  <KPI icon={TrendingUp} label={t('inflation')} value={data.economicStats?.inflation || '—'} sub={getSource('economy')} />
+                  <KPI icon={Banknote} label={t('gdp')} value={data.gdp} sub={getSource('economy')} />
+                  <KPI icon={ArrowRightLeft} label={isRTL ? "الحوالات السنوية من الإمارات" : "Annual Remittances from UAE"} value={data.economicStats?.remittancesFromUAE || 'N/A'} sub={getSource('cbuae')} />
+                </div>
+              </>
+            )}
+
+            {/* Bilateral Trade */}
+            {data.sectionVisibility?.bilateralTrade !== false && (
+              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-4 shadow-sm">
+                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 border-b border-gray-200 pb-2 flex items-center gap-2"><ArrowRightLeft size={14} /> {t('bilateralTrade')} <span className="ms-2">{getSource('trade')}</span></h4>
+                <div className="grid grid-cols-2 gap-8">
+                    <div className="flex flex-col"><div className="flex items-center gap-2 mb-1 text-primary"><ArrowUpRight size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الصادرات من الإمارات إلى (${data.country})` : `Imports to ${data.country} from the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats?.totalImportsFromUAE || '—'}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{Array.isArray(data.economicStats?.topImportProducts) ? data.economicStats.topImportProducts.join(', ') : (data.economicStats?.topImportProducts || '')}</p></div>
+                    <div className="flex flex-col border-s border-gray-200 ps-8"><div className="flex items-center gap-2 mb-1 text-accent"><ArrowDownLeft size={16} /><p className="text-[10px] font-bold uppercase">{isRTL ? `الواردات  إلى  الإمارات من (${data.country})` : `Exports from ${data.country} to the UAE`}</p></div><p className="text-xl font-serif font-bold text-gray-900 mb-1">{data.economicStats?.totalExportsToUAE || '—'}</p><p className="text-[12px] text-gray-700 leading-snug font-medium">{Array.isArray(data.economicStats?.topExportProducts) ? data.economicStats.topExportProducts.join(', ') : (data.economicStats?.topExportProducts || '')}</p></div>
+                </div>
+              </div>
+            )}
+
+            {/* Education Insights */}
+            {data.sectionVisibility?.educationInsights !== false && (
+              <>
+                <SectionHeader icon={GraduationCap} title={t('educationInsights')} compact />
+                <div className="grid grid-cols-3 gap-3">
+                  <KPI icon={GraduationCap} label={t('higherEnrollment')} value={data.educationStats?.higherEducationEnrollment || '—'} sub={getSource('edu')} />
+                  <KPI icon={GraduationCap} label={t('primaryEnrollment')} value={data.educationStats?.primaryEnrollment || '—'} sub={getSource('edu')} />
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col justify-center shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">{t('topUniversities')} <span className="ms-2">{getSource('edu')}</span></p>
+                    <ul className="text-[11px] text-gray-700 leading-snug space-y-1">
+                      {(data.educationStats?.topUniversities || []).slice(0, 5).map((u, i) => (
+                        <li key={i} className="flex gap-1.5 items-start">
+                          <span className="shrink-0 font-bold text-primary opacity-60">•</span>
+                          <span className="break-words leading-tight flex-1 font-medium">{u}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </>
+            )}
+          </PageContainer>
         )}
 
         {/* PAGE 4: UAE WORKFORCE */}
@@ -979,136 +1018,145 @@ export default function PrintView() {
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={Building} title={`${t('sectionUaeWorkforce')} (${data.reportMonthYear || defaultDateStr})`} subtitle={t('domesticAnalysis')} compact />
           
-          <div className="bg-primary/5 border border-primary/20 rounded-lg py-1 px-3 flex items-center justify-between shadow-2xs mb-1.5">
-            <p className="text-[9px] font-black text-primary-dark uppercase tracking-wider font-sans leading-none">
-              {t('totalWorkforceInUaeLaborMarket')}
-            </p>
-            <p className="text-[15.5px] font-serif font-black text-primary-dark leading-none">
-              {combinedTotalWorkers.toLocaleString()}
-            </p>
-          </div>
-
           {/* ROW 1: WORKFORCE BREAKDOWN & CORE PROTECTION */}
-          <div className="grid grid-cols-4 gap-2 mb-1.5 items-stretch">
-            {/* CARD 1: MOHRE PRIVATE */}
-            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
-              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
-                {t('mohrePrivate')}
-              </span>
-              <span className="text-[12.5px] font-black block text-gray-900 font-mono leading-none mt-0.5 pt-0.5 border-t border-gray-100">
-                {data.uaeWorkforceStats?.mohre?.totalPrivate?.value || (isRTL ? 'لا يوجد' : 'N/A')}
-              </span>
-            </div>
-
-            {/* CARD 2: MOHRE DOMESTIC */}
-            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
-              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
-                {t('mohreDomestic')}
-              </span>
-              <span className="text-[12.5px] font-black block text-gray-900 font-mono leading-none mt-0.5 pt-0.5 border-t border-gray-100">
-                {data.uaeWorkforceStats?.mohre?.totalDomestic?.value || (isRTL ? 'لا يوجد' : 'N/A')}
-              </span>
-            </div>
-
-            {/* CARD 3: WPS WAGE TRANSFER */}
-            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
-              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
-                {t('wpsWageTransferRate')}
-              </span>
-              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
-                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">
-                  {data.uaeWorkforceStats?.mohre?.wpsWageTransferNum || (isRTL ? 'لا يوجد' : 'N/A')}
-                </span>
-                <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
-                  {formatPctValue(data.uaeWorkforceStats?.mohre?.wpsWageTransferPct)}
-                </span>
+          {data.sectionVisibility?.uaeWorkforceKpis !== false ? (
+            <>
+              <div className="bg-primary/5 border border-primary/20 rounded-lg py-1 px-3 flex items-center justify-between shadow-2xs mb-1.5">
+                <p className="text-[9px] font-black text-primary-dark uppercase tracking-wider font-sans leading-none">
+                  {t('totalWorkforceInUaeLaborMarket')}
+                </p>
+                <p className="text-[15.5px] font-serif font-black text-primary-dark leading-none">
+                  {combinedTotalWorkers.toLocaleString()}
+                </p>
               </div>
-            </div>
 
-            {/* CARD 4: UNEMPLOYMENT INSURANCE (COVERED) */}
-            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
-              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
-                {t('unemploymentInsuranceCoverageRate')}
-              </span>
-              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
-                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">
-                  {data.uaeWorkforceStats?.mohre?.insuranceUnemploymentCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}
-                </span>
-                <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
-                  {formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceUnemploymentCoveredPct)}
-                </span>
+              <div className="grid grid-cols-4 gap-2 mb-1.5 items-stretch">
+                {/* CARD 1: MOHRE PRIVATE */}
+                <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
+                  <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                    {t('mohrePrivate')}
+                  </span>
+                  <span className="text-[12.5px] font-black block text-gray-900 font-mono leading-none mt-0.5 pt-0.5 border-t border-gray-100">
+                    {data.uaeWorkforceStats?.mohre?.totalPrivate?.value || (isRTL ? 'لا يوجد' : 'N/A')}
+                  </span>
+                </div>
+
+                {/* CARD 2: MOHRE DOMESTIC */}
+                <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
+                  <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                    {t('mohreDomestic')}
+                  </span>
+                  <span className="text-[12.5px] font-black block text-gray-900 font-mono leading-none mt-0.5 pt-0.5 border-t border-gray-100">
+                    {data.uaeWorkforceStats?.mohre?.totalDomestic?.value || (isRTL ? 'لا يوجد' : 'N/A')}
+                  </span>
+                </div>
+
+                {/* CARD 3: WPS WAGE TRANSFER */}
+                <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
+                  <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                    {t('wpsWageTransferRate')}
+                  </span>
+                  <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                    <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">
+                      {data.uaeWorkforceStats?.mohre?.wpsWageTransferNum || (isRTL ? 'لا يوجد' : 'N/A')}
+                    </span>
+                    <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
+                      {formatPctValue(data.uaeWorkforceStats?.mohre?.wpsWageTransferPct)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* CARD 4: UNEMPLOYMENT INSURANCE (COVERED) */}
+                <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2 flex flex-col justify-between shadow-2xs min-h-[46px]">
+                  <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                    {t('unemploymentInsuranceCoverageRate')}
+                  </span>
+                  <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                    <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">
+                      {data.uaeWorkforceStats?.mohre?.insuranceUnemploymentCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}
+                    </span>
+                    <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">
+                      {formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceUnemploymentCoveredPct)}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          ) : null}
 
           {/* ROW 2: INSURANCE EXPOSURES & WORKER RIGHTS */}
-          <div className="grid grid-cols-3 gap-2 mb-1.5 items-stretch">
-            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[42px]">
-              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
-                {t('insuranceUnemploymentExposed')}
-              </span>
-              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
-                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats?.mohre?.insuranceUnemploymentExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
-                <span className="text-[10px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceUnemploymentExposedPct)}</span>
+          {data.sectionVisibility?.insuranceExposures !== false ? (
+            <div className="grid grid-cols-3 gap-2 mb-1.5 items-stretch">
+              <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[42px]">
+                <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                  {t('insuranceUnemploymentExposed')}
+                </span>
+                <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                  <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats?.mohre?.insuranceUnemploymentExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
+                  <span className="text-[10px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceUnemploymentExposedPct)}</span>
+                </div>
               </div>
-            </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[42px]">
-              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
-                {t('insuranceRightsCovered')}
-              </span>
-              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
-                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats?.mohre?.insuranceRightsCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
-                <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceRightsCoveredPct)}</span>
+              <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[42px]">
+                <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                  {t('insuranceRightsCovered')}
+                </span>
+                <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                  <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats?.mohre?.insuranceRightsCoveredNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
+                  <span className="text-[10px] font-extrabold text-emerald-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceRightsCoveredPct)}</span>
+                </div>
               </div>
-            </div>
 
-            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[42px]">
-              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
-                {t('insuranceRightsExposed')}
-              </span>
-              <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
-                <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats?.mohre?.insuranceRightsExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
-                <span className="text-[10px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceRightsExposedPct)}</span>
+              <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[42px]">
+                <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                  {t('insuranceRightsExposed')}
+                </span>
+                <div className="flex items-baseline justify-between mt-0.5 pt-0.5 border-t border-gray-100 gap-1">
+                  <span className="text-[12.5px] font-black text-gray-900 font-mono leading-none">{data.uaeWorkforceStats?.mohre?.insuranceRightsExposedNum || (isRTL ? 'لا يوجد' : 'N/A')}</span>
+                  <span className="text-[10px] font-extrabold text-amber-600 font-sans leading-none">{formatPctValue(data.uaeWorkforceStats?.mohre?.insuranceRightsExposedPct)}</span>
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
 
           {/* ROW 3: LABOR COMPLAINTS & STRIKES */}
-          <div className="grid grid-cols-3 gap-2 mb-1.5 items-stretch">
-            {/* TOTAL COMPLAINTS CURRENT YEAR */}
-            <div className="bg-white border border-primary/30 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[40px]">
-              <span className="text-[8px] font-extrabold text-primary uppercase leading-[1.2] block break-words">
-                {t('totalComplaintsCurrentYear')}
-              </span>
-              <span className="text-[13px] font-black block text-primary font-mono leading-none mt-0.5 pt-0.5 border-t border-primary/10">
-                {data.uaeWorkforceStats?.mohre?.totalComplaintsCurrentYear || '0'}
-              </span>
-            </div>
+          {data.sectionVisibility?.laborComplaints !== false ? (
+            <div className="grid grid-cols-3 gap-2 mb-1.5 items-stretch">
+              {/* TOTAL COMPLAINTS CURRENT YEAR */}
+              <div className="bg-white border border-primary/30 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[40px]">
+                <span className="text-[8px] font-extrabold text-primary uppercase leading-[1.2] block break-words">
+                  {t('totalComplaintsCurrentYear')}
+                </span>
+                <span className="text-[13px] font-black block text-primary font-mono leading-none mt-0.5 pt-0.5 border-t border-primary/10">
+                  {data.uaeWorkforceStats?.mohre?.totalComplaintsCurrentYear || '0'}
+                </span>
+              </div>
 
-            {/* LABOR COMPLAINTS UNDER REVIEW */}
-            <div className="bg-white border border-amber-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[40px]">
-              <span className="text-[8px] font-extrabold text-amber-700 uppercase leading-[1.2] block break-words">
-                {t('laborComplaintsUnderReview')}
-              </span>
-              <span className="text-[13px] font-black block text-amber-600 font-mono leading-none mt-0.5 pt-0.5 border-t border-amber-100">
-                {data.uaeWorkforceStats?.mohre?.laborComplaintsUnderReview || '0'}
-              </span>
-            </div>
+              {/* LABOR COMPLAINTS UNDER REVIEW */}
+              <div className="bg-white border border-amber-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[40px]">
+                <span className="text-[8px] font-extrabold text-amber-700 uppercase leading-[1.2] block break-words">
+                  {t('laborComplaintsUnderReview')}
+                </span>
+                <span className="text-[13px] font-black block text-amber-600 font-mono leading-none mt-0.5 pt-0.5 border-t border-amber-100">
+                  {data.uaeWorkforceStats?.mohre?.laborComplaintsUnderReview || '0'}
+                </span>
+              </div>
 
-            {/* STRIKES */}
-            <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[40px]">
-              <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
-                {t('workersLaborStrikes')}
-              </span>
-              <span className="text-[13px] font-black block text-gray-900 font-mono leading-none mt-0.5 pt-0.5 border-t border-gray-100">
-                {data.uaeWorkforceStats?.mohre?.workersLaborStrikes || '0'}
-              </span>
+              {/* STRIKES */}
+              <div className="bg-white border border-gray-200 rounded-lg py-1.5 px-2.5 flex flex-col justify-between shadow-2xs min-h-[40px]">
+                <span className="text-[8px] font-extrabold text-gray-600 uppercase leading-[1.2] block break-words">
+                  {t('workersLaborStrikes')}
+                </span>
+                <span className="text-[13px] font-black block text-gray-900 font-mono leading-none mt-0.5 pt-0.5 border-t border-gray-100">
+                  {data.uaeWorkforceStats?.mohre?.workersLaborStrikes || '0'}
+                </span>
+              </div>
             </div>
-          </div>
+          ) : null}
 
           {/* 3-YEAR WORKFORCE COMPARISON & TREND (ON TOP OF BLUE TABLE) */}
-          {(() => {
+          {data.sectionVisibility?.threeYearTrend !== false ? (
+          (() => {
             const history = data.uaeWorkforceStats?.workersHistory || {};
             const currentYearLabel = history.yearCurrent || (typeof data.reportDate === 'string' && data.reportDate.includes('-') ? data.reportDate.split('-')[0] : '2024');
             const prevYearLabel = history.yearPrevious || (parseInt(currentYearLabel) ? (parseInt(currentYearLabel) - 1).toString() : '2023');
@@ -1207,7 +1255,8 @@ export default function PrintView() {
                 </div>
               </div>
             );
-          })()}
+          })()
+          ) : null}
 
           {/* Skilled / Unskilled Median Wage Table */}
           {((data.uaeWorkforceStats?.mohre?.skilledPartnerWage || 
@@ -1275,76 +1324,91 @@ export default function PrintView() {
           <PageContainer footer={<DefaultFooter />} className="shadow-xl print:shadow-none mb-8 print:mb-0">
             <HeaderBand country={data.country} reportId={report.id} title={t('loginTitle')} flagUrl={data.flagUrl} />
             <SectionHeader icon={Users} title={`${t('workforceOf')} ${data.country}`} subtitle={t('sourceMarketAnalysis')} compact />
-            <div className="grid grid-cols-4 gap-4 mb-6">
-              <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats?.totalWorkforce || '—'} sub={getSource('demo')} />
-              <div className="col-span-2 kpi-card flex flex-col items-center justify-center p-3 shadow-sm">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 border-b border-gray-100 pb-1.5 w-full justify-center">
-                    <span>{t('genderDistribution')}</span>
-                  </p>
-                  <div className="flex items-center justify-around w-full">
-                      <div className="text-center flex-1">
-                        <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('maleParticipation')}</p>
-                        <p className="text-2xl font-serif font-bold text-blue-600 leading-none">{data.workforceStats?.participationMale || '0'}%</p>
-                      </div>
-                      <div className="h-8 w-px bg-gray-200"></div>
-                      <div className="text-center flex-1">
-                        <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('femaleParticipation')}</p>
-                        <p className="text-2xl font-serif font-bold text-pink-600 leading-none">{data.workforceStats?.participationFemale || '0'}%</p>
-                      </div>
-                  </div>
+            
+            {/* Top KPIs & Gender */}
+            {data.sectionVisibility?.partnerWorkforceKpis !== false && (
+              <div className="grid grid-cols-4 gap-4 mb-6">
+                <KPI icon={Users} label={t('totalWorkforce')} value={data.workforceStats?.totalWorkforce || '—'} sub={getSource('demo')} />
+                <div className="col-span-2 kpi-card flex flex-col items-center justify-center p-3 shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 border-b border-gray-100 pb-1.5 w-full justify-center">
+                      <span>{t('genderDistribution')}</span>
+                    </p>
+                    <div className="flex items-center justify-around w-full">
+                        <div className="text-center flex-1">
+                          <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('maleParticipation')}</p>
+                          <p className="text-2xl font-serif font-bold text-blue-600 leading-none">{data.workforceStats?.participationMale || '0'}%</p>
+                        </div>
+                        <div className="h-8 w-px bg-gray-200"></div>
+                        <div className="text-center flex-1">
+                          <p className="text-xs font-bold text-gray-700 uppercase mb-1">{t('femaleParticipation')}</p>
+                          <p className="text-2xl font-serif font-bold text-pink-600 leading-none">{data.workforceStats?.participationFemale || '0'}%</p>
+                        </div>
+                    </div>
+                </div>
+                <KPI icon={Banknote} label={t('avgWage')} value={normalizeWageDisplay(data.averageWage)} tone="ok" sub={getSource('demo')} />
               </div>
-              <KPI icon={Banknote} label={t('avgWage')} value={normalizeWageDisplay(data.averageWage)} tone="ok" sub={getSource('demo')} />
-            </div>
+            )}
+
+            {/* Grid for Migration Destinations & Partner Sectors */}
             <div className="grid grid-cols-2 gap-6 mb-8">
-              <div className="kpi-card p-4 shadow-sm">
-                  <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Plane size={16} /> {t('migrationDestinations')}</p>
-                  <div className="space-y-3.5">
-                    {processedMigrationDests.map((dest, i) => {
-                      const barWidth = Math.max(5, Math.min(100, (dest.numericVal / maxMigrationDest) * 100));
-                      return (
+              {data.sectionVisibility?.migrationDestinations !== false && (
+                <div className="kpi-card p-4 shadow-sm">
+                    <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Plane size={16} /> {t('migrationDestinations')}</p>
+                    <div className="space-y-3.5">
+                      {processedMigrationDests.map((dest, i) => {
+                        const barWidth = Math.max(5, Math.min(100, (dest.numericVal / maxMigrationDest) * 100));
+                        return (
+                          <div key={i} className="space-y-1">
+                            <div className="flex justify-between text-[11px] font-bold text-gray-700">
+                              <span>{dest.country}</span>
+                              <span className="font-mono text-gray-600 font-bold">{dest.count}</span>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary rounded-full transition-all duration-300" 
+                                style={{ width: `${barWidth}%` }} 
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                </div>
+              )}
+
+              {data.sectionVisibility?.partnerSectors !== false && (
+                <div className="kpi-card p-4 shadow-sm">
+                    <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Briefcase size={16} /> {t('workersBySector')}</p>
+                    <div className="space-y-3.5">
+                      {sortedPartnerSectors.slice(0, 5).map((sec, i) => (
                         <div key={i} className="space-y-1">
                           <div className="flex justify-between text-[11px] font-bold text-gray-700">
-                            <span>{dest.country}</span>
-                            <span className="font-mono text-gray-600 font-bold">{dest.count}</span>
+                            <span>{sec.name}</span>
+                            <span className="font-mono text-gray-600 font-bold">{sec.value}%</span>
                           </div>
                           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-primary rounded-full transition-all duration-300" 
-                              style={{ width: `${barWidth}%` }} 
+                              style={{ width: `${(sec.value / maxPartnerSector) * 100}%` }} 
                             />
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-              </div>
-              <div className="kpi-card p-4 shadow-sm">
-                  <p className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider flex items-center gap-2"><Briefcase size={16} /> {t('workersBySector')}</p>
-                  <div className="space-y-3.5">
-                    {sortedPartnerSectors.slice(0, 5).map((sec, i) => (
-                      <div key={i} className="space-y-1">
-                        <div className="flex justify-between text-[11px] font-bold text-gray-700">
-                          <span>{sec.name}</span>
-                          <span className="font-mono text-gray-600 font-bold">{sec.value}%</span>
-                        </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary rounded-full transition-all duration-300" 
-                            style={{ width: `${(sec.value / maxPartnerSector) * 100}%` }} 
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-              </div>
+                      ))}
+                    </div>
+                </div>
+              )}
             </div>
-            <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 shadow-sm">
-              <h4 className="text-sm font-bold text-primary-dark uppercase mb-4 flex items-center gap-2"><Hammer size={18} /> {t('availableSkills')}</h4>
-              <div className="flex flex-wrap gap-3">
-                  {(data.workforceStats?.availableSkills || []).slice(0, 12).map((skill, i) => (<span key={i} className="bg-white border border-primary/20 text-primary-dark px-4 py-2 rounded-xl text-sm font-bold shadow-sm">{skill}</span>))}
+
+            {/* Available Skills */}
+            {data.sectionVisibility?.availableSkills !== false && (
+              <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 shadow-sm">
+                <h4 className="text-sm font-bold text-primary-dark uppercase mb-4 flex items-center gap-2"><Hammer size={18} /> {t('availableSkills')}</h4>
+                <div className="flex flex-wrap gap-3">
+                    {(data.workforceStats?.availableSkills || []).slice(0, 12).map((skill, i) => (<span key={i} className="bg-white border border-primary/20 text-primary-dark px-4 py-2 rounded-xl text-sm font-bold shadow-sm">{skill}</span>))}
+                </div>
+                <p className="text-[9px] text-gray-400 mt-4 italic">{t('skillsDisclaimer')}</p>
               </div>
-              <p className="text-[9px] text-gray-400 mt-4 italic">{t('skillsDisclaimer')}</p>
-            </div>
+            )}
           </PageContainer>
         )}
 
@@ -1562,53 +1626,57 @@ export default function PrintView() {
               />
               <div className="grid grid-cols-1 gap-6 mt-4">
                 {pageData.uae.length > 0 && (
-                  <div className="avoid-break">
-                    <div className="flex items-center gap-4 mb-3 border-b-2 border-primary pb-2">
-                      <img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto" alt="UAE" />
-                      <p className="text-xs font-extrabold uppercase text-primary tracking-[0.2em]">{t('uaeDelegation')}</p>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      {pageData.uae.map((d) => (
-                        <div key={d.id} className="flex gap-6 items-start p-5 bg-gray-50 rounded-[1.25rem] border border-gray-100 shadow-sm">
-                          <div className="w-32 h-44 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-md">
-                            {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}
+                  data.sectionVisibility?.uaeDelegation !== false ? (
+                    <div className="avoid-break">
+                      <div className="flex items-center gap-4 mb-3 border-b-2 border-primary pb-2">
+                        <img src="https://flagcdn.com/w40/ae.png" className="h-5 w-auto" alt="UAE" />
+                        <p className="text-xs font-extrabold uppercase text-primary tracking-[0.2em]">{t('uaeDelegation')}</p>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        {pageData.uae.map((d) => (
+                          <div key={d.id} className="flex gap-6 items-start p-5 bg-gray-50 rounded-[1.25rem] border border-gray-100 shadow-sm">
+                            <div className="w-32 h-44 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-md">
+                              {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}
+                            </div>
+                            <div className="flex-1 pt-0.5">
+                              <p className="text-xl font-serif font-bold text-gray-900 mb-0.5">{d.name}</p>
+                              <p className="text-xs font-bold text-primary uppercase mb-2 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>
+                              {renderRichText(d.bio)}
+                            </div>
                           </div>
-                          <div className="flex-1 pt-0.5">
-                            <p className="text-xl font-serif font-bold text-gray-900 mb-0.5">{d.name}</p>
-                            <p className="text-xs font-bold text-primary uppercase mb-2 tracking-[0.15em] border-b border-primary/10 pb-1 inline-block">{d.title}</p>
-                            {renderRichText(d.bio)}
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ) : null
                 )}
 
                 {pageData.partner.length > 0 && (
-                  <div className="avoid-break pt-1">
-                    <div className="flex items-center gap-4 mb-3 border-b-2 border-accent pb-2">
-                      <img src={data.flagUrl || `https://flagcdn.com/w40/${(data.country || '').toLowerCase().includes('india')?'in':'ph'}.png`} className="h-5 w-auto" alt={data.country} />
-                      <p className="text-xs font-extrabold uppercase text-accent tracking-[0.2em]">{t('partnerDelegation')}</p>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      {pageData.partner.map((d) => (
-                        <div key={d.id} className="flex gap-6 items-start p-5 bg-gray-50 rounded-[1.25rem] border border-gray-100 shadow-sm">
-                          <div className="w-32 h-44 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-md">
-                            {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}
-                          </div>
-                          <div className="flex-1 pt-0.5">
-                            <p className="text-xl font-serif font-bold text-gray-900 mb-0.5">{d.name}</p>
-                            <div className="mb-2">
-                              <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] border-b border-accent/10 pb-0.5 inline-block">{d.title}</p>
+                  data.sectionVisibility?.partnerDelegation !== false ? (
+                    <div className="avoid-break pt-1">
+                      <div className="flex items-center gap-4 mb-3 border-b-2 border-accent pb-2">
+                        <img src={data.flagUrl || `https://flagcdn.com/w40/${(data.country || '').toLowerCase().includes('india')?'in':'ph'}.png`} className="h-5 w-auto" alt={data.country} />
+                        <p className="text-xs font-extrabold uppercase text-accent tracking-[0.2em]">{t('partnerDelegation')}</p>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        {pageData.partner.map((d) => (
+                          <div key={d.id} className="flex gap-6 items-start p-5 bg-gray-50 rounded-[1.25rem] border border-gray-100 shadow-sm">
+                            <div className="w-32 h-44 rounded-xl bg-gray-200 shrink-0 overflow-hidden border-4 border-white shadow-md">
+                              {d.imageUrl ? <img src={d.imageUrl} className="w-full h-full object-cover" alt="portrait" /> : null}
                             </div>
-                            {/* WHERE & WHEN WE MET DISPLAY */}
-                            {renderMeetingBadge(d)}
-                            {renderRichText(d.bio)}
+                            <div className="flex-1 pt-0.5">
+                              <p className="text-xl font-serif font-bold text-gray-900 mb-0.5">{d.name}</p>
+                              <div className="mb-2">
+                                <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] border-b border-accent/10 pb-0.5 inline-block">{d.title}</p>
+                              </div>
+                              {/* WHERE & WHEN WE MET DISPLAY */}
+                              {renderMeetingBadge(d)}
+                              {renderRichText(d.bio)}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ) : null
                 )}
               </div>
             </PageContainer>

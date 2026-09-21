@@ -233,21 +233,22 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
       {/* ========================================================= */}
       {/* SECTION 1: WORKERS BY EMIRATE                             */}
       {/* ========================================================= */}
-      <div className="mb-2 pb-2 border-b border-gray-200">
-        {/* Section Title */}
-        <div className="flex items-center justify-between mb-1 px-0.5">
-          {/* Child 1: Section Title on the RIGHT in RTL */}
-          <h4 className="text-[10px] font-bold text-gray-800 leading-tight">
-            {isRTL ? 'العاملون حسب الإمارة' : 'Workers by Emirate'}
-          </h4>
+      {data.sectionVisibility?.emiratesDistribution !== false ? (
+        <div className="mb-2 pb-2 border-b border-gray-200">
+          {/* Section Title */}
+          <div className="flex items-center justify-between mb-1 px-0.5">
+            {/* Child 1: Section Title on the RIGHT in RTL */}
+            <h4 className="text-[10px] font-bold text-gray-800 leading-tight">
+              {isRTL ? 'العاملون حسب الإمارة' : 'Workers by Emirate'}
+            </h4>
 
-          {/* Child 2: Metadata on the LEFT in RTL */}
-          <div className="flex items-center gap-1.5 text-[7px] font-mono text-gray-400">
-            <span>{combinedEmirates.length} {isRTL ? 'إمارات' : 'Emirates'}</span>
-            <span>•</span>
-            <span>{isRTL ? 'مقياس مستقل لكل جهة' : 'Independent scale'}</span>
+            {/* Child 2: Metadata on the LEFT in RTL */}
+            <div className="flex items-center gap-1.5 text-[7px] font-mono text-gray-400">
+              <span>{combinedEmirates.length} {isRTL ? 'إمارات' : 'Emirates'}</span>
+              <span>•</span>
+              <span>{isRTL ? 'مقياس مستقل لكل جهة' : 'Independent scale'}</span>
+            </div>
           </div>
-        </div>
 
         {/* Sub-header matching row layout */}
         <div className="flex items-center gap-2 text-[7.5px] font-bold text-gray-500 mb-0.5 px-0.5">
@@ -318,10 +319,12 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
           })}
         </div>
       </div>
+      ) : null}
 
       {/* ========================================================= */}
       {/* SECTION 2: SECTORS DUAL COLUMN (MOHRE & ICP) - 11 SECTORS */}
       {/* ========================================================= */}
+      {data.sectionVisibility?.sectorsChart !== false ? (
       <div className="grid grid-cols-2 gap-3 mb-2 pb-2 border-b border-gray-200">
         {/* MOHRE Workforce (Right in RTL, Left in LTR) */}
         <div className="flex flex-col border-e border-gray-100 pe-2">
@@ -431,10 +434,12 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
           </div>
         </div>
       </div>
+      ) : null}
 
       {/* ========================================================= */}
       {/* SECTION 3: MEDIAN SALARY COMPARISON (5 KEY SECTORS)        */}
       {/* ========================================================= */}
+      {data.sectionVisibility?.salaryChart !== false ? (
       <div>
         {/* Section Title */}
         <div className="flex items-center justify-between mb-1.5 px-0.5">
@@ -568,6 +573,7 @@ export const WorkforceWageAnalytics: React.FC<WorkforceWageAnalyticsProps> = ({
           </div>
         </div>
       </div>
+      ) : null}
     </div>
   );
 };

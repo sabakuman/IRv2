@@ -7,7 +7,7 @@ import { MockService } from '../services/mockService';
 import { Button, Card, Input } from '../components/ui/LayoutComponents';
 import { PendingMattersEditor } from '../components/PendingMattersEditor';
 import { AttentionNotesEditor } from '../components/AttentionNotesEditor';
-import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink, Mail, Layers, Eye, Check, ArrowUpDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Globe, Users, FileText, CheckCircle, Plane, Building, TrendingUp, Sparkles, Loader2, RefreshCw, Link as LinkIcon, Search, Hammer, GraduationCap, Briefcase, Plus, X, Banknote, UserPlus, BarChart2, MessageSquare, Newspaper, Calendar, UploadCloud, ShieldAlert, BookOpen, Bold, Italic, List, ExternalLink, Mail, Layers, Eye, Check, ArrowUpDown, SlidersHorizontal, ChevronDown, ChevronUp, Target, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 
@@ -86,6 +86,27 @@ export default function Wizard() {
   const [lastSavedMessage, setLastSavedMessage] = useState<string | null>(null);
   const [data, setData] = useState<ReportData>(EMPTY_REPORT_DATA);
   const [reportTitle, setReportTitle] = useState('');
+  const [showVisibilityManager, setShowVisibilityManager] = useState(false);
+  const [visibilityTab, setVisibilityTab] = useState<'pages' | 'sections'>('sections');
+
+  const getCountryArabicName = (country: string = ''): string => {
+    const c = country.trim().toLowerCase();
+    if (!c) return isRTL ? 'الدولة الشريكة' : 'Partner Country';
+    if (c.includes('india') || c.includes('هند')) return 'جمهورية الهند';
+    if (c.includes('philippine') || c.includes('فلبين')) return 'جمهورية الفلبين';
+    if (c.includes('pakistan') || c.includes('باكستان')) return 'جمهورية باكستان الإسلامية';
+    if (c.includes('bangladesh') || c.includes('بنغلاديش')) return 'جمهورية بنغلاديش الشعبية';
+    if (c.includes('nepal') || c.includes('نيبال')) return 'جمهورية نيبال الديمقراطية الاتحادية';
+    if (c.includes('sri lanka') || c.includes('سريلانكا')) return 'جمهورية سريلانكا الديمقراطية الاشتراكية';
+    if (c.includes('egypt') || c.includes('مصر')) return 'جمهورية مصر العربية';
+    if (c.includes('jordan') || c.includes('أردن')) return 'المملكة الأردنية الهاشمية';
+    if (c.includes('indonesia') || c.includes('إندونيسيا')) return 'جمهورية إندونيسيا';
+    if (c.includes('vietnam') || c.includes('فيتنام')) return 'جمهورية فيتنام الاشتراكية';
+    if (c.includes('ethiopia') || c.includes('إثيوبيا')) return 'جمهورية إثيوبيا الفيدرالية';
+    if (c.includes('kenya') || c.includes('كينيا')) return 'جمهورية كينيا';
+    if (c.includes('uganda') || c.includes('أوغندا')) return 'جمهورية أوغندا';
+    return country;
+  };
 
   const broadcastSync = (reportId: string, updatedReport?: Report) => {
     try {
@@ -590,13 +611,15 @@ export default function Wizard() {
             className="sr-only peer"
             checked={isVisible}
             onChange={(e) => {
-              setData({
+              const updated = {
                 ...data,
                 sectionVisibility: {
                   ...(data.sectionVisibility || {}),
                   [sectionKey]: e.target.checked
                 }
-              });
+              };
+              setData(updated);
+              saveSilently(updated, isRTL ? `تم تحديث وحفظ حالة القسم "${label}" في التقرير` : `Section "${label}" visibility updated`);
             }}
           />
           <div className="w-10 h-5.5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-primary"></div>
@@ -613,17 +636,291 @@ export default function Wizard() {
       case 0:
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-             <SectionVisibilityToggle 
-               sectionKey="profileEconomy" 
-               label={isRTL ? 'تضمين صفحة النبذة التعريفية وسوق العمل (الصفحة 3)' : 'Include Profile & Economy Page (Page 3)'}
-               description={isRTL ? 'التحكم في ظهور صفحة النبذة التعريفية في التقرير المطبوع / PDF' : 'Toggle whether Page 3 is generated in print and PDF views'}
-             />
+             {/* REPORT SECTIONS & PAGES VISIBILITY CONTROL CENTER */}
+             <div className="bg-gradient-to-r from-slate-50 to-blue-50/40 dark:from-gray-900/60 dark:to-gray-800/40 border border-blue-200/60 dark:border-blue-900/40 rounded-2xl p-5 shadow-sm mb-6">
+               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-blue-200/40 dark:border-blue-800/40">
+                 <div className="flex items-center gap-3">
+                   <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm">
+                     <SlidersHorizontal size={18} />
+                   </div>
+                   <div>
+                     <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                       {isRTL ? 'إدارة ظهور أقسام وصفحات التقرير (إظهار / استبعاد)' : 'Report Pages & Sections Visibility Control'}
+                     </h4>
+                     <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                       {isRTL 
+                         ? 'تحكّم في استبعاد الصفحات الكاملة، أو إخفاء أقسام معينة مع بقاء مكانها شاغراً دون التأثير على التنسيق والمسافات'
+                         : 'Control full pages, or hide specific sections while preserving layout and spacing as empty placeholders'}
+                     </p>
+                   </div>
+                 </div>
+                 <button
+                   type="button"
+                   onClick={() => setShowVisibilityManager(!showVisibilityManager)}
+                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60 text-primary shadow-2xs transition-all self-start sm:self-auto"
+                 >
+                   <span>{showVisibilityManager ? (isRTL ? 'طي اللوحة' : 'Collapse') : (isRTL ? 'تخصيص الأقسام' : 'Configure')}</span>
+                   {showVisibilityManager ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                 </button>
+               </div>
+
+               {showVisibilityManager && (
+                 <div className="mt-4 pt-2 space-y-4 animate-in fade-in duration-200">
+                   {/* Tabs for Pages vs Sub-sections */}
+                   <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                     <button
+                       type="button"
+                       onClick={() => setVisibilityTab('sections')}
+                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${visibilityTab === 'sections' ? 'bg-primary text-white shadow-2xs' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                     >
+                       <Layers size={14} />
+                       {isRTL ? 'الأقسام الداخلية (مع الحفاظ على المساحات الشاغرة)' : 'Sub-Sections (Preserve Empty Space)'}
+                     </button>
+                     <button
+                       type="button"
+                       onClick={() => setVisibilityTab('pages')}
+                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${visibilityTab === 'pages' ? 'bg-primary text-white shadow-2xs' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                     >
+                       <FileText size={14} />
+                       {isRTL ? 'صفحات التقرير الكاملة' : 'Entire Pages'}
+                     </button>
+                   </div>
+
+                   {visibilityTab === 'sections' ? (
+                     <div className="space-y-4">
+                       {/* Executive Brief Sub-sections */}
+                       <div className="bg-white/90 dark:bg-gray-800/80 p-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shadow-2xs">
+                         <h5 className="text-xs font-bold text-primary uppercase tracking-wider mb-2.5">
+                           {isRTL ? 'صفحة الإحاطة التنفيذية' : 'Executive Brief Page'}
+                         </h5>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                           <SectionVisibilityToggle 
+                             sectionKey="executiveBriefPoints" 
+                             label={isRTL ? 'أهم الرسائل التي يجب التركيز عليها' : 'Points to Focus On'}
+                             description={isRTL ? 'قسم النقاط والرسائل الاستراتيجية في الإحاطة التنفيذية' : 'Key focal points in executive brief'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="executiveBriefLastMeeting" 
+                             label={isRTL ? 'آخر لقاء رسمي' : 'Last Official Meeting'}
+                             description={isRTL ? 'تفاصيل آخر اجتماع أو لجنة مشتركة' : 'Last meeting details & outcomes'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="executiveBriefLastCorrespondence" 
+                             label={isRTL ? 'آخر مراسلة رسمية' : 'Last Correspondence'}
+                             description={isRTL ? 'المراسلة الصادرة أو الواردة ومتابعة حالتها' : 'Latest correspondence item & status'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="executiveBriefInsights" 
+                             label={isRTL ? 'مؤشرات الإحاطة السريعة' : 'Brief Quick Insights'}
+                             description={isRTL ? 'البطاقات والمؤشرات التلخيصية' : 'Summary KPI insight cards'}
+                           />
+                         </div>
+                       </div>
+
+                       {/* Profile & Economy Sub-sections */}
+                       <div className="bg-white/90 dark:bg-gray-800/80 p-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shadow-2xs">
+                         <h5 className="text-xs font-bold text-primary uppercase tracking-wider mb-2.5">
+                           {isRTL ? 'صفحة النبذة التعريفية وسوق العمل (الصفحة 3)' : 'Profile & Economy Page (Page 3)'}
+                         </h5>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                           <SectionVisibilityToggle 
+                             sectionKey="demographics" 
+                             label={isRTL ? 'البيانات الديموغرافية والأساسية' : 'Demographics & Basics'}
+                             description={isRTL ? 'العاصمة، السكان، اللغة، العملة، ومؤشر التنمية' : 'Capital, population, currency, HDI'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="economicLandscape" 
+                             label={isRTL ? 'المشهد الاقتصادي ومعدلات التضخم' : 'Economic Landscape & Inflation'}
+                             description={isRTL ? 'الناتج المحلي، التضخم، والبطالة' : 'GDP, inflation rate, unemployment'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="bilateralTrade" 
+                             label={isRTL ? 'التبادل التجاري والتحويلات المالية' : 'Bilateral Trade & Remittances'}
+                             description={isRTL ? 'الصادرات والواردات وحجم التحويلات' : 'Exports, imports, and remittance flow'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="educationInsights" 
+                             label={isRTL ? 'مؤشرات التعليم وأبرز الجامعات' : 'Education Insights & Top Universities'}
+                             description={isRTL ? 'نسب القيد والتعليم الجامعي' : 'Enrollment rates and top universities'}
+                           />
+                         </div>
+                       </div>
+
+                       {/* UAE Workforce Sub-sections */}
+                       <div className="bg-white/90 dark:bg-gray-800/80 p-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shadow-2xs">
+                         <h5 className="text-xs font-bold text-primary uppercase tracking-wider mb-2.5">
+                           {isRTL ? 'صفحة سوق العمل الإماراتي (الصفحة 4)' : 'UAE Labour Market Page (Page 4)'}
+                         </h5>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                           <SectionVisibilityToggle 
+                             sectionKey="uaeWorkforceKpis" 
+                             label={isRTL ? 'مؤشرات القوى العاملة (MOHRE & ICP)' : 'UAE Workforce KPIs'}
+                             description={isRTL ? 'إجمالي العمالة والمقارنة بين الوزارة والهيئة' : 'Total workers, MOHRE and ICP metrics'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="insuranceExposures" 
+                             label={isRTL ? 'وثائق التأمين وحماية العمالة' : 'Insurance Exposures'}
+                             description={isRTL ? 'المبالغ المؤمنة ونسب التغطية' : 'Insured value & worker coverage'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="laborComplaints" 
+                             label={isRTL ? 'الشكاوى والنزاعات العمالية' : 'Labour Complaints'}
+                             description={isRTL ? 'إجمالي الشكاوى ومعدل التسوية الودية' : 'Total complaints and amicable resolution'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="threeYearTrend" 
+                             label={isRTL ? 'المسار التاريخي للعمالة (3 سنوات)' : '3-Year Workforce Trend'}
+                             description={isRTL ? 'رسم بياني يوضح تطور العمالة على مدى 3 أعوام' : '3-year historic employment chart'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="workforceByEmirate" 
+                             label={isRTL ? 'التوزيع الجغرافي حسب الإمارة' : 'Distribution by Emirate'}
+                             description={isRTL ? 'توزيع العمال على إمارات الدولة السبع' : 'Distribution across the 7 Emirates'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="workforceBySector" 
+                             label={isRTL ? 'التوزيع القطاعي للعمالة' : 'Distribution by Sector'}
+                             description={isRTL ? 'أبرز القطاعات التشغيلية' : 'Key employment sectors'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="salaryComparison" 
+                             label={isRTL ? 'مقارنة الأجور ومتوسط الرواتب' : 'Salary & Wage Comparison'}
+                             description={isRTL ? 'مقارنة رواتب العمالة الماهرة وغير الماهرة' : 'Skilled vs unskilled median salary table'}
+                           />
+                         </div>
+                       </div>
+
+                       {/* Partner Workforce Sub-sections */}
+                       <div className="bg-white/90 dark:bg-gray-800/80 p-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shadow-2xs">
+                         <h5 className="text-xs font-bold text-primary uppercase tracking-wider mb-2.5">
+                           {isRTL ? `صفحة القوى العاملة في ${data.country || 'الدولة الشريكة'} (الصفحة 5)` : 'Partner Workforce Page (Page 5)'}
+                         </h5>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                           <SectionVisibilityToggle 
+                             sectionKey="partnerWorkforceKpis" 
+                             label={isRTL ? 'إجمالي القوى العاملة والتوزيع الجنساني' : 'Workforce Total & Gender Distribution'}
+                             description={isRTL ? 'إجمالي قوة العمل ومشاركة الذكور والإناث' : 'Total workforce & gender participation'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="migrationDestinations" 
+                             label={isRTL ? 'وجهات الهجرة للعمالة' : 'Migration Destinations'}
+                             description={isRTL ? 'أبرز الدول المستقطبة للعمالة' : 'Top destinations for outbound workers'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="partnerSectors" 
+                             label={isRTL ? 'توزيع عمالة الدولة حسب القطاع' : 'Partner Workers by Sector'}
+                             description={isRTL ? 'القطاعات المحلية في الدولة الشريكة' : 'Domestic sector distribution'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="availableSkills" 
+                             label={isRTL ? 'المهارات والكفاءات المتاحة' : 'Available Skills'}
+                             description={isRTL ? 'قائمة المهارات والمهن المعروضة' : 'Market skills and competencies'}
+                           />
+                         </div>
+                       </div>
+
+                       {/* Delegations Sub-sections */}
+                       <div className="bg-white/90 dark:bg-gray-800/80 p-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shadow-2xs">
+                         <h5 className="text-xs font-bold text-primary uppercase tracking-wider mb-2.5">
+                           {isRTL ? 'صفحة الوفود الرسمية' : 'Official Delegations Page'}
+                         </h5>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                           <SectionVisibilityToggle 
+                             sectionKey="uaeDelegation" 
+                             label={isRTL ? 'وفد دولة الإمارات' : 'UAE Delegation'}
+                             description={isRTL ? 'أعضاء وفد دولة الإمارات وتفاصيلهم' : 'UAE delegates profiles and bios'}
+                           />
+                           <SectionVisibilityToggle 
+                             sectionKey="partnerDelegation" 
+                             label={isRTL ? `وفد ${data.country || 'الدولة الشريكة'}` : 'Partner Delegation'}
+                             description={isRTL ? 'أعضاء وفد الدولة الشريكة وبيانات اللقاءات السابقة' : 'Partner delegates & past meeting history'}
+                           />
+                         </div>
+                       </div>
+                     </div>
+                   ) : (
+                     /* Entire Pages Toggles */
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                       <SectionVisibilityToggle 
+                         sectionKey="coverPage" 
+                         label={isRTL ? 'صفحة الغلاف الرئيسي' : 'Main Cover Page'}
+                         description={isRTL ? 'صفحة الغلاف الأولى وعنوان التقرير' : 'First page cover'}
+                       />
+                       <SectionVisibilityToggle 
+                         sectionKey="executiveBriefPage" 
+                         label={isRTL ? 'صفحة الإحاطة التنفيذية' : 'Executive Brief Page'}
+                         description={isRTL ? 'صفحة الإحاطة التنفيذية والرسائل الرئيسية' : 'Executive brief focal messages'}
+                       />
+                       <SectionVisibilityToggle 
+                         sectionKey="profileEconomy" 
+                         label={isRTL ? 'صفحة النبذة التعريفية وسوق العمل (الصفحة 3)' : 'Profile & Economy Page (Page 3)'}
+                         description={isRTL ? 'الملف التعريفي والاقتصادي العام للدولة' : 'Country general profile & trade'}
+                       />
+                       <SectionVisibilityToggle 
+                         sectionKey="uaeWorkforce" 
+                         label={isRTL ? 'صفحة سوق العمل الإماراتي (الصفحة 4)' : 'UAE Labour Market Page (Page 4)'}
+                         description={isRTL ? 'إحصائيات عمالة الدولة في سوق عمل الإمارات' : 'Workforce in UAE statistics'}
+                       />
+                       <SectionVisibilityToggle 
+                         sectionKey="partnerWorkforce" 
+                         label={isRTL ? `صفحة القوى العاملة في ${data.country || 'الدولة الشريكة'} (الصفحة 5)` : 'Partner Workforce Page (Page 5)'}
+                         description={isRTL ? 'سوق العمل المحلي للدولة الشريكة' : 'Partner domestic labour market'}
+                       />
+                       <SectionVisibilityToggle 
+                         sectionKey="interactions" 
+                         label={isRTL ? 'صفحات سجل اللقاءات والمراسلات' : 'Interaction History Pages'}
+                         description={isRTL ? 'مواضيع ملخص العلاقة والمراسلات الرسمية' : 'Relationship summary topics'}
+                       />
+                       <SectionVisibilityToggle 
+                         sectionKey="discussionPoints" 
+                         label={isRTL ? 'صفحات محاور النقاش' : 'Discussion Points Pages'}
+                         description={isRTL ? 'أبرز نقاط ومحاور المباحثات الثنائية' : 'Bilateral discussion points'}
+                       />
+                       <SectionVisibilityToggle 
+                         sectionKey="previousUpdates" 
+                         label={isRTL ? 'صفحات التحديثات السابقة' : 'Previous Updates Pages'}
+                         description={isRTL ? 'التحديثات والقرارات الصادرة سابقاً' : 'Prior agreements and updates'}
+                       />
+                       <SectionVisibilityToggle 
+                         sectionKey="agreements" 
+                         label={isRTL ? 'صفحات الاتفاقيات ومذكرات التفاهم' : 'Bilateral Agreements Pages'}
+                         description={isRTL ? 'قائمة الاتفاقيات ومذكرات التفاهم الثنائية' : 'Formal bilateral agreements and MoUs'}
+                       />
+                       <SectionVisibilityToggle 
+                         sectionKey="delegation" 
+                         label={isRTL ? 'صفحات الوفود الرسمية' : 'Delegations Pages'}
+                         description={isRTL ? 'بيانات أعضاء الوفود الرسمية' : 'Official delegation members'}
+                       />
+                     </div>
+                   )}
+                 </div>
+               )}
+             </div>
 
              <div className="border-b dark:border-gray-700 pb-4 mb-4">
                <h3 className="text-lg font-serif font-bold text-primary flex items-center gap-2 mb-2"><FileText size={20} /> {t('reportDetails')}</h3>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <Input label={t('reportTitle')} value={reportTitle} onChange={e => setReportTitle(e.target.value)} />
                  <Input label={t('reportDate')} type="date" value={data.reportDate} onChange={e => setData({...data, reportDate: e.target.value})} />
+               </div>
+               {/* Meeting Goal (هدف اللقاء) - 1 or 2 lines section for Page 1 Cover */}
+               <div className="mt-4">
+                 <div className="flex items-center justify-between mb-1.5">
+                   <label className="text-sm font-semibold text-foreground/80 dark:text-gray-300 flex items-center gap-2">
+                     <Target size={16} className="text-primary" />
+                     <span>{isRTL ? 'هدف اللقاء (يظهر في غلاف الصفحة الأولى)' : 'Meeting Goal (Features on Page 1 Cover)'}</span>
+                   </label>
+                   <span className="text-[11px] text-gray-400">
+                     {isRTL ? 'سطر أو سطرين للهدف الاستراتيجي' : '1-2 lines for meeting objective'}
+                   </span>
+                 </div>
+                 <textarea
+                   rows={2}
+                   className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm leading-relaxed"
+                   placeholder={isRTL ? 'مثال: تعزيز التعاون الثنائي في حوكمة استقدام العمالة الماهرة ومناقشة مسودة مذكرة التفاهم وتفعيل آليات الربط الرقمي والتحقق المسبق من المهارات.' : 'e.g. Strengthening bilateral coordination on skilled labor mobility, reviewing the draft MoU, and advancing electronic skill verification.'}
+                   value={data.meetingGoal || ''}
+                   onChange={e => setData({ ...data, meetingGoal: e.target.value })}
+                 />
                </div>
              </div>
 
@@ -716,12 +1013,12 @@ export default function Wizard() {
               <Input label={t('unemploymentRate')} value={data.unemploymentRate || ''} onChange={e => setData({...data, unemploymentRate: e.target.value})} placeholder="e.g. 5.2%" />
             </div>
 
-            {/* Executive Brief (Page 2) Comprehensive Controls */}
+            {/* Executive Brief (Page 2) Focused Controls */}
             <div className="mt-8 pt-6 border-t dark:border-gray-700 space-y-6">
               <div className="bg-primary/5 border-2 border-primary/20 rounded-2xl p-5 shadow-xs">
-                <div className="flex items-center justify-between mb-3 border-b border-primary/10 pb-3">
+                <div className="flex items-center justify-between mb-4 border-b border-primary/10 pb-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold shadow-2xs">
                       <FileText size={18} />
                     </div>
                     <div>
@@ -729,366 +1026,432 @@ export default function Wizard() {
                         {isRTL ? 'إعدادات وبيانات الملخص التنفيذي (Executive Brief)' : 'Executive Brief Data & Controls'}
                       </h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {isRTL ? 'تخصيص البيانات التي تظهر مباشرة في الصفحة 2 من التقرير' : 'Customize the fields featured directly on Page 2'}
+                        {isRTL ? 'تخصيص أهم الرسائل التي يجب التركيز عليها وآخر اللقاءات المتبادلة في الصفحة 2' : 'Manage key focus messages and last bilateral meetings for Page 2'}
                       </p>
                     </div>
                   </div>
-                  <span className="text-[11px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md">
-                    {isRTL ? 'الصفحة 2' : 'Page 2'}
-                  </span>
-                </div>
-
-                {/* 1. Relationship One-Liner / Summary */}
-                <div className="mb-5">
-                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">
-                    {isRTL ? 'ملخص مسار العلاقات الثنائية (جملة واحدة استراتيجية)' : 'Relationship Overview (Strategic One-Liner)'}
-                  </label>
-                  <textarea
-                    className="w-full p-2.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    rows={2}
-                    placeholder={isRTL ? 'مثال: شراكة عمالية استراتيجية تضم أكثر من 150 ألف عامل ومؤطرة باتفاقيات ثنائية لتعزيز الاستقرار وحماية الحقوق...' : 'e.g. A strategic labour partnership covering over 150k workers anchored by active bilateral agreements...'}
-                    value={data.summary || ''}
-                    onChange={e => setData({ ...data, summary: e.target.value })}
-                  />
-                </div>
-
-                {/* 2. MOU Signed with MOHRE (User requested custom block) */}
-                <div className="bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-5 shadow-2xs">
-                  <h5 className="text-xs font-bold text-primary mb-3 flex items-center gap-2">
-                    <FileText size={15} />
-                    {isRTL ? 'هل توجد مذكرة تفاهم موقعة مع وزارة الموارد البشرية و التوطين (MOHRE)؟' : 'MoU Signed with MOHRE?'}
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'حالة التوقيع' : 'Signed Status'}
-                      </label>
-                      <select
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        value={data.mouSignedWithMohre?.signed === true || data.mouSignedWithMohre?.signed === 'yes' ? 'yes' : (data.mouSignedWithMohre?.signed === false || data.mouSignedWithMohre?.signed === 'no' ? 'no' : '')}
-                        onChange={e => {
-                          const updated = {
-                            ...data,
-                            mouSignedWithMohre: {
-                              ...(data.mouSignedWithMohre || {}),
-                              signed: e.target.value === 'yes' ? 'yes' : (e.target.value === 'no' ? 'no' : undefined)
-                            }
-                          };
-                          setData(updated);
-                          saveSilently(updated, isRTL ? 'تم حفظ حالة مذكرة التفاهم في التقرير' : 'MOU status saved');
-                        }}
-                      >
-                        <option value="">{isRTL ? '— غير محدد (تلقائي) —' : '— Auto-detect —'}</option>
-                        <option value="yes">{isRTL ? 'نعم (موقعة)' : 'Yes (Signed)'}</option>
-                        <option value="no">{isRTL ? 'لا (غير موقعة)' : 'No (Not Signed)'}</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'تاريخ التوقيع' : 'Date of Signing'}
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        placeholder={isRTL ? 'مثال: 2018 أو 14/05/2018' : 'e.g. 2018 or 14/05/2018'}
-                        value={data.mouSignedWithMohre?.signedDate || ''}
-                        onChange={e => setData({
-                          ...data,
-                          mouSignedWithMohre: {
-                            ...(data.mouSignedWithMohre || {}),
-                            signedDate: e.target.value
-                          }
-                        })}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'نوع المذكرة' : 'MoU Type'}
-                      </label>
-                      <select
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        value={data.mouSignedWithMohre?.type || ''}
-                        onChange={e => setData({
-                          ...data,
-                          mouSignedWithMohre: {
-                            ...(data.mouSignedWithMohre || {}),
-                            type: e.target.value
-                          }
-                        })}
-                      >
-                        <option value="">{isRTL ? '— اختر النوع —' : '— Select Type —'}</option>
-                        <option value="domestic">{isRTL ? 'عمالة مساعدة (Domestic)' : 'Domestic Labour'}</option>
-                        <option value="general">{isRTL ? 'عمالة عامة (General)' : 'General Labour'}</option>
-                        <option value="both">{isRTL ? 'كلاهما (عامة ومساعدة)' : 'Both (General & Domestic)'}</option>
-                      </select>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSave('draft', false, data, false, isRTL ? 'تم حفظ بيانات الملخص التنفيذي في التقرير' : 'Executive brief saved');
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold bg-primary text-white hover:bg-primary-dark rounded-lg shadow-2xs transition-all"
+                    >
+                      <Save size={13} />
+                      {isRTL ? 'حفظ التعديلات' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSave('draft', true, data, false);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-lg transition-all"
+                    >
+                      <ExternalLink size={13} />
+                      {isRTL ? 'معاينة في التقرير ↗' : 'View in Report ↗'}
+                    </button>
                   </div>
                 </div>
 
-                {/* 3. Last Meeting (اللقاء الأخير) */}
+                {/* 1. FOCUS POINTS ("أهم الرسائل التي يجب التركيز عليها") */}
                 <div className="bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-5 shadow-2xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
-                    <h5 className="text-xs font-bold text-primary flex items-center gap-2">
-                      <Calendar size={15} />
-                      {isRTL ? 'اللقاء الأخير' : 'Last Meeting'}
-                    </h5>
+                  <div className="flex items-center justify-between gap-3 mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                        <Sparkles size={15} />
+                      </div>
+                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">
+                        {isRTL ? 'أهم الرسائل التي يجب التركيز عليها' : 'Key Messages & Points to Focus On'}
+                      </h5>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 font-medium cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded text-primary focus:ring-primary h-3.5 w-3.5"
+                          checked={data.sectionVisibility?.briefPointsToFocus !== false}
+                          onChange={e => {
+                            const updated = {
+                              ...data,
+                              sectionVisibility: {
+                                ...(data.sectionVisibility || {}),
+                                briefPointsToFocus: e.target.checked
+                              }
+                            };
+                            setData(updated);
+                            saveSilently(updated, isRTL ? (e.target.checked ? 'تم إظهار قسم أهم الرسائل' : 'تم استبعاد قسم أهم الرسائل من المعاينة') : 'Focus points visibility updated');
+                          }}
+                        />
+                        <span>{isRTL ? 'إظهار في التقرير' : 'Show in report'}</span>
+                      </label>
                       <button
                         type="button"
-                        onClick={async () => {
-                          await handleSave('draft', false, data, false, isRTL ? 'تم حفظ وتحديث بيانات اللقاء الأخير في التقرير فوراً' : 'Last meeting details saved to report');
+                        onClick={() => {
+                          const defaultList = isRTL ? [
+                            'التأكيد على عمق العلاقات الثنائية والشراكة الاستراتيجية في تنظيم وحوكمة سوق العمل.',
+                            'متابعة مخرجات وقرارات اللجان الفنية والوزارية المشتركة، وتفعيل قنوات التنسيق المباشر.',
+                            'تعزيز منظومة حماية حقوق العمالة عبر التوعية الاستباقية، ومنظومة التأمين ضد التعطل، وحماية الأجور (WPS).',
+                            'تطوير التعاون الرقمي والربط الإلكتروني للتحقق من المهارات وتبسيط إجراءات الاستقدام النظامي.'
+                          ] : [
+                            'Emphasize strategic bilateral partnership and collaborative governance in labor mobility.',
+                            'Follow up on outcomes of Joint Committees (JCM) and maintain active inter-ministerial coordination.',
+                            'Strengthen worker welfare protocols through proactive awareness, Wage Protection System (WPS), and unemployment insurance.',
+                            'Advance digital integration for skill verification and streamlined, transparent recruitment procedures.'
+                          ];
+                          const updated = { ...data, pointsToFocusOn: defaultList };
+                          setData(updated);
+                          saveSilently(updated, isRTL ? 'تمت استعادة الرسائل المقترحة الافتراضية' : 'Default points restored');
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold bg-primary text-white hover:bg-primary-dark rounded-lg shadow-2xs transition-all"
-                        title={isRTL ? 'حفظ التعديلات في التقرير' : 'Save changes to report'}
+                        className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-semibold"
+                        title={isRTL ? 'استعادة النقاط الافتراضية' : 'Reset to defaults'}
                       >
-                        <Save size={13} />
-                        {isRTL ? 'حفظ اللقاء في التقرير' : 'Save Meeting to Report'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await handleSave('draft', true, data, false);
-                        }}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-lg transition-all"
-                        title={isRTL ? 'معاينة في التقرير' : 'View in Report'}
-                      >
-                        <ExternalLink size={13} />
-                        {isRTL ? 'معاينة في التقرير ↗' : 'View in Report ↗'}
+                        <RefreshCw size={11} />
+                        <span>{isRTL ? 'استعادة الاقتراحات' : 'Reset Defaults'}</span>
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'تاريخ اللقاء' : 'Meeting Date'}
-                      </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    {isRTL 
+                      ? 'الرسائل والمحاور الجوهرية المعدة للإحاطة بالقيادة والوفد للتأكيد عليها خلال المباحثات:' 
+                      : 'Key strategic messages and talking points prepared for the delegation during discussions:'}
+                  </p>
+
+                  {/* List of Points */}
+                  <div className="space-y-2.5">
+                    {((data.pointsToFocusOn && data.pointsToFocusOn.length > 0)
+                      ? data.pointsToFocusOn
+                      : (isRTL ? [
+                          'التأكيد على عمق العلاقات الثنائية والشراكة الاستراتيجية في تنظيم وحوكمة سوق العمل.',
+                          'متابعة مخرجات وقرارات اللجان الفنية والوزارية المشتركة، وتفعيل قنوات التنسيق المباشر.',
+                          'تعزيز منظومة حماية حقوق العمالة عبر التوعية الاستباقية، ومنظومة التأمين ضد التعطل، وحماية الأجور (WPS).',
+                          'تطوير التعاون الرقمي والربط الإلكتروني للتحقق من المهارات وتبسيط إجراءات الاستقدام النظامي.'
+                        ] : [
+                          'Emphasize strategic bilateral partnership and collaborative governance in labor mobility.',
+                          'Follow up on outcomes of Joint Committees (JCM) and maintain active inter-ministerial coordination.',
+                          'Strengthen worker welfare protocols through proactive awareness, Wage Protection System (WPS), and unemployment insurance.',
+                          'Advance digital integration for skill verification and streamlined, transparent recruitment procedures.'
+                        ])
+                    ).map((point, idx, arr) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          className="flex-1 px-3 py-2 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                          value={point}
+                          placeholder={isRTL ? 'أدخل نقطة أو رسالة رئيسية...' : 'Enter a focus point...'}
+                          onChange={e => {
+                            const newPoints = [...arr];
+                            newPoints[idx] = e.target.value;
+                            setData(prev => ({ ...prev, pointsToFocusOn: newPoints }));
+                          }}
+                          onBlur={() => {
+                            saveSilently(data, isRTL ? 'تم حفظ رسائل التركيز' : 'Focus points saved');
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPoints = arr.filter((_, i) => i !== idx);
+                            const updated = { ...data, pointsToFocusOn: newPoints };
+                            setData(updated);
+                            saveSilently(updated, isRTL ? 'تم حذف البند' : 'Point removed');
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors shrink-0"
+                          title={isRTL ? 'حذف هذا البند' : 'Delete this point'}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = data.pointsToFocusOn && data.pointsToFocusOn.length > 0
+                        ? [...data.pointsToFocusOn]
+                        : (isRTL ? [
+                            'التأكيد على عمق العلاقات الثنائية والشراكة الاستراتيجية في تنظيم وحوكمة سوق العمل.',
+                            'متابعة مخرجات وقرارات اللجان الفنية والوزارية المشتركة، وتفعيل قنوات التنسيق المباشر.',
+                            'تعزيز منظومة حماية حقوق العمالة عبر التوعية الاستباقية، ومنظومة التأمين ضد التعطل، وحماية الأجور (WPS).',
+                            'تطوير التعاون الرقمي والربط الإلكتروني للتحقق من المهارات وتبسيط إجراءات الاستقدام النظامي.'
+                          ] : [
+                            'Emphasize strategic bilateral partnership and collaborative governance in labor mobility.',
+                            'Follow up on outcomes of Joint Committees (JCM) and maintain active inter-ministerial coordination.',
+                            'Strengthen worker welfare protocols through proactive awareness, Wage Protection System (WPS), and unemployment insurance.',
+                            'Advance digital integration for skill verification and streamlined, transparent recruitment procedures.'
+                          ]);
+                      current.push('');
+                      setData(prev => ({ ...prev, pointsToFocusOn: current }));
+                    }}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
+                  >
+                    <Plus size={13} />
+                    <span>{isRTL ? 'إضافة رسالة / نقطة جديدة' : 'Add Point to Focus On'}</span>
+                  </button>
+                </div>
+
+                {/* 2. LAST MEETINGS ("آخر اللقاءات والاجتماعات مع X Country") */}
+                <div className="bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                        <Calendar size={15} />
+                      </div>
+                      <h5 className="text-sm font-bold text-gray-900 dark:text-white">
+                        {isRTL 
+                          ? `آخر اللقاءات والاجتماعات مع ${getCountryArabicName(data.country)}` 
+                          : `Last meetings with ${data.country || 'Partner Country'}`}
+                      </h5>
+                    </div>
+
+                    <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 font-medium cursor-pointer">
                       <input
-                        type="date"
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        value={data.lastMeeting?.date || ''}
+                        type="checkbox"
+                        className="rounded text-primary focus:ring-primary h-3.5 w-3.5"
+                        checked={data.sectionVisibility?.briefLastMeetings !== false}
                         onChange={e => {
                           const updated = {
                             ...data,
-                            lastMeeting: {
-                              ...(data.lastMeeting || {}),
-                              date: e.target.value
+                            sectionVisibility: {
+                              ...(data.sectionVisibility || {}),
+                              briefLastMeetings: e.target.checked
                             }
                           };
                           setData(updated);
-                          saveSilently(updated, isRTL ? 'تم حفظ تاريخ اللقاء في التقرير' : 'Meeting date saved');
+                          saveSilently(updated, isRTL ? (e.target.checked ? 'تم إظهار قسم اللقاءات والاجتماعات' : 'تم استبعاد قسم اللقاءات والاجتماعات من المعاينة') : 'Meetings section visibility updated');
                         }}
                       />
+                      <span>{isRTL ? 'إظهار في التقرير' : 'Show in report'}</span>
+                    </label>
+                  </div>
+
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    {isRTL
+                      ? `بيانات اللقاءات الثنائية واللجان المشتركة السابقة والحديثة مع وفد ومسؤولي ${getCountryArabicName(data.country)}:`
+                      : `Details of past and recent bilateral meetings and joint committees with ${data.country || 'Partner Country'}:`}
+                  </p>
+
+                  {/* Highlighted Meeting (Latest Meeting) */}
+                  <div className="p-3.5 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-200 dark:border-gray-700 mb-4">
+                    <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-200 dark:border-gray-700">
+                      <span className="text-[11px] font-extrabold text-primary uppercase tracking-wider">
+                        {isRTL ? 'اللقاء الأخير المميز (Featured Latest Meeting)' : 'Featured Latest Meeting'}
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        {isRTL ? 'يبرز في ملخص الصفحة 2' : 'Highlights in Page 2 summary'}
+                      </span>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'نوع اللقاء' : 'Meeting Type'}
-                      </label>
-                      <select
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        value={data.lastMeeting?.type || ''}
-                        onChange={e => {
-                          const val = e.target.value;
-                          const updated = {
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-2.5">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
+                          {isRTL ? 'تاريخ اللقاء' : 'Meeting Date'}
+                        </label>
+                        <input
+                          type="date"
+                          className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
+                          value={data.lastMeeting?.date || ''}
+                          onChange={e => {
+                            const updated = {
+                              ...data,
+                              lastMeeting: {
+                                ...(data.lastMeeting || {}),
+                                date: e.target.value
+                              }
+                            };
+                            setData(updated);
+                            saveSilently(updated, isRTL ? 'تم حفظ تاريخ اللقاء الأخير' : 'Meeting date saved');
+                          }}
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
+                          {isRTL ? 'نوع اللقاء' : 'Meeting Type'}
+                        </label>
+                        <select
+                          className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
+                          value={data.lastMeeting?.type || ''}
+                          onChange={e => {
+                            const val = e.target.value;
+                            const updated = {
+                              ...data,
+                              lastMeeting: {
+                                ...(data.lastMeeting || {}),
+                                type: val
+                              }
+                            };
+                            setData(updated);
+                            saveSilently(updated, isRTL ? `تم حفظ نوع اللقاء: ${val}` : 'Meeting type saved');
+                          }}
+                        >
+                          <option value="">{isRTL ? '— اختر النوع —' : '— Select Type —'}</option>
+                          <option value="اللجنة المشتركة (JCM)">{isRTL ? 'اللجنة المشتركة (JCM)' : 'Joint Committee (JCM)'}</option>
+                          <option value="اللجنة الوزارية / الفنية (TCM)">{isRTL ? 'اللجنة الوزارية / الفنية (TCM)' : 'Ministerial / Technical (TCM)'}</option>
+                          <option value="اجتماع ثنائي">{isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'}</option>
+                          <option value="زيارة رسمية">{isRTL ? 'زيارة رسمية' : 'Official Visit'}</option>
+                          <option value="أخرى">{isRTL ? 'أخرى' : 'Other'}</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
+                          {isRTL ? 'مسمى اللقاء / الاجتماع' : 'Meeting Title'}
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
+                          placeholder={isRTL ? 'مثال: اجتماع الدورة الرابعة للجنة الفنية المشتركة' : 'e.g. 4th Joint Committee Session'}
+                          value={data.lastMeeting?.title || ''}
+                          onChange={e => setData({
                             ...data,
                             lastMeeting: {
                               ...(data.lastMeeting || {}),
-                              type: val
+                              title: e.target.value
                             }
-                          };
-                          setData(updated);
-                          saveSilently(updated, isRTL ? `تم حفظ نوع اللقاء "${val}" في التقرير فوراً` : `Meeting type "${val}" saved to report`);
-                        }}
-                      >
-                        <option value="">{isRTL ? '— اختر النوع —' : '— Select Type —'}</option>
-                        <option value="اللجنة المشتركة (JCM)">{isRTL ? 'اللجنة المشتركة (JCM)' : 'Joint Committee (JCM)'}</option>
-                        <option value="اللجنة الوزارية / الفنية (TCM)">{isRTL ? 'اللجنة الوزارية / الفنية (TCM)' : 'Ministerial / Technical (TCM)'}</option>
-                        <option value="اجتماع ثنائي">{isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting'}</option>
-                        <option value="أخرى">{isRTL ? 'أخرى' : 'Other'}</option>
-                      </select>
+                          })}
+                          onBlur={() => {
+                            saveSilently(data, isRTL ? 'تم حفظ مسمى اللقاء' : 'Meeting title saved');
+                          }}
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'مسمى اللقاء' : 'Meeting Title'}
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
+                          {isRTL ? 'موجز ما تم بحثه والاتفاق عليه' : 'Discussion & Outcomes Summary'}
+                        </label>
+                        <span className="text-[10px] text-gray-400">
+                          {(data.lastMeeting?.coverage || '').length}/160 {isRTL ? 'حرف' : 'chars'}
+                        </span>
+                      </div>
                       <input
                         type="text"
+                        maxLength={160}
                         className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        placeholder={isRTL ? 'مثال: اجتماع الدورة الرابعة للجنة الفنية المشتركة' : 'e.g. 4th Joint Committee Session'}
-                        value={data.lastMeeting?.title || ''}
+                        placeholder={isRTL ? 'موجز مختصر للمباحثات وأهم النتائج...' : 'Brief discussion summary and outcomes...'}
+                        value={data.lastMeeting?.coverage || ''}
                         onChange={e => setData({
                           ...data,
                           lastMeeting: {
                             ...(data.lastMeeting || {}),
-                            title: e.target.value
+                            coverage: e.target.value
                           }
                         })}
                         onBlur={() => {
-                          saveSilently(data, isRTL ? 'تم حفظ مسمى اللقاء في التقرير' : 'Meeting title saved');
+                          saveSilently(data, isRTL ? 'تم حفظ موجز اللقاء' : 'Meeting summary saved');
                         }}
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'موجز ما تم بحثه' : 'Coverage Summary'}
-                      </label>
-                      <span className="text-[10px] text-gray-400">
-                        {(data.lastMeeting?.coverage || '').length}/130 {isRTL ? 'حرف' : 'chars'}
+                  {/* Additional Past Meetings List (Synced with recentInteractions that render on Page 2) */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                        {isRTL ? 'جدول سجل اللقاءات والاجتماعات السابقة' : 'Past Meetings & Sessions Log'}
                       </span>
-                    </div>
-                    <input
-                      type="text"
-                      maxLength={130}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                      placeholder={isRTL ? 'موجز مختصر للمباحثات (بحد أقصى 130 حرف حتى لا يتجاوز الحجم المخصص)...' : 'Brief discussion summary (max 130 chars)...'}
-                      value={data.lastMeeting?.coverage || ''}
-                      onChange={e => setData({
-                        ...data,
-                        lastMeeting: {
-                          ...(data.lastMeeting || {}),
-                          coverage: e.target.value
-                        }
-                      })}
-                    />
-                  </div>
-                </div>
-
-                {/* 4. Last Correspondence (آخر مراسلة) */}
-                <div className="bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-5 shadow-2xs">
-                  <h5 className="text-xs font-bold text-primary mb-3 flex items-center gap-2">
-                    <Mail size={15} />
-                    {isRTL ? 'آخر مراسلة' : 'Last Correspondence'}
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'الاتجاه' : 'Direction'}
-                      </label>
-                      <select
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        value={data.lastCorrespondence?.direction || 'outgoing'}
-                        onChange={e => setData({
-                          ...data,
-                          lastCorrespondence: {
-                            ...(data.lastCorrespondence || {}),
-                            direction: e.target.value
-                          }
-                        })}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newMeeting = {
+                            id: uuidv4(),
+                            date: new Date().toISOString().split('T')[0],
+                            type: 'Meeting',
+                            meetingType: isRTL ? 'اجتماع ثنائي' : 'Bilateral Meeting',
+                            title: isRTL ? 'اجتماع ثنائي مشترك' : 'Joint Bilateral Meeting',
+                            category: 'MOHRE',
+                            details: ''
+                          };
+                          const current = [...(data.recentInteractions || [])];
+                          current.unshift(newMeeting);
+                          const updated = { ...data, recentInteractions: current };
+                          setData(updated);
+                          saveSilently(updated, isRTL ? 'تمت إضافة لقاء جديد إلى السجل' : 'Meeting added to log');
+                        }}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
                       >
-                        <option value="outgoing">{isRTL ? 'صادرة' : 'Outgoing'}</option>
-                        <option value="incoming">{isRTL ? 'واردة' : 'Incoming'}</option>
-                      </select>
+                        <Plus size={12} />
+                        <span>{isRTL ? 'إضافة لقاء إلى الجدول' : 'Add Meeting to Log'}</span>
+                      </button>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'الحالة' : 'Status'}
-                      </label>
-                      <select
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        value={data.lastCorrespondence?.status || 'awaiting_reply'}
-                        onChange={e => setData({
-                          ...data,
-                          lastCorrespondence: {
-                            ...(data.lastCorrespondence || {}),
-                            status: e.target.value
-                          }
-                        })}
-                      >
-                        <option value="awaiting_reply">{isRTL ? 'بانتظار الرد' : 'Awaiting Reply'}</option>
-                        <option value="actioned">{isRTL ? 'تم اتخاذ الإجراء' : 'Actioned'}</option>
-                        <option value="closed">{isRTL ? 'مغلقة' : 'Closed'}</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'التاريخ' : 'Date'}
-                      </label>
-                      <input
-                        type="date"
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        value={data.lastCorrespondence?.date || ''}
-                        onChange={e => setData({
-                          ...data,
-                          lastCorrespondence: {
-                            ...(data.lastCorrespondence || {}),
-                            date: e.target.value
-                          }
-                        })}
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'رقم القيد' : 'Reference Number'}
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                        placeholder="REF/MOHRE/2024/091"
-                        value={data.lastCorrespondence?.ref || ''}
-                        onChange={e => setData({
-                          ...data,
-                          lastCorrespondence: {
-                            ...(data.lastCorrespondence || {}),
-                            ref: e.target.value
-                          }
-                        })}
-                      />
+                    <div className="space-y-2">
+                      {(data.recentInteractions || [])
+                        .filter(item => {
+                          const t = (item.type || '').toLowerCase();
+                          return t === 'meeting' || t === 'visit' || t === 'session' || item.meetingType || t === '';
+                        })
+                        .map((item, idx) => (
+                          <div key={item.id || idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-2.5 bg-gray-50 dark:bg-gray-900/40 rounded-lg border border-gray-200 dark:border-gray-700 text-xs">
+                            <input
+                              type="date"
+                              className="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 w-32 shrink-0"
+                              value={item.date || ''}
+                              onChange={e => {
+                                const current = [...(data.recentInteractions || [])];
+                                const targetIdx = current.findIndex(m => (m.id === item.id) || (m === item));
+                                if (targetIdx !== -1) {
+                                  current[targetIdx] = { ...current[targetIdx], date: e.target.value };
+                                  setData({ ...data, recentInteractions: current });
+                                }
+                              }}
+                              onBlur={() => saveSilently(data, isRTL ? 'تم حفظ التعديل' : 'Saved')}
+                            />
+                            <input
+                              type="text"
+                              className="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 w-36 shrink-0"
+                              placeholder={isRTL ? 'نوع اللقاء' : 'Type'}
+                              value={item.meetingType || item.type || ''}
+                              onChange={e => {
+                                const current = [...(data.recentInteractions || [])];
+                                const targetIdx = current.findIndex(m => (m.id === item.id) || (m === item));
+                                if (targetIdx !== -1) {
+                                  current[targetIdx] = { ...current[targetIdx], meetingType: e.target.value, type: e.target.value };
+                                  setData({ ...data, recentInteractions: current });
+                                }
+                              }}
+                              onBlur={() => saveSilently(data, isRTL ? 'تم حفظ التعديل' : 'Saved')}
+                            />
+                            <input
+                              type="text"
+                              className="flex-1 px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 min-w-[140px]"
+                              placeholder={isRTL ? 'مسمى اللقاء وموجز المباحثات...' : 'Meeting title & summary...'}
+                              value={item.title || item.details || ''}
+                              onChange={e => {
+                                const current = [...(data.recentInteractions || [])];
+                                const targetIdx = current.findIndex(m => (m.id === item.id) || (m === item));
+                                if (targetIdx !== -1) {
+                                  current[targetIdx] = { ...current[targetIdx], title: e.target.value };
+                                  setData({ ...data, recentInteractions: current });
+                                }
+                              }}
+                              onBlur={() => saveSilently(data, isRTL ? 'تم حفظ التعديل' : 'Saved')}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = (data.recentInteractions || []).filter(m => (m.id ? m.id !== item.id : m !== item));
+                                const updated = { ...data, recentInteractions: current };
+                                setData(updated);
+                                saveSilently(updated, isRTL ? 'تم حذف اللقاء' : 'Meeting removed');
+                              }}
+                              className="p-1 text-gray-400 hover:text-rose-600 rounded shrink-0"
+                              title={isRTL ? 'حذف هذا اللقاء' : 'Delete'}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        ))}
                     </div>
                   </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                        {isRTL ? 'الموضوع' : 'Subject'}
-                      </label>
-                      <span className="text-[10px] text-gray-400">
-                        {(data.lastCorrespondence?.subject || '').length}/120 {isRTL ? 'حرف' : 'chars'}
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      maxLength={120}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary"
-                      placeholder={isRTL ? 'موضوع المراسلة (بحد أقصى 120 حرف حتى لا يتجاوز الحجم المخصص)...' : 'Subject of correspondence (max 120 chars)...'}
-                      value={data.lastCorrespondence?.subject || ''}
-                      onChange={e => setData({
-                        ...data,
-                        lastCorrespondence: {
-                          ...(data.lastCorrespondence || {}),
-                          subject: e.target.value
-                        }
-                      })}
-                    />
-                  </div>
-                </div>
-
-                {/* 5. Requires Attention (ملاحظات وتنبيهات تتطلب الانتباه قبل الاجتماع - Max 4 items) */}
-                <AttentionNotesEditor
-                  attentionNotes={data.attentionNotes || []}
-                  onChange={(notes) => setData(prev => ({ ...prev, attentionNotes: notes }))}
-                  isRTL={isRTL}
-                  reportData={data}
-                />
-
-                {/* 6. Pending Matters (المواضيع تحت المراجعة - Matters Under Review) */}
-                <div className="mt-5">
-                  <PendingMattersEditor
-                    pendingMatters={data.pendingMatters || []}
-                    onChange={(matters) => setData(prev => ({ ...prev, pendingMatters: matters }))}
-                    isRTL={isRTL}
-                    onAutoImport={handleAutoImportPendingMatters}
-                    showAutoImport={(data.previousAgreementsAndUpdates || []).length > 0 || (data.bilateralAgreements || []).some(a => a.status === 'pending')}
-                  />
                 </div>
               </div>
             </div>
@@ -1102,6 +1465,15 @@ export default function Wizard() {
                label={isRTL ? 'تضمين صفحة سوق العمل في دولة الإمارات (الصفحة 4)' : 'Include UAE Labour Market Page (Page 4)'}
                description={isRTL ? 'التحكم في ظهور صفحة سوق العمل الإماراتي وإحصائيات العمالة في التقرير' : 'Toggle whether Page 4 is generated in print and PDF views'}
              />
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+               <SectionVisibilityToggle sectionKey="uaeWorkforceKpis" label={isRTL ? 'مؤشرات القوى العاملة' : 'Workforce KPIs'} />
+               <SectionVisibilityToggle sectionKey="insuranceExposures" label={isRTL ? 'وثائق التأمين' : 'Insurance'} />
+               <SectionVisibilityToggle sectionKey="laborComplaints" label={isRTL ? 'الشكاوى العمالية' : 'Complaints'} />
+               <SectionVisibilityToggle sectionKey="threeYearTrend" label={isRTL ? 'المسار التاريخي (3 سنوات)' : '3-Year Trend'} />
+               <SectionVisibilityToggle sectionKey="workforceByEmirate" label={isRTL ? 'توزيع الإمارات' : 'Emirates'} />
+               <SectionVisibilityToggle sectionKey="workforceBySector" label={isRTL ? 'توزيع القطاعات' : 'Sectors'} />
+               <SectionVisibilityToggle sectionKey="salaryComparison" label={isRTL ? 'مقارنة الأجور' : 'Salaries'} />
+             </div>
               {/* Total Workforce Override Card */}
               <Card className="p-4 border border-gray-200 bg-gray-50/50 dark:bg-gray-900/30">
                 <h5 className="font-bold text-sm mb-1 text-amber-600 flex items-center gap-2 font-sans">
@@ -1761,11 +2133,19 @@ export default function Wizard() {
         return (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
              {currentStep === 2 && (
-               <SectionVisibilityToggle 
-                 sectionKey="partnerWorkforce" 
-                 label={isRTL ? `تضمين صفحة القوى العاملة في ${data.country || 'الدولة الشريكة'}` : `Include ${data.country || 'Partner'} Workforce Page`}
-                 description={isRTL ? 'التحكم في ظهور صفحة القوى العاملة ومعدلات الأجور والمهارات في التقرير' : 'Toggle whether partner workforce page is generated in print and PDF views'}
-               />
+               <div className="space-y-3">
+                 <SectionVisibilityToggle 
+                   sectionKey="partnerWorkforce" 
+                   label={isRTL ? `تضمين صفحة القوى العاملة في ${data.country || 'الدولة الشريكة'}` : `Include ${data.country || 'Partner'} Workforce Page`}
+                   description={isRTL ? 'التحكم في ظهور صفحة القوى العاملة ومعدلات الأجور والمهارات في التقرير' : 'Toggle whether partner workforce page is generated in print and PDF views'}
+                 />
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                   <SectionVisibilityToggle sectionKey="partnerWorkforceKpis" label={isRTL ? 'مؤشرات القوى العاملة' : 'Workforce KPIs'} />
+                   <SectionVisibilityToggle sectionKey="migrationDestinations" label={isRTL ? 'وجهات الهجرة' : 'Migration Dests'} />
+                   <SectionVisibilityToggle sectionKey="partnerSectors" label={isRTL ? 'توزيع القطاعات' : 'Sectors'} />
+                   <SectionVisibilityToggle sectionKey="availableSkills" label={isRTL ? 'المهارات المتاحة' : 'Skills'} />
+                 </div>
+               </div>
              )}
              {currentStep === 2 ? (
                <>
@@ -2553,6 +2933,18 @@ export default function Wizard() {
                label={isRTL ? 'تضمين صفحات الوفود الرسمية (الإماراتي والشريك)' : 'Include Delegations Pages'}
                description={isRTL ? 'التحكم في ظهور قسم الوفود في التقرير المطبوع / PDF' : 'Toggle whether Delegations pages are included'}
              />
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <SectionVisibilityToggle 
+                 sectionKey="uaeDelegation" 
+                 label={isRTL ? 'إظهار وفد دولة الإمارات' : 'Show UAE Delegation'}
+                 description={isRTL ? 'في حال الإخفاء، يُترك مكان القسم فارغاً حفاظاً على التنسيق' : 'If hidden, space remains empty to preserve layout'}
+               />
+               <SectionVisibilityToggle 
+                 sectionKey="partnerDelegation" 
+                 label={isRTL ? `إظهار وفد ${data.country || 'الدولة الشريكة'}` : `Show ${data.country || 'Partner'} Delegation`}
+                 description={isRTL ? 'في حال الإخفاء، يُترك مكان القسم فارغاً حفاظاً على التنسيق' : 'If hidden, space remains empty to preserve layout'}
+               />
+             </div>
              {['uae', 'partner'].map((type: any) => (
                 <div key={type} className="bg-gray-50 dark:bg-gray-800 p-8 rounded-2xl border">
                    <div className="flex justify-between items-center mb-8 pb-4 border-b">
