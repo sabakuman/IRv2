@@ -273,7 +273,9 @@ export interface ReportData {
   pointsToFocusOn?: string[];
   sectionVisibility?: {
     cover?: boolean;
+    coverPage?: boolean;
     executiveBrief?: boolean;
+    executiveBriefPage?: boolean;
     profileEconomy?: boolean;
     uaeWorkforce?: boolean;
     partnerWorkforce?: boolean;

@@ -9,7 +9,8 @@ import {
   Printer, X, AlertTriangle, ShieldAlert,
   GraduationCap, Briefcase, MessageSquare, FileText, Calendar, Activity,
   ArrowDownLeft, ArrowUpRight, BookOpen, Shield, ArrowRightLeft, Hammer,
-  ExternalLink, Clock, Phone, Percent, CheckCircle, Edit3, Target
+  ExternalLink, Clock, Phone, Percent, CheckCircle, Edit3, Target,
+  Eye, EyeOff
 } from 'lucide-react';
 import { PageContainer, SectionHeader, KPI } from '../components/PrintUI';
 import { ExecutiveBriefPage } from '../components/ExecutiveBriefPage';
@@ -296,6 +297,34 @@ export default function PrintView() {
   };
 
   const isRTL = language === 'ar';
+  
+  const isExecutiveBriefVisible = data.sectionVisibility?.executiveBrief !== false && data.sectionVisibility?.executiveBriefPage !== false;
+
+  const toggleExecutiveBrief = async () => {
+    const nextVal = !isExecutiveBriefVisible;
+    const updatedData: ReportData = {
+      ...data,
+      sectionVisibility: {
+        ...(data.sectionVisibility || {}),
+        executiveBrief: nextVal,
+        executiveBriefPage: nextVal
+      }
+    };
+    const updatedReport: Report = {
+      ...report,
+      data: updatedData,
+      updatedAt: new Date().toISOString()
+    };
+    setReport(updatedReport);
+    try {
+      await MockService.saveReport(updatedReport);
+      const bc = new BroadcastChannel('report_sync_channel');
+      bc.postMessage({ reportId: report.id, report: updatedReport });
+      bc.close();
+    } catch (e) {
+      console.error(e);
+    }
+  };
   
   // Dynamic Year Logic
   const reportDateObj = data.reportDate ? new Date(data.reportDate) : new Date();
@@ -856,7 +885,30 @@ export default function PrintView() {
         `}
       </style>
 
-      <div className={`fixed top-6 z-50 flex gap-3 no-print p-2 rounded-2xl bg-white/80 backdrop-blur-md shadow-2xl border border-white/20 ${isRTL ? 'left-6' : 'right-6'}`}>
+      <div className={`fixed top-6 z-50 flex items-center gap-2.5 no-print p-2 rounded-2xl bg-white/90 backdrop-blur-md shadow-2xl border border-gray-200/80 ${isRTL ? 'left-6' : 'right-6'}`}>
+         {/* Toggle Executive Brief Visibility */}
+         <button 
+           onClick={toggleExecutiveBrief}
+           className={`px-3.5 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 text-sm font-bold active:scale-95 border ${
+             isExecutiveBriefVisible 
+               ? 'bg-white hover:bg-gray-50 text-gray-700 border-gray-200' 
+               : 'bg-amber-50 hover:bg-amber-100 text-amber-950 border-amber-300'
+           }`}
+           title={isExecutiveBriefVisible ? (isRTL ? 'إخفاء صفحة الإحاطة التنفيذية من التقرير' : 'Hide Executive Brief page') : (isRTL ? 'إظهار صفحة الإحاطة التنفيذية في التقرير' : 'Show Executive Brief page')}
+         >
+           {isExecutiveBriefVisible ? (
+             <>
+               <EyeOff size={16} className="text-amber-600 shrink-0" />
+               <span className="hidden sm:inline">{isRTL ? 'إخفاء الإحاطة' : 'Hide Brief'}</span>
+             </>
+           ) : (
+             <>
+               <Eye size={16} className="text-emerald-600 shrink-0" />
+               <span className="hidden sm:inline text-emerald-800">{isRTL ? 'إظهار الإحاطة' : 'Show Brief'}</span>
+             </>
+           )}
+         </button>
+
          <button 
            onClick={() => navigate(`/wizard/${report.id}`)} 
            className="bg-white text-primary hover:bg-gray-50 border border-primary/20 px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm font-bold active:scale-95"
@@ -873,6 +925,27 @@ export default function PrintView() {
       </div>
 
       <div id="report-content" className="overflow-visible report-root">
+        {/* Screen notice if Executive Brief is hidden */}
+        {!isExecutiveBriefVisible && (
+          <div className="no-print max-w-[210mm] mx-auto mb-4 p-3 bg-amber-50/95 border border-amber-300 rounded-2xl flex items-center justify-between text-xs text-amber-950 shadow-md">
+            <div className="flex items-center gap-2.5">
+              <EyeOff size={17} className="text-amber-700 shrink-0" />
+              <div>
+                <span className="font-extrabold">{isRTL ? 'صفحة الإحاطة التنفيذية مخفية حالياً' : 'Executive Brief page is currently hidden'}</span>
+                <span className="text-amber-800 mx-1.5">•</span>
+                <span>{isRTL ? 'مستبعدة من التقرير النهائي وملف الطباعة.' : 'Excluded from final report output and print.'}</span>
+              </div>
+            </div>
+            <button
+              onClick={toggleExecutiveBrief}
+              className="px-3 py-1 bg-white hover:bg-amber-100 text-amber-950 font-bold border border-amber-400 rounded-lg transition-colors text-xs shadow-2xs shrink-0 flex items-center gap-1.5"
+            >
+              <Eye size={13} className="text-emerald-600" />
+              <span>{isRTL ? 'إظهار الصفحة الآن' : 'Show page now'}</span>
+            </button>
+          </div>
+        )}
+
         {/* PAGE 1: COVER */}
         {data.sectionVisibility?.cover !== false && (
           <div className="w-[210mm] h-[297mm] bg-white mx-auto flex flex-col relative overflow-hidden page-break shadow-xl print:shadow-none mb-8 print:mb-0">
@@ -914,7 +987,10 @@ export default function PrintView() {
                         <Target size={15} className="text-primary shrink-0" />
                         <span>{isRTL ? 'هدف اللقاء' : 'Goal of the Meeting'}</span>
                       </p>
-                      <p className="text-[14px] font-bold text-gray-800 leading-relaxed line-clamp-2">
+                      <p 
+                        className="text-[14px] sm:text-[15px] font-extrabold text-black dark:text-black leading-relaxed"
+                        style={{ color: '#000000' }}
+                      >
                         {data.meetingGoal}
                       </p>
                     </div>
@@ -926,7 +1002,7 @@ export default function PrintView() {
         )}
 
         {/* PAGE 2: EXECUTIVE BRIEF (الإحاطة التنفيذية) */}
-        {data.sectionVisibility?.executiveBrief !== false && (
+        {data.sectionVisibility?.executiveBrief !== false && data.sectionVisibility?.executiveBriefPage !== false && (
           <ExecutiveBriefPage 
             report={report}
             data={data}
@@ -935,6 +1011,7 @@ export default function PrintView() {
             t={t}
             footer={<DefaultFooter />}
             onEditAttentionNotes={() => navigate(`/wizard/${report.id}`)}
+            onHidePage={toggleExecutiveBrief}
           />
         )}
 

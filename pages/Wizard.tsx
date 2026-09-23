@@ -587,13 +587,17 @@ export default function Wizard() {
     label: string;
     description?: string;
   }) => {
-    const isVisible = sectionKey === 'executiveBriefLastMeeting'
-      ? (data.sectionVisibility?.executiveBriefLastMeeting !== false && data.sectionVisibility?.briefLastMeetings !== false)
-      : sectionKey === 'executiveBriefLastCorrespondence'
-        ? (data.sectionVisibility?.executiveBriefLastCorrespondence !== false && data.sectionVisibility?.briefLastCorrespondence !== false)
-        : sectionKey === 'executiveBriefPoints'
-          ? (data.sectionVisibility?.executiveBriefPoints !== false && data.sectionVisibility?.briefPointsToFocus !== false)
-          : data.sectionVisibility?.[sectionKey] !== false;
+    const isVisible = (sectionKey === 'executiveBrief' || sectionKey === 'executiveBriefPage')
+      ? (data.sectionVisibility?.executiveBrief !== false && data.sectionVisibility?.executiveBriefPage !== false)
+      : (sectionKey === 'cover' || sectionKey === 'coverPage')
+        ? (data.sectionVisibility?.cover !== false && data.sectionVisibility?.coverPage !== false)
+        : sectionKey === 'executiveBriefLastMeeting'
+          ? (data.sectionVisibility?.executiveBriefLastMeeting !== false && data.sectionVisibility?.briefLastMeetings !== false)
+          : sectionKey === 'executiveBriefLastCorrespondence'
+            ? (data.sectionVisibility?.executiveBriefLastCorrespondence !== false && data.sectionVisibility?.briefLastCorrespondence !== false)
+            : sectionKey === 'executiveBriefPoints'
+              ? (data.sectionVisibility?.executiveBriefPoints !== false && data.sectionVisibility?.briefPointsToFocus !== false)
+              : data.sectionVisibility?.[sectionKey] !== false;
     return (
       <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 shadow-2xs mb-4">
         <div className="flex items-center gap-3">
@@ -622,7 +626,13 @@ export default function Wizard() {
                 ...(data.sectionVisibility || {}),
                 [sectionKey]: val
               };
-              if (sectionKey === 'executiveBriefLastMeeting' || sectionKey === 'briefLastMeetings') {
+              if (sectionKey === 'executiveBrief' || sectionKey === 'executiveBriefPage') {
+                newVisibility.executiveBrief = val;
+                newVisibility.executiveBriefPage = val;
+              } else if (sectionKey === 'cover' || sectionKey === 'coverPage') {
+                newVisibility.cover = val;
+                newVisibility.coverPage = val;
+              } else if (sectionKey === 'executiveBriefLastMeeting' || sectionKey === 'briefLastMeetings') {
                 newVisibility.executiveBriefLastMeeting = val;
                 newVisibility.briefLastMeetings = val;
               } else if (sectionKey === 'executiveBriefLastCorrespondence' || sectionKey === 'briefLastCorrespondence') {
@@ -934,7 +944,8 @@ export default function Wizard() {
                  </div>
                  <textarea
                    rows={2}
-                   className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm leading-relaxed"
+                   className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white text-black font-semibold focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm leading-relaxed"
+                   style={{ color: '#000000' }}
                    placeholder={isRTL ? 'مثال: تعزيز التعاون الثنائي في حوكمة استقدام العمالة الماهرة ومناقشة مسودة مذكرة التفاهم وتفعيل آليات الربط الرقمي والتحقق المسبق من المهارات.' : 'e.g. Strengthening bilateral coordination on skilled labor mobility, reviewing the draft MoU, and advancing electronic skill verification.'}
                    value={data.meetingGoal || ''}
                    onChange={e => setData({ ...data, meetingGoal: e.target.value })}
@@ -1072,6 +1083,96 @@ export default function Wizard() {
                   </div>
                 </div>
 
+                {/* MASTER TOGGLE: SHOW / HIDE ENTIRE EXECUTIVE BRIEF PAGE */}
+                {(() => {
+                  const isExecutiveBriefVisible = data.sectionVisibility?.executiveBrief !== false && data.sectionVisibility?.executiveBriefPage !== false;
+                  return (
+                    <div className={`p-4 rounded-xl border transition-all mb-5 ${
+                      isExecutiveBriefVisible 
+                        ? 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800' 
+                        : 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700'
+                    }`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-2xs ${
+                            isExecutiveBriefVisible ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'
+                          }`}>
+                            <FileText size={18} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h5 className="text-sm font-bold text-gray-900 dark:text-white">
+                                {isRTL ? 'إظهار / إخفاء صفحة الإحاطة التنفيذية بالكامل' : 'Show / Hide Entire Executive Brief Page'}
+                              </h5>
+                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border shadow-2xs ${
+                                isExecutiveBriefVisible 
+                                  ? 'bg-emerald-100 text-emerald-900 border-emerald-300' 
+                                  : 'bg-amber-100 text-amber-950 border-amber-300'
+                              }`}>
+                                {isExecutiveBriefVisible ? (isRTL ? 'معروضة في التقرير والطباعة' : 'Visible in Report & Print') : (isRTL ? 'مخفية ومستبعدة من التقرير' : 'Hidden from Report & Print')}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+                              {isExecutiveBriefVisible 
+                                ? (isRTL ? 'الصفحة مفعلة وستظهر كصفحة رسمية (الصفحة 2) في معاينة التقرير وملف الطباعة.' : 'The Executive Brief page is included as Page 2 in the report output.')
+                                : (isRTL ? 'الصفحة مخفية ومستبعدة حالياً. لن تظهر في ملف التقرير أو الطباعة نهائياً.' : 'The Executive Brief page is currently hidden from report view and print.')}
+                            </p>
+                          </div>
+                        </div>
+
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={isExecutiveBriefVisible}
+                            onChange={(e) => {
+                              const val = e.target.checked;
+                              const updated = {
+                                ...data,
+                                sectionVisibility: {
+                                  ...(data.sectionVisibility || {}),
+                                  executiveBrief: val,
+                                  executiveBriefPage: val
+                                }
+                              };
+                              setData(updated);
+                              saveSilently(updated, isRTL ? (val ? 'تم تفعيل وإظهار صفحة الإحاطة التنفيذية في التقرير' : 'تم إخفاء واستبعاد صفحة الإحاطة التنفيذية من التقرير') : 'Executive Brief page visibility updated');
+                            }}
+                          />
+                          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                          <span className="ms-3 text-xs font-bold text-gray-800 dark:text-gray-100">
+                            {isExecutiveBriefVisible ? (isRTL ? 'مدرجة في التقرير' : 'Included') : (isRTL ? 'مخفية من التقرير' : 'Hidden')}
+                          </span>
+                        </label>
+                      </div>
+                      
+                      {!isExecutiveBriefVisible && (
+                        <div className="mt-3 pt-2.5 border-t border-amber-200 dark:border-amber-800 flex items-center justify-between text-xs text-amber-900 dark:text-amber-300">
+                          <span>{isRTL ? 'تنبيه: محتوى الإحاطة التنفيذية محفوظ ومحدث لديك، ولكن الصفحة نفسها مستبعدة من التقرير حتى تعيد تفعيلها.' : 'Note: Your brief data is safely stored, but excluded from the output until re-enabled.'}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = {
+                                ...data,
+                                sectionVisibility: {
+                                  ...(data.sectionVisibility || {}),
+                                  executiveBrief: true,
+                                  executiveBriefPage: true
+                                }
+                              };
+                              setData(updated);
+                              saveSilently(updated, isRTL ? 'تمت إعادة إظهار صفحة الإحاطة التنفيذية في التقرير' : 'Executive brief page restored');
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold bg-white text-amber-950 border border-amber-400 rounded-lg hover:bg-amber-100 shadow-2xs"
+                          >
+                            {isRTL ? 'إعادة الإظهار الآن' : 'Show page now'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* GOAL OF THE MEETING ("هدف اللقاء") */}
                 <div className="bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-5 shadow-2xs">
                   <div className="flex items-center justify-between gap-3 mb-2 pb-2 border-b border-gray-100 dark:border-gray-700">
@@ -1104,7 +1205,8 @@ export default function Wizard() {
                   </p>
                   <textarea
                     rows={2}
-                    className="w-full px-3 py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    className="w-full px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border border-gray-300 dark:border-gray-600 bg-white text-black outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                    style={{ color: '#000000' }}
                     placeholder={isRTL 
                       ? `موجز استراتيجي عالي المستوى لأهم الرسائل المعتمدة وأحدث اللقاءات والمراسلات الرسمية مع ${getCountryArabicName(data.country)}`
                       : `High-level strategic overview of key focus messages, recent meetings, and official correspondence with ${data.country || 'Partner Country'}`}

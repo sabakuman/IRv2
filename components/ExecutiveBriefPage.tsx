@@ -3,7 +3,7 @@ import { Report, ReportData, RecentInteraction } from '../types';
 import { PageContainer, HeaderBand, SectionHeader } from './PrintUI';
 import { 
   FileText, Calendar, Sparkles, MessageSquare, CheckCircle2, 
-  MapPin, Clock, ArrowUpRight, Award, ShieldCheck, Tag, Mail
+  MapPin, Clock, ArrowUpRight, Award, ShieldCheck, Tag, Mail, EyeOff
 } from 'lucide-react';
 
 const formatDate = (dateStr: string) => {
@@ -108,6 +108,7 @@ interface ExecutiveBriefPageProps {
   t: (key: any) => string;
   footer?: React.ReactNode;
   onEditAttentionNotes?: () => void;
+  onHidePage?: () => void;
 }
 
 export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
@@ -115,7 +116,8 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
   data,
   isRTL,
   t,
-  footer
+  footer,
+  onHidePage
 }) => {
   // Helper to translate/format Arabic country name
   const getCountryArabicName = (country: string = ''): string => {
@@ -243,6 +245,25 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
 
   return (
     <PageContainer footer={footer} className="shadow-xl print:shadow-none mb-8 print:mb-0">
+      {/* On-screen quick controls (hidden in print) */}
+      {onHidePage && (
+        <div className="no-print mb-3 -mt-1 flex items-center justify-between bg-blue-50/80 border border-blue-200/80 rounded-xl px-3 py-1.5 text-xs text-blue-950 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+            <span className="font-bold">{isRTL ? 'صفحة الإحاطة التنفيذية (الصفحة 2)' : 'Executive Brief Page (Page 2)'}</span>
+          </div>
+          <button
+            type="button"
+            onClick={onHidePage}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-rose-300 text-rose-700 font-bold hover:bg-rose-50 transition-colors shadow-2xs text-[11px] active:scale-95"
+            title={isRTL ? 'إخفاء هذه الصفحة من التقرير النهائي وملف الطباعة' : 'Hide this page from final report and print'}
+          >
+            <EyeOff size={13} className="text-rose-600" />
+            <span>{isRTL ? 'إخفاء هذه الصفحة من التقرير' : 'Hide this page from report'}</span>
+          </button>
+        </div>
+      )}
+
       {/* Header Band with Flag and Ministry title */}
       <HeaderBand 
         country={data.country} 
@@ -258,7 +279,10 @@ export const ExecutiveBriefPage: React.FC<ExecutiveBriefPageProps> = ({
           title={isRTL ? 'الإحاطة التنفيذية' : 'Executive Briefing'} 
           compact 
         />
-        <p className="text-[14.5px] sm:text-[15.5px] font-bold text-gray-900 dark:text-gray-100 mt-2 pr-1 leading-relaxed font-serif">
+        <p 
+          className="text-[14.5px] sm:text-[15.5px] font-extrabold text-black dark:text-black mt-2 pr-1 leading-relaxed font-serif"
+          style={{ color: '#000000' }}
+        >
           {data.meetingGoal || (isRTL 
             ? `موجز استراتيجي عالي المستوى لأهم الرسائل المعتمدة وأحدث اللقاءات والمراسلات الرسمية مع ${countryDisplayName}`
             : `High-level strategic overview of key focus messages, recent meetings, and official correspondence with ${countryDisplayName}`)}
