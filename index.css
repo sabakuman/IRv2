@@ -1,4 +1,38 @@
+/* Dubai Font (Dubai Executive Council) — self-hosted so it works offline */
+@font-face {
+  font-family: "Dubai";
+  src: url("/fonts/dubai/Dubai-Light.woff2") format("woff2"), url("/fonts/dubai/Dubai-Light.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dubai";
+  src: url("/fonts/dubai/Dubai-Regular.woff2") format("woff2"), url("/fonts/dubai/Dubai-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dubai";
+  src: url("/fonts/dubai/Dubai-Medium.woff2") format("woff2"), url("/fonts/dubai/Dubai-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Dubai";
+  src: url("/fonts/dubai/Dubai-Bold.woff2") format("woff2"), url("/fonts/dubai/Dubai-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
+
+/* Arabic interface: Dubai everywhere (Latin-only display fonts fall back to it per glyph anyway) */
+html[dir="rtl"] body, html[dir="rtl"] .font-serif, html[dir="rtl"] .font-sans { font-family: "Dubai", "Noto Naskh Arabic", sans-serif; }
+html[dir="rtl"] .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 @tailwind components;
 @tailwind utilities;
 

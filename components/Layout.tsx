@@ -62,15 +62,15 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-secondary/30 dark:bg-background flex transition-colors duration-300" dir={dir}>
       {/* Sidebar */}
-      <aside className="w-64 bg-primary text-white hidden md:flex flex-col shadow-diplomatic z-20 sticky top-0 h-screen border-r border-primary-light">
+      <aside className="w-64 bg-primary text-white hidden md:flex flex-col shadow-diplomatic z-20 sticky top-0 h-screen border-e border-primary-light">
         <div className="shrink-0 p-6 border-b border-primary-light">
           <h2 className="font-serif font-bold text-lg leading-tight opacity-90">{t('ministry')}</h2>
-          <p className="text-xs text-accent mt-2 uppercase tracking-wider font-bold">IR REPORT LOG</p>
+          <p className="text-xs text-accent mt-2 uppercase tracking-wider font-bold">{language === 'ar' ? 'سجل تقارير العلاقات الدولية' : 'IR REPORT LOG'}</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {/* Standard Navigation */}
-          <div className="mb-2 px-4 text-xs font-semibold text-blue-300 uppercase tracking-wider">General</div>
+          <div className="mb-2 px-4 text-xs font-semibold text-blue-300 uppercase tracking-wider">{language === 'ar' ? 'عام' : 'General'}</div>
           <NavItem icon={Home} label={t('dashboard')} path="/dashboard" />
           <NavItem icon={FileText} label={t('reports')} path="/reports" />
           <NavItem icon={Globe} label={t('mouTracker')} path="/mous" />
@@ -79,13 +79,13 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
           {/* Admin Navigation */}
           {user?.role === 'admin' && (
-            <div className="mt-8 animate-in fade-in slide-in-from-left-4">
+            <div className="mt-8 animate-in fade-in">
               <div className="mb-2 px-4 text-xs font-semibold text-accent uppercase tracking-wider flex items-center gap-2">
-                <ShieldAlert size={12} /> Administration
+                <ShieldAlert size={12} /> {language === 'ar' ? 'الإدارة' : 'Administration'}
               </div>
               <div className="space-y-1 bg-primary-dark/30 rounded-xl p-2">
-                <NavItem icon={Users} label="User Management" path="/admin/users" />
-                <NavItem icon={FileClock} label="System Logs" path="/admin/logs" />
+                <NavItem icon={Users} label={language === 'ar' ? 'إدارة المستخدمين' : 'User Management'} path="/admin/users" />
+                <NavItem icon={FileClock} label={language === 'ar' ? 'سجل النظام' : 'System Logs'} path="/admin/logs" />
               </div>
             </div>
           )}

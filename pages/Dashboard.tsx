@@ -81,7 +81,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-l-4 border-l-primary hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/reports')}>
+        <Card className="border-s-4 border-s-primary hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/reports')}>
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">{t('reports')}</p>
@@ -93,7 +93,7 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-400 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/letters')}>
+        <Card className="border-s-4 border-s-blue-400 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/letters')}>
            <div className="flex justify-between items-start">
              <div>
                <p className="text-sm font-medium text-muted-foreground">{t('letterLog')}</p>
@@ -120,7 +120,7 @@ export default function Dashboard() {
            </div>
         </Card>
 
-        <Card className="border-l-4 border-l-green-600">
+        <Card className="border-s-4 border-s-green-600">
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm font-medium text-muted-foreground">{t('completed')}</p>

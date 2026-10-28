@@ -30,9 +30,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     // Change font family based on language
     if (language === 'ar') {
-      document.body.style.fontFamily = "'Noto Naskh Arabic', serif";
+      document.body.style.fontFamily = "'Dubai', 'Noto Naskh Arabic', sans-serif";
     } else {
-      document.body.style.fontFamily = "'Inter', sans-serif";
+      document.body.style.fontFamily = "'Inter', 'Dubai', sans-serif";
     }
   }, [language, dir]);
 

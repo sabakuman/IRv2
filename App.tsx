@@ -8,6 +8,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Wizard from './pages/Wizard';
 import PrintView from './pages/PrintView';
+import ReportBuilder from './pages/ReportBuilder';
+import ReportPrint from './pages/ReportPrint';
 import ReportsList from './pages/ReportsList';
 import AdminUsers from './pages/AdminUsers';
 import AdminLogs from './pages/AdminLogs';
@@ -18,8 +20,11 @@ import MOUDetail from './pages/MOUDetail';
 import MOUWizard from './pages/MOUWizard';
 import MOUPrintView from './pages/MOUPrintView';
 
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// New report builder: a fresh builder per report, so data never carries over between reports
+const BuilderRoute = () => { const { id } = useParams(); return <ReportBuilder key={id || 'new'} />; };
 
 // Route Guard Component
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
@@ -47,6 +52,7 @@ const AppRoutes = () => {
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/print/:id" element={<PrintView />} />
+      <Route path="/report/:id" element={<ReportPrint />} />
       <Route path="/mou/:id/print" element={<MOUPrintView />} />
       
       {/* Protected App Routes */}
@@ -65,6 +71,8 @@ const AppRoutes = () => {
         <Route path="mou/:id/edit" element={<MOUWizard />} />
         <Route path="wizard" element={<Wizard />} />
         <Route path="wizard/:id" element={<Wizard />} />
+        <Route path="builder" element={<BuilderRoute />} />
+        <Route path="builder/:id" element={<BuilderRoute />} />
         <Route path="account" element={<Settings />} />
         
         {/* Admin Routes */}

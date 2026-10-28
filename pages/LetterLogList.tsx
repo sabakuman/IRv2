@@ -171,8 +171,8 @@ export default function LetterLogList() {
            filteredLetters.map(letter => (
              <Card 
                key={letter.id} 
-               className="p-0 overflow-hidden cursor-pointer hover:border-primary/50 transition-all border-l-[6px]" 
-               style={{ borderLeftColor: letter.label_color }}
+               className="p-0 overflow-hidden cursor-pointer hover:border-primary/50 transition-all border-s-[6px]" 
+               style={{ borderInlineStartColor: letter.label_color }}
                onClick={() => handleOpenDetails(letter)}
              >
                 <div className="py-3 px-5 flex flex-col md:flex-row gap-3 items-start md:items-center">
@@ -193,7 +193,7 @@ export default function LetterLogList() {
                          <FileText size={12} /> {letter.topic}
                       </p>
                    </div>
-                   <div className="flex flex-row md:flex-col items-end gap-1.5 text-right">
+                   <div className="flex flex-row md:flex-col items-end gap-1.5 text-end">
                       <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-semibold">
                          <Calendar size={10} /> {format(new Date(letter.created_at), 'MMM dd, yyyy')}
                       </div>
