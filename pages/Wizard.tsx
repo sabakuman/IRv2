@@ -559,11 +559,11 @@ export default function Wizard() {
       }, 4000);
 
       if (shouldViewReport) {
-        navigate(`/print/${reportId}?lang=${language}`);
+        navigate(`/print-classic/${reportId}?lang=${language}`);
       } else if (status === 'completed') {
         navigate('/dashboard');
       } else if (!id) {
-        navigate(`/wizard/${reportId}`, { replace: true });
+        navigate(`/wizard-classic/${reportId}`, { replace: true });
       }
     } catch (err) {
       console.error('Save report failed:', err);

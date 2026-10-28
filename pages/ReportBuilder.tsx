@@ -492,7 +492,7 @@ export default function ReportBuilder() {
     await MockService.saveReport(buildReport(st));
     setStatus(st); setDirty(false); setSaving('saved');
     // first save of a new report: put the id in the address without reloading the builder
-    if (!id) window.history.replaceState(window.history.state, '', `#/builder/${reportId}`);
+    if (!id) window.history.replaceState(window.history.state, '', `#/wizard/${reportId}`);
     setTimeout(() => setSaving('idle'), 1500);
   };
   const complete = async (force = false) => {
@@ -503,7 +503,7 @@ export default function ReportBuilder() {
   };
   const openPdf = async () => {
     if (dirty || !id) await save();
-    window.open(`${window.location.origin}${window.location.pathname}#/report/${reportId}?lang=${lang}`, '_blank');
+    window.open(`${window.location.origin}${window.location.pathname}#/print/${reportId}?lang=${lang}`, '_blank');
   };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); } };

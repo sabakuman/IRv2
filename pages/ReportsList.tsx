@@ -7,7 +7,7 @@ import { MockService } from '../services/mockService';
 import { Report, UserProfile } from '../types';
 import { FLAGS } from '../constants';
 import { Card, Button, Badge } from '../components/ui/LayoutComponents';
-import { Search, Plus, Edit3, Trash2, Printer, FileText, Lock, RefreshCw, Eye, Sparkles, FileBadge } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Printer, FileText, Lock, RefreshCw, Eye, History } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ReportsList() {
@@ -97,16 +97,10 @@ export default function ReportsList() {
             {t('reportsDescription')}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => navigate('/builder')}>
-            <Sparkles size={18} />
-            {language === 'ar' ? 'منشئ التقارير الجديد' : 'New report builder'}
-          </Button>
-          <Button onClick={() => navigate('/wizard')}>
-            <Plus size={20} />
-            {t('createNew')}
-          </Button>
-        </div>
+        <Button onClick={() => navigate('/wizard')}>
+          <Plus size={20} />
+          {t('createNew')}
+        </Button>
       </div>
 
       <div className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
@@ -213,28 +207,20 @@ export default function ReportsList() {
                            <Eye size={16} />
                          </button>
 
-                         <button
-                           onClick={() => navigate(`/report/${report.id}?lang=${language}`)}
-                           className="p-2 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg text-amber-600 dark:text-amber-400 transition-colors"
-                           title={language === 'ar' ? 'عرض بالتصميم الجديد' : 'View in new design'}
-                         >
-                           <FileBadge size={16} />
-                         </button>
-
-                         <button
-                           onClick={() => navigate(`/builder/${report.id}`)}
-                           className="p-2 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg text-amber-600 dark:text-amber-400 transition-colors"
-                           title={language === 'ar' ? 'تعديل في المنشئ الجديد' : 'Edit in new builder'}
-                         >
-                           <Sparkles size={16} />
-                         </button>
-
                          <button 
                            onClick={() => navigate(`/wizard/${report.id}`)}
                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors"
                            title="Edit Report"
                          >
                            <Edit3 size={16} />
+                         </button>
+
+                         <button
+                           onClick={() => navigate(`/wizard-classic/${report.id}`)}
+                           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 dark:text-gray-500 transition-colors"
+                           title={language === 'ar' ? 'المعالج القديم' : 'Classic wizard'}
+                         >
+                           <History size={16} />
                          </button>
 
                          {canDelete && (

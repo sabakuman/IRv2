@@ -910,7 +910,7 @@ export default function PrintView() {
          </button>
 
          <button 
-           onClick={() => navigate(`/wizard/${report.id}`)} 
+           onClick={() => navigate(`/wizard-classic/${report.id}`)} 
            className="bg-white text-primary hover:bg-gray-50 border border-primary/20 px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm font-bold active:scale-95"
            title={isRTL ? 'تعديل التقرير في صفحة المعالج' : 'Edit Report in Wizard'}
          >
@@ -1010,7 +1010,7 @@ export default function PrintView() {
             isRTL={isRTL}
             t={t}
             footer={<DefaultFooter />}
-            onEditAttentionNotes={() => navigate(`/wizard/${report.id}`)}
+            onEditAttentionNotes={() => navigate(`/wizard-classic/${report.id}`)}
             onHidePage={toggleExecutiveBrief}
           />
         )}

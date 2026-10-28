@@ -51,8 +51,9 @@ const AppRoutes = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />
-      <Route path="/print/:id" element={<PrintView />} />
+      <Route path="/print/:id" element={<ReportPrint />} />
       <Route path="/report/:id" element={<ReportPrint />} />
+      <Route path="/print-classic/:id" element={<PrintView />} />
       <Route path="/mou/:id/print" element={<MOUPrintView />} />
       
       {/* Protected App Routes */}
@@ -69,10 +70,12 @@ const AppRoutes = () => {
         <Route path="mou/new" element={<MOUWizard />} />
         <Route path="mou/:id" element={<MOUDetail />} />
         <Route path="mou/:id/edit" element={<MOUWizard />} />
-        <Route path="wizard" element={<Wizard />} />
-        <Route path="wizard/:id" element={<Wizard />} />
+        <Route path="wizard" element={<BuilderRoute />} />
+        <Route path="wizard/:id" element={<BuilderRoute />} />
         <Route path="builder" element={<BuilderRoute />} />
         <Route path="builder/:id" element={<BuilderRoute />} />
+        <Route path="wizard-classic" element={<Wizard />} />
+        <Route path="wizard-classic/:id" element={<Wizard />} />
         <Route path="account" element={<Settings />} />
         
         {/* Admin Routes */}
