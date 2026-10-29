@@ -547,14 +547,14 @@ export default function ReportBuilder() {
     const num = (v: any) => parseFloat(String(v ?? '').replace(/[^0-9.]/g, '')) || 0;
     const icpTotal = (data.uaeWorkforceStats.icp as any).totalWorkers;
     const total = data.uaeWorkforceStats.totalWorkersOverride || (num(m.totalPrivate?.value) + num(m.totalDomestic?.value) + num(icpTotal)) || (sumEm(m.byEmirate) + sumEm(data.uaeWorkforceStats.icp.byEmirate));
-    const activeMohre = data.bilateralAgreements.filter(a => (a.status || 'active') === 'active' && a.party === 'mohre').length;
+    const activeMohre = data.bilateralAgreements.filter(a => (a.status || 'active') === 'active' && (a.party || 'mohre') === 'mohre').length;
     const latest = [...data.recentInteractions].sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
     return {
       country: data.country, totalWorkforceInUAE: total || null, workforceTrend: trend,
       mohreLabour: m.totalPrivate?.value, mohreDomestic: m.totalDomestic?.value, icpWorkers: (data.uaeWorkforceStats.icp as any).totalWorkers, workforceTrendNote: 'trend covers MOHRE workers only (labour + domestic)',
       wpsPct: wpsStats(m).pct, complaintsThisYear: m.totalComplaintsCurrentYear, complaintsResolved: m.laborComplaintsResolved, unemploymentInsurancePct: m.insuranceUnemploymentCoveredPct, strikes: m.workersLaborStrikes,
       activeMohreAgreements: activeMohre,
-      agreements: data.bilateralAgreements.map(a => ({ title: a.title, status: a.status, side: a.party })),
+      agreements: data.bilateralAgreements.map(a => ({ title: a.title, status: a.status, side: a.party || 'mohre' })),
       latestEngagement: latest ? { date: latest.date, title: latest.title, side: latest.party } : null,
       pointsOfDiscussion: data.pointsOfDiscussion.map(p => p.title),
       pendingUpdates: (data.previousAgreementsAndUpdates || []).filter(u => u.status !== 'done').map(u => u.title),

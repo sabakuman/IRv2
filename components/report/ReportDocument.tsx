@@ -339,7 +339,9 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
   const points = data.pointsOfDiscussion || [];
   const updates = data.previousAgreementsAndUpdates || [];
   const agreements = [...data.bilateralAgreements].sort(byDateDesc);
-  const activeAgreements = agreements.filter(a => agreementStatus(a).cls === 'ok' && a.party === 'mohre').length;
+  // An agreement with no side saved is MOHRE (the builder shows it as MOHRE; the classic wizard never asked)
+  const agrParty = (a: any) => a.party || 'mohre';
+  const activeAgreements = agreements.filter(a => agreementStatus(a).cls === 'ok' && agrParty(a) === 'mohre').length;
   const latestEngagement = interactions[0]?.date ? formatMonthYear(interactions[0].date, lang) : '';
   const nMohre = interactions.filter(i => i.party === 'mohre').length;
   const nGov = interactions.filter(i => i.party === 'uae_gov').length;
@@ -396,7 +398,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
     const st = agreementStatus(a);
     return (
       <tr>
-        <td><div className="ttl">{a.title}</div>{a.party && <div style={{ marginTop: '1.5mm' }}><PartyBadge party={a.party} /></div>}</td>
+        <td><div className="ttl">{a.title}</div><div style={{ marginTop: '1.5mm' }}><PartyBadge party={agrParty(a)} /></div></td>
         <td>{formatDayDate(a.date, lang) || DASH}</td>
         <td><RichText text={a.summary} /></td>
         <td className="c"><span className={`rpt-status ${st.cls}`}>{st.label}</span></td>
