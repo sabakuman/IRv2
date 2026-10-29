@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { MockService } from '../services/mockService';
 import { EMPTY_REPORT_DATA, Report, ReportData } from '../types';
 import ReportDocument, { SectionKey } from '../components/report/ReportDocument';
-import { COPY, Lang, isBlank, wpsStats, MAX_PROTECTION_KPIS } from '../components/report/reportCopy';
+import { COPY, Lang, isBlank, wpsStats, protectionBudget, protRowKey } from '../components/report/reportCopy';
 import { PROFILE_FIELDS, PARTNER_FIELDS, fetchFields, draftSummary } from '../services/reportAI';
 import { fromClassic } from '../components/report/classicAdapter';
 
@@ -56,7 +56,7 @@ const UI = {
     protection: 'Worker protection', covered: 'covered', notCovered: 'not covered', pct: '%',
     wpsAuto: 'Calculated: workers paid through WPS ÷ total MOHRE workers (labour + domestic). Enter the MOHRE totals in Headline totals.', wpsNeedTotals: 'Enter the MOHRE labour and domestic totals above to calculate this.',
     complaints: 'Labour complaints', complaintsYear: 'Complaints this year', complaintsResolved: 'Resolved so far',
-    customKpis: 'Additional rows', customKpisHint: (n: number) => `Your own indicators, added as rows at the end of this table. Up to ${n}, so the page still fits.`, kpiTitle: 'Title', kpiValue: 'Number', kpiLimit: (n: number) => `Limit reached (${n}). Remove one to add another.`,
+    customKpis: 'Custom rows', customKpisHint: 'Your own indicators, added at the end of this table. Title and number are needed; % is optional (with a %, the coverage bar is shown too). Hide a row above to make room for more.', kpiTitle: 'Title', kpiValue: 'Number', kpiPct: '% (optional)', kpiLimit: 'The table is full. Hide or remove a row to add another.', kpiOver: 'Not shown: the table is full. Hide another row to show it.',
     wages: 'Median monthly wage (AED)', emirates: 'Workers by emirate', sectorsAll: 'Workers by sector', sectorsM: 'Workers by sector — MOHRE', sectorsI: 'Workers by sector — ICP',
     salary: 'Median wage by sector (AED)', sector: 'Sector', market: 'Labour market', nationals: 'Nationals',
     addStdSectors: 'Add standard sectors',
@@ -101,7 +101,7 @@ const UI = {
     protection: 'حماية العمال', covered: 'مشمولون', notCovered: 'غير مشمولين', pct: '%',
     wpsAuto: 'محسوبة: العمال المحوّلة أجورهم عبر النظام ÷ إجمالي عمالة الوزارة (العمالة + المساعدة). أدخل إجماليات الوزارة في الأرقام الرئيسية.', wpsNeedTotals: 'أدخل إجمالي عمالة الوزارة والعمالة المساعدة أعلاه لحساب النسبة.',
     complaints: 'الشكاوى العمالية', complaintsYear: 'الشكاوى هذا العام', complaintsResolved: 'تم حلها حتى الآن',
-    customKpis: 'صفوف إضافية', customKpisHint: (n: number) => `مؤشرات تضيفها بنفسك كصفوف في آخر هذا الجدول. بحد أقصى ${n} حتى لا تتجاوز الصفحة.`, kpiTitle: 'العنوان', kpiValue: 'الرقم', kpiLimit: (n: number) => `تم بلوغ الحد (${n}). احذف مؤشراً لإضافة آخر.`,
+    customKpis: 'صفوف مخصصة', customKpisHint: 'مؤشرات تضيفها بنفسك في آخر هذا الجدول. العنوان والرقم مطلوبان، والنسبة اختيارية (عند إدخالها يظهر شريط التغطية). أخفِ صفاً أعلاه لإتاحة مساحة لصفوف أكثر.', kpiTitle: 'العنوان', kpiValue: 'الرقم', kpiPct: '% (اختياري)', kpiLimit: 'الجدول ممتلئ. أخفِ صفاً أو احذفه لإضافة آخر.', kpiOver: 'لن يظهر: الجدول ممتلئ. أخفِ صفاً آخر لإظهاره.',
     wages: 'وسيط الأجر الشهري (درهم)', emirates: 'العمال حسب الإمارة', sectorsAll: 'العمال حسب القطاع', sectorsM: 'العمال حسب القطاع — الوزارة', sectorsI: 'العمال حسب القطاع — الهوية',
     salary: 'وسيط الأجور حسب القطاع (درهم)', sector: 'القطاع', market: 'سوق العمل', nationals: 'الجنسية',
     addStdSectors: 'إضافة القطاعات الأساسية',
@@ -328,15 +328,28 @@ const NameValueEditor: React.FC<{ path: string; nameLabel: string; valueLabel: s
   );
 };
 
-const ProtectionRow: React.FC<{ label: string; cn: string; cp: string; nn?: string; np?: string }> = ({ label, cn, cp, nn, np }) => {
-  const { data, update, ui } = React.useContext(BuilderCtx);
+/* Label line for a row of the Worker protection table, with its own show/hide switch */
+const RowHead: React.FC<{ label: string; rowKey: string }> = ({ label, rowKey }) => {
+  const { hidden, toggle, ui } = React.useContext(BuilderCtx);
+  const k = protRowKey(rowKey);
+  const shown = !hidden.has(k);
+  return (
+    <div className="mb-1.5 flex items-center justify-between gap-3">
+      <span className={`text-sm font-semibold text-slate-700 dark:text-slate-300 ${shown ? '' : 'line-through opacity-50'}`}>{label}</span>
+      <span className="flex items-center gap-1.5 text-[11px] text-slate-400">{shown ? ui.showBlock : ui.hiddenTag}<Switch on={shown} onClick={() => toggle(k)} label={`${ui.showBlock}: ${label}`} /></span>
+    </div>
+  );
+};
+
+const ProtectionRow: React.FC<{ label: string; rowKey: string; cn: string; cp: string; nn?: string; np?: string }> = ({ label, rowKey, cn, cp, nn, np }) => {
+  const { data, update, ui, hidden } = React.useContext(BuilderCtx);
   const inp = (key: string, ph: string) => {
     const path = `uaeWorkforceStats.mohre.${key}`;
     return <input className={`${inputCls} py-1.5 text-end`} placeholder={ph} value={getIn(data, path) || ''} onChange={e => update(path, e.target.value)} />;
   };
   return (
-    <div className="border-b border-slate-100 py-2.5 last:border-0 dark:border-slate-800">
-      <div className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</div>
+    <div className={`border-b border-slate-100 py-2.5 last:border-0 dark:border-slate-800 ${hidden.has(protRowKey(rowKey)) ? 'opacity-60' : ''}`}>
+      <RowHead label={label} rowKey={rowKey} />
       <div className="grid grid-cols-[90px_1fr_64px] items-center gap-x-2 gap-y-1.5">
         <span className="text-xs text-slate-500">{ui.covered}</span>{inp(cn, '0')}{inp(cp, '%')}
         {nn && <><span className="text-xs text-slate-500">{ui.notCovered}</span>{inp(nn, '0')}{np ? inp(np, '%') : <span />}</>}
@@ -346,13 +359,13 @@ const ProtectionRow: React.FC<{ label: string; cn: string; cp: string; nn?: stri
 };
 
 const WpsRow: React.FC<{ label: string }> = ({ label }) => {
-  const { data, update, ui } = React.useContext(BuilderCtx);
+  const { data, update, ui, hidden } = React.useContext(BuilderCtx);
   const m = data.uaeWorkforceStats.mohre;
   const w = wpsStats(m);
   const ro = `${inputCls} py-1.5 text-end bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300`;
   return (
-    <div className="border-b border-slate-100 py-2.5 last:border-0 dark:border-slate-800">
-      <div className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</div>
+    <div className={`border-b border-slate-100 py-2.5 last:border-0 dark:border-slate-800 ${hidden.has(protRowKey('wps')) ? 'opacity-60' : ''}`}>
+      <RowHead label={label} rowKey="wps" />
       <div className="grid grid-cols-[90px_1fr_64px] items-center gap-x-2 gap-y-1.5">
         <span className="text-xs text-slate-500">{ui.covered}</span>
         <input type="number" className={`${inputCls} py-1.5 text-end`} placeholder="0" value={m.wpsWageTransferNum || ''} onChange={e => update('uaeWorkforceStats.mohre.wpsWageTransferNum', e.target.value)} />
@@ -366,32 +379,49 @@ const WpsRow: React.FC<{ label: string }> = ({ label }) => {
   );
 };
 
+const ProtectionNumRow: React.FC<{ label: string; rowKey: string; path: string }> = ({ label, rowKey, path }) => {
+  const { data, update, hidden } = React.useContext(BuilderCtx);
+  return (
+    <div className={`border-b border-slate-100 py-2.5 last:border-0 dark:border-slate-800 ${hidden.has(protRowKey(rowKey)) ? 'opacity-60' : ''}`}>
+      <RowHead label={label} rowKey={rowKey} />
+      <input className={`${inputCls} py-1.5 text-end`} placeholder="0" value={getIn(data, path) ?? ''} onChange={e => update(path, e.target.value)} />
+    </div>
+  );
+};
+
 const ProtectionKpiEditor: React.FC = () => {
-  const { data, update, dir, ui } = React.useContext(BuilderCtx);
+  const { data, update, dir, ui, hidden } = React.useContext(BuilderCtx);
   const rows = data.uaeWorkforceStats.protectionKpis || [];
-  const set = (next: { label: string; value: string }[]) => update('uaeWorkforceStats.protectionKpis', next);
-  const full = rows.length >= MAX_PROTECTION_KPIS;
+  const set = (next: { label: string; value: string; pct?: string }[]) => update('uaeWorkforceStats.protectionKpis', next);
+  const { maxCustom } = protectionBudget(data.uaeWorkforceStats.mohre, hidden);
+  const full = rows.length >= maxCustom;
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">{ui.customKpis}</span>
-        <span className="text-[11px] font-semibold text-slate-400">{rows.length}/{MAX_PROTECTION_KPIS}</span>
+        <span className={`text-[11px] font-semibold ${rows.length > maxCustom ? 'text-amber-600' : 'text-slate-400'}`}>{rows.length}/{maxCustom}</span>
       </div>
-      <p className="mb-2 text-[11px] text-slate-500">{ui.customKpisHint(MAX_PROTECTION_KPIS)}</p>
-      {rows.length > 0 && <div className="mb-1 grid grid-cols-[1fr_96px_28px] gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400"><span>{ui.kpiTitle}</span><span>{ui.kpiValue}</span><span /></div>}
-      <div className="space-y-1.5">
+      <p className="mb-2 text-[11px] text-slate-500">{ui.customKpisHint}</p>
+      <div className="space-y-2">
         {rows.map((r, i) => (
-          <div key={i} className={`grid grid-cols-[1fr_96px_28px] items-center gap-2 ${i >= MAX_PROTECTION_KPIS ? 'opacity-50' : ''}`} title={i >= MAX_PROTECTION_KPIS ? ui.kpiLimit(MAX_PROTECTION_KPIS) : undefined}>
-            <input dir={dir} maxLength={40} className={`${inputCls} py-1.5`} value={r.label} placeholder={ui.kpiTitle}
-              onChange={e => set(rows.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} />
-            <input maxLength={14} className={`${inputCls} py-1.5 text-end`} value={r.value} placeholder="0"
-              onChange={e => set(rows.map((x, j) => j === i ? { ...x, value: e.target.value } : x))} />
-            <button type="button" aria-label={ui.remove} onClick={() => set(rows.filter((_, j) => j !== i))} className="rounded p-1 text-slate-400 hover:text-red-600"><X size={15} /></button>
+          <div key={i} className={`rounded-lg border border-slate-200 p-2 dark:border-slate-700 ${i >= maxCustom ? 'opacity-50' : ''}`} title={i >= maxCustom ? ui.kpiOver : undefined}>
+            <div className="flex items-center gap-2">
+              <input dir={dir} maxLength={40} className={`${inputCls} py-1.5`} value={r.label} placeholder={ui.kpiTitle}
+                onChange={e => set(rows.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} />
+              <button type="button" aria-label={ui.remove} onClick={() => set(rows.filter((_, j) => j !== i))} className="shrink-0 rounded p-1 text-slate-400 hover:text-red-600"><X size={15} /></button>
+            </div>
+            <div className="mt-1.5 grid grid-cols-[1fr_80px] gap-2">
+              <input maxLength={14} className={`${inputCls} py-1.5 text-end`} value={r.value} placeholder={ui.kpiValue}
+                onChange={e => set(rows.map((x, j) => j === i ? { ...x, value: e.target.value } : x))} />
+              <input maxLength={6} className={`${inputCls} py-1.5 text-end`} value={r.pct || ''} placeholder={ui.kpiPct}
+                onChange={e => set(rows.map((x, j) => j === i ? { ...x, pct: e.target.value } : x))} />
+            </div>
+            {i >= maxCustom && <p className="mt-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">{ui.kpiOver}</p>}
           </div>
         ))}
       </div>
       {full
-        ? <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">{ui.kpiLimit(MAX_PROTECTION_KPIS)}</p>
+        ? <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">{ui.kpiLimit}</p>
         : <button type="button" onClick={() => set([...rows, { label: '', value: '' }])} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[#24527f] hover:underline dark:text-sky-300"><Plus size={14} />{ui.add}</button>}
     </div>
   );
@@ -811,17 +841,12 @@ export default function ReportBuilder() {
               {trend.length < 3 && <button type="button" onClick={() => update('uaeWorkforceStats.trend', [...trend, { year: String((Number(trend[trend.length - 1]?.year) || new Date().getFullYear() - 1) + 1) }])} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[#24527f] hover:underline dark:text-sky-300"><Plus size={14} />{ui.add}</button>}
             </Card>
             <Card title={ui.protection} block="uae.protection">
-              <ProtectionRow label={R.unempIns} cn="insuranceUnemploymentCoveredNum" cp="insuranceUnemploymentCoveredPct" nn="insuranceUnemploymentExposedNum" np="insuranceUnemploymentExposedPct" />
-              <ProtectionRow label={R.rightsIns} cn="insuranceRightsCoveredNum" cp="insuranceRightsCoveredPct" nn="insuranceRightsExposedNum" np="insuranceRightsExposedPct" />
+              <ProtectionRow rowKey="unemp" label={R.unempIns} cn="insuranceUnemploymentCoveredNum" cp="insuranceUnemploymentCoveredPct" nn="insuranceUnemploymentExposedNum" np="insuranceUnemploymentExposedPct" />
+              <ProtectionRow rowKey="rights" label={R.rightsIns} cn="insuranceRightsCoveredNum" cp="insuranceRightsCoveredPct" nn="insuranceRightsExposedNum" np="insuranceRightsExposedPct" />
               <WpsRow label={R.wps} />
-              <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
-                <div className="mb-2 text-[13px] font-semibold text-slate-700 dark:text-slate-300">{ui.complaints}</div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field path="uaeWorkforceStats.mohre.totalComplaintsCurrentYear" label={ui.complaintsYear} placeholder="0" />
-                  <Field path="uaeWorkforceStats.mohre.laborComplaintsResolved" label={ui.complaintsResolved} placeholder="0" />
-                  <Field path="uaeWorkforceStats.mohre.workersLaborStrikes" label={R.strikesShort} placeholder="0" />
-                </div>
-              </div>
+              <ProtectionNumRow rowKey="strikes" label={R.strikesShort} path="uaeWorkforceStats.mohre.workersLaborStrikes" />
+              <ProtectionNumRow rowKey="complaints" label={R.complaintsYear} path="uaeWorkforceStats.mohre.totalComplaintsCurrentYear" />
+              <ProtectionNumRow rowKey="resolved" label={R.complaintsResolved} path="uaeWorkforceStats.mohre.laborComplaintsResolved" />
               <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800"><ProtectionKpiEditor /></div>
             </Card>
             <Card title={ui.highlights} hint={ui.hlHint}>

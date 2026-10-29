@@ -4,7 +4,7 @@ import { Report } from '../../types';
 import {
   COPY, Copy, Lang, MONTHS, SOURCE_URLS, EMIRATES_AR, SECTORS_EN_AR, SECTORS_AR_EN, COUNTRY_AR, DASH,
   flagFor, isBlank, show, toNumber, fmtInt, fmtCompact, fmtPct, fmtChange, withAed, formatDayDate, formatMonthYear,
-  wpsStats, complaintStats, MAX_PROTECTION_KPIS,
+  wpsStats, complaintStats, protectionBudget, protRowKey,
 } from './reportCopy';
 import './report.css';
 
@@ -585,13 +585,14 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
   if (showUae) {
     const s = secUae;
     const protectionRows = [
-      { label: T.unempIns, cn: mohre.insuranceUnemploymentCoveredNum, cp: mohre.insuranceUnemploymentCoveredPct, nn: mohre.insuranceUnemploymentExposedNum, np: mohre.insuranceUnemploymentExposedPct },
-      { label: T.rightsIns, cn: mohre.insuranceRightsCoveredNum, cp: mohre.insuranceRightsCoveredPct, nn: mohre.insuranceRightsExposedNum, np: mohre.insuranceRightsExposedPct },
-      { label: T.wps, cn: mohre.wpsWageTransferNum, cp: wps.pct, nn: wps.computed ? String(wps.notPaid) : undefined, np: wps.computed ? wps.notPct : undefined },
+      { key: 'unemp', label: T.unempIns, cn: mohre.insuranceUnemploymentCoveredNum, cp: mohre.insuranceUnemploymentCoveredPct, nn: mohre.insuranceUnemploymentExposedNum, np: mohre.insuranceUnemploymentExposedPct },
+      { key: 'rights', label: T.rightsIns, cn: mohre.insuranceRightsCoveredNum, cp: mohre.insuranceRightsCoveredPct, nn: mohre.insuranceRightsExposedNum, np: mohre.insuranceRightsExposedPct },
+      { key: 'wps', label: T.wps, cn: mohre.wpsWageTransferNum, cp: wps.pct, nn: wps.computed ? String(wps.notPaid) : undefined, np: wps.computed ? wps.notPct : undefined },
     ];
     const complaints = complaintStats(mohre);
     const customKpis = (data.uaeWorkforceStats?.protectionKpis || [])
-      .filter(k => k && !isBlank(k.label) && !isBlank(k.value)).slice(0, MAX_PROTECTION_KPIS);
+      .filter(k => k && !isBlank(k.label) && !isBlank(k.value)).slice(0, protectionBudget(mohre, hidden).maxCustom);
+    const onRow = (k: string) => on(protRowKey(k));
     if (uae1) pages.push({
       key: 'uae-1', section: 'uae', toc: uaeToc(true), cls: 'rpt-big rpt-big2', render: () => (
         <>
@@ -625,7 +626,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {protectionRows.map((r, i) => {
+                {protectionRows.filter(r => onRow(r.key)).map((r, i) => {
                   const a = pctNum(r.cp);
                   const b = r.np !== undefined ? pctNum(r.np) : (a !== null ? 100 - a : null);
                   return (
@@ -639,19 +640,19 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
                     </tr>
                   );
                 })}
-                <tr>
+                {onRow('strikes') && <tr>
                   <td className="strong">{T.strikesShort}</td>
                   <td className="r num strong">{fmtInt(mohre.workersLaborStrikes || '0')}</td>
                   <td colSpan={4} />
-                </tr>
-                {complaints.hasTotal && (
+                </tr>}
+                {complaints.hasTotal && onRow('complaints') && (
                   <tr>
                     <td className="strong">{T.complaintsYear}</td>
                     <td className="r num strong">{fmtInt(complaints.total)}</td>
                     <td colSpan={4} />
                   </tr>
                 )}
-                {complaints.hasResolved && (() => {
+                {complaints.hasResolved && onRow('resolved') && (() => {
                   const a = pctNum(complaints.resolvedPct);
                   return (
                     <tr>
@@ -663,13 +664,18 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
                     </tr>
                   );
                 })()}
-                {customKpis.map((k, i) => (
-                  <tr key={`c${i}`}>
-                    <td className="strong">{k.label}</td>
-                    <td className={`r strong ${/^[\d\s.,%+-]+$/.test(String(k.value).trim()) ? 'num' : 'numx'}`}>{k.value}</td>
-                    <td colSpan={4} />
-                  </tr>
-                ))}
+                {customKpis.map((k, i) => {
+                  const a = isBlank(k.pct) ? null : pctNum(k.pct);
+                  return (
+                    <tr key={`c${i}`}>
+                      <td className="strong">{k.label}</td>
+                      <td className={`r strong ${/^[\d\s.,%+-]+$/.test(String(k.value).trim()) ? 'num' : 'numx'}`}>{k.value}</td>
+                      <td className="r num pct-ok">{a !== null ? fmtPct(k.pct) : ''}</td>
+                      <td colSpan={2} />
+                      <td>{a !== null ? <div className="rpt-split"><span className="a" style={{ width: `${a}%` }} /><span className="b" style={{ width: `${100 - a}%` }} /></div> : null}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>}

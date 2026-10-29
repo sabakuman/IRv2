@@ -131,7 +131,7 @@ export interface WorkersHistory {
 export interface UaeWorkforceData {
   totalWorkersOverride?: number;
   workersHistory?: WorkersHistory;
-  protectionKpis?: { label: string; value: string }[]; // custom boxes under Worker protection indicators (max MAX_PROTECTION_KPIS)
+  protectionKpis?: { label: string; value: string; pct?: string }[]; // custom rows in Worker protection indicators (title, number, optional %)
   mohre: {
     totalPrivate: DateValue;
     totalDomestic: DateValue;

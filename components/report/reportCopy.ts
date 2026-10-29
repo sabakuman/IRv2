@@ -438,8 +438,18 @@ export const fmtInt = (v: unknown) => {
 export const fmtCompact = (v: number) =>
   new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
 
-/* Worker-protection table: most custom rows a report can hold without breaking the page */
-export const MAX_PROTECTION_KPIS = 2;
+/* Worker-protection table: page 4 holds at most 8 rows. Custom rows use the space left by
+   built-in rows that are hidden or empty, up to 4 custom rows. */
+export const MAX_PROTECTION_ROWS = 8;
+export const MAX_CUSTOM_PROTECTION_ROWS = 4;
+export const PROT_ROW_KEYS = ['unemp', 'rights', 'wps', 'strikes', 'complaints', 'resolved'] as const;
+export const protRowKey = (k: string) => `uae.prot.${k}`;
+export function protectionBudget(m: any, hidden: Set<string>) {
+  const c = complaintStats(m);
+  const present: Record<string, boolean> = { unemp: true, rights: true, wps: true, strikes: true, complaints: c.hasTotal, resolved: c.hasResolved };
+  const builtIn = PROT_ROW_KEYS.filter(k => present[k] && !hidden.has(protRowKey(k))).length;
+  return { builtIn, maxCustom: Math.max(0, Math.min(MAX_CUSTOM_PROTECTION_ROWS, MAX_PROTECTION_ROWS - builtIn)) };
+}
 
 const numOf = (v: unknown) => {
   const n = parseFloat(String(v ?? '').replace(/[^0-9.]/g, ''));
