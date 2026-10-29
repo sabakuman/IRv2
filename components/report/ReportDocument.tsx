@@ -4,6 +4,7 @@ import { Report } from '../../types';
 import {
   COPY, Copy, Lang, MONTHS, SOURCE_URLS, EMIRATES_AR, SECTORS_EN_AR, SECTORS_AR_EN, COUNTRY_AR, DASH,
   flagFor, isBlank, show, toNumber, fmtInt, fmtCompact, fmtPct, fmtChange, withAed, formatDayDate, formatMonthYear,
+  wpsStats, complaintStats, MAX_PROTECTION_KPIS,
 } from './reportCopy';
 import './report.css';
 
@@ -177,11 +178,12 @@ const DistCell: React.FC<{ v: number; max: number; total: number; tone: 'm' | 'i
 );
 
 /* KPI box: optional entity (official name) on top, label, value pinned to the bottom so values align across a row */
-const KBox: React.FC<{ ent?: string; label: string; value: React.ReactNode; lead?: boolean; small?: boolean }> = ({ ent, label, value, lead, small }) => (
+const KBox: React.FC<{ ent?: string; label: string; value: React.ReactNode; lead?: boolean; small?: boolean; sub?: React.ReactNode }> = ({ ent, label, value, lead, small, sub }) => (
   <div className={`kb ${lead ? 'lead' : ''}`}>
     {ent && <div className="ent">{ent}</div>}
     <div className="lbl">{label}</div>
     <div className={`val ${small ? 'sm' : 'num'}`}>{value}</div>
+    {sub && <div className="sub">{sub}</div>}
   </div>
 );
 
@@ -222,6 +224,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
   const { data } = report;
   const uae = data.uaeWorkforceStats;
   const mohre = uae.mohre;
+  const wps = wpsStats(mohre);
 
   /* ---------- Derived values ---------- */
   const countryRaw = data.country || '';
@@ -463,7 +466,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
             <KBox lead label={T.totalWorkforce} value={totalWorkers ? Number(totalWorkers).toLocaleString('en-US') : DASH} />
             <KBox ent={T.entMohre} label={T.catAllMohre} value={mohreWorkers + mohreDomestic ? (mohreWorkers + mohreDomestic).toLocaleString('en-US') : DASH} />
             <KBox ent={T.entIcp} label={T.catWorkers} value={fmtInt(icpRaw)} />
-            <KBox label={T.glanceProtected} value={fmtPct(mohre.wpsWageTransferPct)} />
+            <KBox label={T.glanceProtected} value={fmtPct(wps.pct)} />
             <KBox label={T.glanceAgreements} value={activeAgreements} />
             <KBox label={T.glanceLast} value={latestEngagement || DASH} small />
           </div>}
@@ -584,8 +587,11 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
     const protectionRows = [
       { label: T.unempIns, cn: mohre.insuranceUnemploymentCoveredNum, cp: mohre.insuranceUnemploymentCoveredPct, nn: mohre.insuranceUnemploymentExposedNum, np: mohre.insuranceUnemploymentExposedPct },
       { label: T.rightsIns, cn: mohre.insuranceRightsCoveredNum, cp: mohre.insuranceRightsCoveredPct, nn: mohre.insuranceRightsExposedNum, np: mohre.insuranceRightsExposedPct },
-      { label: T.wps, cn: mohre.wpsWageTransferNum, cp: mohre.wpsWageTransferPct, nn: undefined, np: undefined },
+      { label: T.wps, cn: mohre.wpsWageTransferNum, cp: wps.pct, nn: wps.computed ? String(wps.notPaid) : undefined, np: wps.computed ? wps.notPct : undefined },
     ];
+    const complaints = complaintStats(mohre);
+    const customKpis = (data.uaeWorkforceStats?.protectionKpis || [])
+      .filter(k => k && !isBlank(k.label) && !isBlank(k.value)).slice(0, MAX_PROTECTION_KPIS);
     if (uae1) pages.push({
       key: 'uae-1', section: 'uae', toc: uaeToc(true), cls: 'rpt-big rpt-big2', render: () => (
         <>
@@ -606,7 +612,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
 
           {on('uae.protection') && <div className="rpt-panel rpt-mt">
             <h3>{T.protection} <Src k="mohre" year={dataAsOf} /></h3>
-            <table className="rpt-table">
+            <table className="rpt-table rpt-ptable">
               <thead>
                 <tr>
                   <th>{T.indicator}</th>
@@ -632,13 +638,15 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
                     </tr>
                   );
                 })}
-                <tr>
-                  <td className="strong">{T.strikes}</td>
-                  <td className="r num strong">{fmtInt(mohre.workersLaborStrikes || '0')}</td>
-                  <td colSpan={4} />
-                </tr>
               </tbody>
             </table>
+            <div className="rpt-pkpi">
+              <KBox label={T.strikesShort} value={fmtInt(mohre.workersLaborStrikes || '0')} />
+              {complaints.hasTotal && <KBox label={T.complaintsYear} value={fmtInt(complaints.total)} />}
+              {complaints.hasResolved && <KBox label={T.complaintsResolved} value={fmtInt(complaints.resolved)}
+                sub={complaints.resolvedPct ? <span className="numx">{T.resolvedShare(complaints.resolvedPct)}</span> : undefined} />}
+              {customKpis.map((k, i) => <KBox key={i} label={k.label} value={/^[\d\s.,%+-]+$/.test(String(k.value).trim()) ? <span className="num">{k.value}</span> : <span className="numx">{k.value}</span>} />)}
+            </div>
           </div>}
 
         </>

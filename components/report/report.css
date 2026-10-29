@@ -524,3 +524,14 @@
   .rpt-page { margin: 0; box-shadow: none; break-after: page; page-break-after: always; }
   .rpt-page:last-child { break-after: auto; page-break-after: auto; }
 }
+
+/* Worker protection: compact KPI boxes under the indicators table (strikes, complaints, custom) — max 2 rows of 4 */
+.rpt-pkpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2mm; margin-top: 2.5mm; }
+.rpt-pkpi .kb { display: flex; flex-direction: column; gap: .3mm; padding: 2mm 3mm; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+.rpt-pkpi .kb .lbl { font-size: .74em; font-weight: 700; color: var(--ink-2); line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.rpt[dir="rtl"] .rpt-pkpi .kb .lbl { font-size: .8em; line-height: 1.35; }
+.rpt-pkpi .kb .val { margin-top: auto; padding-top: .6mm; font-size: 1.3em; font-weight: 700; color: var(--navy); line-height: 1.1; white-space: nowrap; }
+.rpt-pkpi .kb .sub { font-size: .68em; color: var(--muted); line-height: 1.25; }
+.rpt[dir="rtl"] .rpt-pkpi .kb .sub { font-size: .74em; }
+.rpt-ptable td { padding-top: 1.1mm; padding-bottom: 1.1mm; }
+.rpt-ptable td.strong { line-height: 1.25; }

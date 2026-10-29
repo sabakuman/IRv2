@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { MockService } from '../services/mockService';
 import { EMPTY_REPORT_DATA, Report, ReportData } from '../types';
 import ReportDocument, { SectionKey } from '../components/report/ReportDocument';
-import { COPY, Lang, isBlank } from '../components/report/reportCopy';
+import { COPY, Lang, isBlank, wpsStats, MAX_PROTECTION_KPIS } from '../components/report/reportCopy';
 import { PROFILE_FIELDS, PARTNER_FIELDS, fetchFields, draftSummary } from '../services/reportAI';
 import { fromClassic } from '../components/report/classicAdapter';
 
@@ -54,6 +54,9 @@ const UI = {
     year: 'Year', privateN: 'MOHRE labour', domesticN: 'MOHRE domestic', totalN: 'Total (optional)',
     totals: 'Headline totals', totalOverride: 'Override total (optional)', totalOverrideHint: 'Only if the official total differs from the calculated one.',
     protection: 'Worker protection', covered: 'covered', notCovered: 'not covered', pct: '%',
+    wpsAuto: 'Calculated: workers paid through WPS ÷ total MOHRE workers (labour + domestic). Enter the MOHRE totals in Headline totals.', wpsNeedTotals: 'Enter the MOHRE labour and domestic totals above to calculate this.',
+    complaints: 'Labour complaints', complaintsYear: 'Complaints this year', complaintsResolved: 'Resolved so far',
+    customKpis: 'Additional indicators', customKpisHint: (n: number) => `Your own boxes, shown under the table. Up to ${n}, so the page still fits.`, kpiTitle: 'Title', kpiValue: 'Number', kpiLimit: (n: number) => `Limit reached (${n}). Remove one to add another.`,
     wages: 'Median monthly wage (AED)', emirates: 'Workers by emirate', sectorsAll: 'Workers by sector', sectorsM: 'Workers by sector — MOHRE', sectorsI: 'Workers by sector — ICP',
     salary: 'Median wage by sector (AED)', sector: 'Sector', market: 'Labour market', nationals: 'Nationals',
     addStdSectors: 'Add standard sectors',
@@ -96,6 +99,9 @@ const UI = {
     year: 'السنة', privateN: 'عمالة الوزارة', domesticN: 'مساعدة الوزارة', totalN: 'الإجمالي (اختياري)',
     totals: 'الأرقام الرئيسية', totalOverride: 'تعديل الإجمالي (اختياري)', totalOverrideHint: 'فقط إذا اختلف الإجمالي الرسمي عن الإجمالي المحسوب.',
     protection: 'حماية العمال', covered: 'مشمولون', notCovered: 'غير مشمولين', pct: '%',
+    wpsAuto: 'محسوبة: العمال المحوّلة أجورهم عبر النظام ÷ إجمالي عمالة الوزارة (العمالة + المساعدة). أدخل إجماليات الوزارة في الأرقام الرئيسية.', wpsNeedTotals: 'أدخل إجمالي عمالة الوزارة والعمالة المساعدة أعلاه لحساب النسبة.',
+    complaints: 'الشكاوى العمالية', complaintsYear: 'الشكاوى هذا العام', complaintsResolved: 'تم حلها حتى الآن',
+    customKpis: 'مؤشرات إضافية', customKpisHint: (n: number) => `مربعات تضيفها بنفسك تظهر أسفل الجدول. بحد أقصى ${n} حتى لا تتجاوز الصفحة.`, kpiTitle: 'العنوان', kpiValue: 'الرقم', kpiLimit: (n: number) => `تم بلوغ الحد (${n}). احذف مؤشراً لإضافة آخر.`,
     wages: 'وسيط الأجر الشهري (درهم)', emirates: 'العمال حسب الإمارة', sectorsAll: 'العمال حسب القطاع', sectorsM: 'العمال حسب القطاع — الوزارة', sectorsI: 'العمال حسب القطاع — الهوية',
     salary: 'وسيط الأجور حسب القطاع (درهم)', sector: 'القطاع', market: 'سوق العمل', nationals: 'الجنسية',
     addStdSectors: 'إضافة القطاعات الأساسية',
@@ -329,11 +335,64 @@ const ProtectionRow: React.FC<{ label: string; cn: string; cp: string; nn?: stri
     return <input className={`${inputCls} py-1.5 text-end`} placeholder={ph} value={getIn(data, path) || ''} onChange={e => update(path, e.target.value)} />;
   };
   return (
-    <div className="grid grid-cols-[1.6fr_1fr_70px_1fr_70px] items-center gap-2 border-b border-slate-100 py-2 last:border-0 dark:border-slate-800">
-      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
-      {inp(cn, ui.covered)}{inp(cp, '%')}
-      {nn ? inp(nn, ui.notCovered) : <span />}
-      {np ? inp(np, '%') : <span />}
+    <div className="border-b border-slate-100 py-2.5 last:border-0 dark:border-slate-800">
+      <div className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</div>
+      <div className="grid grid-cols-[90px_1fr_64px] items-center gap-x-2 gap-y-1.5">
+        <span className="text-xs text-slate-500">{ui.covered}</span>{inp(cn, '0')}{inp(cp, '%')}
+        {nn && <><span className="text-xs text-slate-500">{ui.notCovered}</span>{inp(nn, '0')}{np ? inp(np, '%') : <span />}</>}
+      </div>
+    </div>
+  );
+};
+
+const WpsRow: React.FC<{ label: string }> = ({ label }) => {
+  const { data, update, ui } = React.useContext(BuilderCtx);
+  const m = data.uaeWorkforceStats.mohre;
+  const w = wpsStats(m);
+  const ro = `${inputCls} py-1.5 text-end bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300`;
+  return (
+    <div className="border-b border-slate-100 py-2.5 last:border-0 dark:border-slate-800">
+      <div className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</div>
+      <div className="grid grid-cols-[90px_1fr_64px] items-center gap-x-2 gap-y-1.5">
+        <span className="text-xs text-slate-500">{ui.covered}</span>
+        <input type="number" className={`${inputCls} py-1.5 text-end`} placeholder="0" value={m.wpsWageTransferNum || ''} onChange={e => update('uaeWorkforceStats.mohre.wpsWageTransferNum', e.target.value)} />
+        <input readOnly tabIndex={-1} className={ro} value={w.computed ? w.pct : (w.pct || '')} placeholder="%" />
+        <span className="text-xs text-slate-500">{ui.notCovered}</span>
+        <input readOnly tabIndex={-1} className={ro} value={w.computed ? Number(w.notPaid).toLocaleString('en-US') : ''} placeholder="—" />
+        <input readOnly tabIndex={-1} className={ro} value={w.computed ? w.notPct || '' : ''} placeholder="%" />
+      </div>
+      <p className="mt-1 text-[11px] text-slate-500">{w.total > 0 ? ui.wpsAuto : ui.wpsNeedTotals}</p>
+    </div>
+  );
+};
+
+const ProtectionKpiEditor: React.FC = () => {
+  const { data, update, dir, ui } = React.useContext(BuilderCtx);
+  const rows = data.uaeWorkforceStats.protectionKpis || [];
+  const set = (next: { label: string; value: string }[]) => update('uaeWorkforceStats.protectionKpis', next);
+  const full = rows.length >= MAX_PROTECTION_KPIS;
+  return (
+    <div>
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">{ui.customKpis}</span>
+        <span className="text-[11px] font-semibold text-slate-400">{rows.length}/{MAX_PROTECTION_KPIS}</span>
+      </div>
+      <p className="mb-2 text-[11px] text-slate-500">{ui.customKpisHint(MAX_PROTECTION_KPIS)}</p>
+      {rows.length > 0 && <div className="mb-1 grid grid-cols-[1fr_96px_28px] gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400"><span>{ui.kpiTitle}</span><span>{ui.kpiValue}</span><span /></div>}
+      <div className="space-y-1.5">
+        {rows.map((r, i) => (
+          <div key={i} className={`grid grid-cols-[1fr_96px_28px] items-center gap-2 ${i >= MAX_PROTECTION_KPIS ? 'opacity-50' : ''}`} title={i >= MAX_PROTECTION_KPIS ? ui.kpiLimit(MAX_PROTECTION_KPIS) : undefined}>
+            <input dir={dir} maxLength={40} className={`${inputCls} py-1.5`} value={r.label} placeholder={ui.kpiTitle}
+              onChange={e => set(rows.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} />
+            <input maxLength={14} className={`${inputCls} py-1.5 text-end`} value={r.value} placeholder="0"
+              onChange={e => set(rows.map((x, j) => j === i ? { ...x, value: e.target.value } : x))} />
+            <button type="button" aria-label={ui.remove} onClick={() => set(rows.filter((_, j) => j !== i))} className="rounded p-1 text-slate-400 hover:text-red-600"><X size={15} /></button>
+          </div>
+        ))}
+      </div>
+      {full
+        ? <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">{ui.kpiLimit(MAX_PROTECTION_KPIS)}</p>
+        : <button type="button" onClick={() => set([...rows, { label: '', value: '' }])} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[#24527f] hover:underline dark:text-sky-300"><Plus size={14} />{ui.add}</button>}
     </div>
   );
 };
@@ -463,7 +522,7 @@ export default function ReportBuilder() {
     return {
       country: data.country, totalWorkforceInUAE: total || null, workforceTrend: trend,
       mohreLabour: m.totalPrivate?.value, mohreDomestic: m.totalDomestic?.value, icpWorkers: (data.uaeWorkforceStats.icp as any).totalWorkers, workforceTrendNote: 'trend covers MOHRE workers only (labour + domestic)',
-      wpsPct: m.wpsWageTransferPct, unemploymentInsurancePct: m.insuranceUnemploymentCoveredPct, strikes: m.workersLaborStrikes,
+      wpsPct: wpsStats(m).pct, complaintsThisYear: m.totalComplaintsCurrentYear, complaintsResolved: m.laborComplaintsResolved, unemploymentInsurancePct: m.insuranceUnemploymentCoveredPct, strikes: m.workersLaborStrikes,
       activeMohreAgreements: activeMohre,
       agreements: data.bilateralAgreements.map(a => ({ title: a.title, status: a.status, side: a.party })),
       latestEngagement: latest ? { date: latest.date, title: latest.title, side: latest.party } : null,
@@ -734,7 +793,6 @@ export default function ReportBuilder() {
                   <div className="flex h-[38px] items-center rounded-lg bg-slate-100 px-3 text-sm font-bold text-[#0d2c4f] dark:bg-slate-800 dark:text-white">{facts.totalWorkforceInUAE ? Number(facts.totalWorkforceInUAE).toLocaleString('en-US') : '—'}</div>
                 </div>
                 <Field path="uaeWorkforceStats.totalWorkersOverride" type="number" label={ui.totalOverride} hint={ui.totalOverrideHint} />
-                <Field path="uaeWorkforceStats.mohre.workersLaborStrikes" label={R.strikes} />
               </div>
             </Card>
             <Card title={ui.trend} hint={ui.trendHint} block="uae.trend">
@@ -753,12 +811,18 @@ export default function ReportBuilder() {
               {trend.length < 3 && <button type="button" onClick={() => update('uaeWorkforceStats.trend', [...trend, { year: String((Number(trend[trend.length - 1]?.year) || new Date().getFullYear() - 1) + 1) }])} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[#24527f] hover:underline dark:text-sky-300"><Plus size={14} />{ui.add}</button>}
             </Card>
             <Card title={ui.protection} block="uae.protection">
-              <div className="grid grid-cols-[1.6fr_1fr_70px_1fr_70px] gap-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                <span>{R.indicator}</span><span>{R.covered}</span><span>%</span><span>{R.notCovered}</span><span>%</span>
-              </div>
               <ProtectionRow label={R.unempIns} cn="insuranceUnemploymentCoveredNum" cp="insuranceUnemploymentCoveredPct" nn="insuranceUnemploymentExposedNum" np="insuranceUnemploymentExposedPct" />
               <ProtectionRow label={R.rightsIns} cn="insuranceRightsCoveredNum" cp="insuranceRightsCoveredPct" nn="insuranceRightsExposedNum" np="insuranceRightsExposedPct" />
-              <ProtectionRow label={R.wps} cn="wpsWageTransferNum" cp="wpsWageTransferPct" />
+              <WpsRow label={R.wps} />
+              <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+                <div className="mb-2 text-[13px] font-semibold text-slate-700 dark:text-slate-300">{ui.complaints}</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field path="uaeWorkforceStats.mohre.totalComplaintsCurrentYear" label={ui.complaintsYear} placeholder="0" />
+                  <Field path="uaeWorkforceStats.mohre.laborComplaintsResolved" label={ui.complaintsResolved} placeholder="0" />
+                  <Field path="uaeWorkforceStats.mohre.workersLaborStrikes" label={R.strikesShort} placeholder="0" />
+                </div>
+              </div>
+              <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800"><ProtectionKpiEditor /></div>
             </Card>
             <Card title={ui.highlights} hint={ui.hlHint}>
               <div className="space-y-2.5">
