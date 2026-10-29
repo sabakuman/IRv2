@@ -97,6 +97,11 @@ export const COPY = {
     rightsIns: 'Worker rights insurance scheme',
     wps: 'Wages paid through WPS (last 3 months)',
     strikes: 'Workers involved in labour strikes (current year)',
+    strikesShort: 'Workers in labour strikes (this year)',
+    complaintsYear: 'Labour complaints (this year)',
+    complaintsResolved: 'Complaints resolved',
+    resolvedShare: (p: string) => `${p} of this year's complaints`,
+    wpsNote: 'WPS coverage = workers paid through WPS ÷ total MOHRE workers (labour + domestic).',
     wagesBySkill: 'Median monthly wage by skill level',
     skillLevel: 'Skill level',
     nationals: (c: string) => `${c} nationals`,
@@ -274,6 +279,11 @@ export const COPY = {
     rightsIns: 'نظام التأمين على حقوق العمالة',
     wps: 'الأجور عبر نظام حماية الأجور (3 أشهر)',
     strikes: 'المشاركون في إضرابات (هذا العام)',
+    strikesShort: 'المشاركون في إضرابات (هذا العام)',
+    complaintsYear: 'الشكاوى العمالية (هذا العام)',
+    complaintsResolved: 'الشكاوى التي تم حلها',
+    resolvedShare: (p: string) => `${p} من شكاوى هذا العام`,
+    wpsNote: 'نسبة حماية الأجور = العمال المحوّلة أجورهم عبر النظام ÷ إجمالي عمالة الوزارة (العمالة + المساعدة).',
     wagesBySkill: 'وسيط الأجر الشهري حسب المستوى المهاري',
     skillLevel: 'المستوى المهاري',
     nationals: (c: string) => `عمالة ${c}`,
@@ -427,6 +437,48 @@ export const fmtInt = (v: unknown) => {
 
 export const fmtCompact = (v: number) =>
   new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
+
+/* Worker-protection table: page 4 holds at most 8 rows. Custom rows use the space left by
+   built-in rows that are hidden or empty, up to 4 custom rows. */
+export const MAX_PROTECTION_ROWS = 8;
+export const MAX_CUSTOM_PROTECTION_ROWS = 4;
+export const PROT_ROW_KEYS = ['unemp', 'rights', 'wps', 'strikes', 'complaints', 'resolved'] as const;
+export const protRowKey = (k: string) => `uae.prot.${k}`;
+export function protectionBudget(m: any, hidden: Set<string>) {
+  const c = complaintStats(m);
+  const present: Record<string, boolean> = { unemp: true, rights: true, wps: true, strikes: true, complaints: c.hasTotal, resolved: c.hasResolved };
+  const builtIn = PROT_ROW_KEYS.filter(k => present[k] && !hidden.has(protRowKey(k))).length;
+  return { builtIn, maxCustom: Math.max(0, Math.min(MAX_CUSTOM_PROTECTION_ROWS, MAX_PROTECTION_ROWS - builtIn)) };
+}
+
+const numOf = (v: unknown) => {
+  const n = parseFloat(String(v ?? '').replace(/[^0-9.]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+};
+const pct1 = (n: number) => `${Math.round(n * 10) / 10}%`;
+
+/* WPS: covered % = workers paid through WPS / all MOHRE workers (labour + domestic).
+   Not covered = MOHRE workers - paid through WPS. Falls back to a typed % when totals are missing. */
+export function wpsStats(m: any) {
+  const total = numOf(m?.totalPrivate?.value) + numOf(m?.totalDomestic?.value);
+  const paid = numOf(m?.wpsWageTransferNum);
+  if (paid > 0 && total > 0) {
+    const share = Math.min(100, (paid / total) * 100);
+    return { computed: true, total, paid, pct: pct1(share), notPaid: Math.max(0, total - paid), notPct: pct1(100 - share) };
+  }
+  const typed = m?.wpsWageTransferPct;
+  return { computed: false, total, paid, pct: isBlank(typed) ? '' : String(typed), notPaid: undefined as number | undefined, notPct: undefined as string | undefined };
+}
+
+/* Labour complaints this year and how many were resolved (resolved falls back to total - under review) */
+export function complaintStats(m: any) {
+  const total = numOf(m?.totalComplaintsCurrentYear);
+  let resolved = isBlank(m?.laborComplaintsResolved) ? NaN : numOf(m?.laborComplaintsResolved);
+  if (!Number.isFinite(resolved) && total > 0 && !isBlank(m?.laborComplaintsUnderReview)) resolved = Math.max(0, total - numOf(m.laborComplaintsUnderReview));
+  const hasTotal = !isBlank(m?.totalComplaintsCurrentYear);
+  const hasResolved = Number.isFinite(resolved);
+  return { hasTotal, total, hasResolved, resolved: hasResolved ? resolved : 0, resolvedPct: hasTotal && hasResolved && total > 0 ? pct1(Math.min(100, (resolved / total) * 100)) : '' };
+}
 
 export const fmtPct = (v: unknown) => {
   if (isBlank(v) || String(v).trim() === '-' || String(v).trim() === '-%') return DASH;
