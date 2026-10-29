@@ -31,7 +31,7 @@ export default function AdminLogs() {
             <input placeholder="Filter logs..." className="bg-transparent outline-none flex-1 text-sm" />
          </div>
          <div className="max-h-[600px] overflow-y-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-start text-sm">
                <thead className="bg-gray-50 border-b sticky top-0">
                   <tr>
                      <th className="p-4 font-semibold text-gray-600">Timestamp</th>

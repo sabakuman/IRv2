@@ -38,9 +38,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        serif: ['Playfair Display', 'serif'],
-        arabic: ['Noto Naskh Arabic', 'serif'],
+        sans: ['Inter', 'Dubai', 'sans-serif'],
+        serif: ['Playfair Display', 'Dubai', 'serif'],
+        arabic: ['Dubai', 'Noto Naskh Arabic', 'sans-serif'],
       },
       boxShadow: {
         'diplomatic': '0 4px 20px -4px hsl(var(--primary) / 0.15)',

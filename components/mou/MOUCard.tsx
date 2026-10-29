@@ -39,8 +39,8 @@ export const MOUCard: React.FC<MOUCardProps> = ({ mou, onClick }) => {
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-all group border-l-4" 
-      style={{ borderLeftColor: isRTL ? undefined : getStatusColor(mou.status) === 'green' ? '#10b981' : getStatusColor(mou.status) === 'yellow' ? '#f59e0b' : '#3b82f6', borderRightColor: isRTL ? (getStatusColor(mou.status) === 'green' ? '#10b981' : getStatusColor(mou.status) === 'yellow' ? '#f59e0b' : '#3b82f6') : undefined, borderRightWidth: isRTL ? '4px' : '0' }}
+      className="cursor-pointer hover:shadow-lg transition-all group border-s-4" 
+      style={{ borderInlineStartColor: getStatusColor(mou.status) === 'green' ? '#10b981' : getStatusColor(mou.status) === 'yellow' ? '#f59e0b' : '#3b82f6' }}
       onClick={() => onClick(mou.id)}
     >
       <div className="flex items-start justify-between mb-4">

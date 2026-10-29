@@ -48,6 +48,8 @@ export interface Delegate {
   metBefore?: boolean;
   meetingYear?: string;
   meetingLocation?: string;
+  metWhen?: string;    // new builder: when / where we met (falls back to meetingYear / meetingLocation)
+  metShow?: boolean;   // if not met before: show "first meeting" in the report (default true)
 }
 
 export interface DateValue {
@@ -66,6 +68,8 @@ export interface SectorSalary {
   partnerValue: number;
 }
 
+export type InteractionParty = 'mohre' | 'uae_gov';
+
 export interface RecentInteraction {
   id: string;
   title: string;
@@ -74,12 +78,29 @@ export interface RecentInteraction {
   meetingType?: string; // e.g., "اللجنة المشتركة (JCM)", "اللجنة الوزارية / الفنية (TCM)", "اجتماع ثنائي", "أخرى"
   category?: 'UAE GOV' | 'MOHRE' | 'OTHER' | string;
   details: string; // Summary of the interaction
+  party?: InteractionParty; // UAE side: MOHRE or wider UAE Government (MOFA, other entities)
+}
+
+export interface LastInteraction {
+  kind: 'meeting' | 'letter';
+  title: string;
+  date: string;          // YYYY-MM-DD
+  brief: string;         // one or two short lines
+  status: 'done' | 'pending';
+}
+
+export interface WorkforceTrendPoint {
+  year: string;          // e.g. "2024"
+  privateSector?: number; // MOHRE labour (private sector) of this nationality
+  domestic?: number;      // MOHRE domestic workers of this nationality
+  total?: number;         // optional override; otherwise labour + domestic (MOHRE only, no ICP)
 }
 
 export interface PointOfDiscussion {
   id: string;
   title: string;
   content: string;
+  status?: 'pending' | 'done'; // used for previous agreements & work updates
 }
 
 export interface PendingMatter {
@@ -137,6 +158,7 @@ export interface UaeWorkforceData {
     bySector: LabelValue[];
   };
   icp: {
+    totalWorkers?: string; // ICP workers of this nationality (added to the total, not to the 3-year trend)
     byEmirate: LabelValue[];
     bySector: LabelValue[];
   };
@@ -148,10 +170,19 @@ export interface UaeWorkforceData {
     isTotal: boolean; // For the mandatory "Total Workers in UAE"
   }>;
   salaryBySector?: SectorSalary[];
+  trend?: WorkforceTrendPoint[]; // last 3 years, oldest first
 }
 
 // Complex Report Structure
 export interface ReportData {
+  contentLanguage?: Language; // language the report content is written in (drives AI + preview)
+  executiveSummary?: string;  // first-page summary paragraph(s)
+  keyMessages?: string[];     // (legacy) headline messages — no longer shown
+  meetingObjectives?: string[]; // "Main objectives of this meeting" on the summary page (user input)
+  lastInteractions?: LastInteraction[]; // up to 2 "Last interactions" on the summary page (user input)
+  aiFields?: string[];        // field paths filled by AI and not yet verified by a user
+  hiddenSections?: string[];  // report sections switched off in the builder (summary, profile, uae, partner, relationship, points, updates, agreements, delegations)
+
   reportDate?: string; // Date of the report/meeting
   reportMonthYear?: string; // Month and Year (Arabic/English or input from user)
   meetingGoal?: string; // Goal / objective of the meeting (1-2 lines shown on Cover Page)
@@ -159,6 +190,7 @@ export interface ReportData {
 
   // Section 1: Country Profile & Diplomacy
   country: string;
+  countryOfficialName?: string; // e.g. "Republic of Kenya" — shown on the cover
   capital: string;
   officialLanguage: string;
   population: string;
@@ -234,6 +266,7 @@ export interface ReportData {
     status: 'active' | 'pending' | 'custom';
     customStatusText?: string;
     summary: string;
+    party?: InteractionParty; // signed by MOHRE or by the wider UAE Government
   }>;
   
   keyIssues: string[];
@@ -341,6 +374,10 @@ export interface AuditLog {
 }
 
 export const EMPTY_REPORT_DATA: ReportData = {
+  contentLanguage: undefined,
+  executiveSummary: '',
+  keyMessages: [],
+  aiFields: [],
   reportDate: new Date().toISOString().split('T')[0],
   reportMonthYear: '',
   meetingGoal: '',
@@ -408,6 +445,7 @@ export const EMPTY_REPORT_DATA: ReportData = {
       bySector: []
     },
     icp: {
+      totalWorkers: '',
       byEmirate: [
         { name: 'Abu Dhabi', value: 0 },
         { name: 'Dubai', value: 0 },
@@ -422,14 +460,8 @@ export const EMPTY_REPORT_DATA: ReportData = {
     custom: [
       { id: 'total-uae', label: 'Total Workers in UAE', value: '', date: '', isTotal: true }
     ],
-    salaryBySector: [
-      { name: 'Construction', uaeValue: 4500, partnerValue: 1200 },
-      { name: 'Retail', uaeValue: 3800, partnerValue: 950 },
-      { name: 'Services', uaeValue: 4200, partnerValue: 1100 },
-      { name: 'Hospitality', uaeValue: 3500, partnerValue: 800 },
-      { name: 'Manufacturing', uaeValue: 5000, partnerValue: 1400 },
-      { name: 'Transportation', uaeValue: 4800, partnerValue: 1300 },
-    ]
+    salaryBySector: [],
+    trend: [],
   },
   workforceStats: {
     totalWorkforce: '',

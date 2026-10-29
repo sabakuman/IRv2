@@ -7,7 +7,7 @@ import { MockService } from '../services/mockService';
 import { Report, UserProfile } from '../types';
 import { FLAGS } from '../constants';
 import { Card, Button, Badge } from '../components/ui/LayoutComponents';
-import { Search, Plus, Edit3, Trash2, Printer, FileText, Lock, RefreshCw, Eye } from 'lucide-react';
+import { Search, Plus, Edit3, Trash2, Printer, FileText, Lock, RefreshCw, Eye, History } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ReportsList() {
@@ -128,7 +128,7 @@ export default function ReportsList() {
             <p>No reports found.</p>
           </div>
         ) : (
-          <table className="w-full text-left">
+          <table className="w-full text-start">
             <thead className="bg-secondary/50 dark:bg-gray-700/50 border-b dark:border-gray-700">
               <tr>
                 <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('country')}</th>
@@ -136,7 +136,7 @@ export default function ReportsList() {
                 <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colCreatedBy')}</th>
                 <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colLastModified')}</th>
                 <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300">{t('colStatus')}</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">{t('colActions')}</th>
+                <th className="p-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-end">{t('colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y dark:divide-gray-700">
@@ -197,7 +197,7 @@ export default function ReportsList() {
                         {t(report.status)}
                       </Badge>
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-end">
                       <div className="flex items-center justify-end gap-2">
                          <button 
                            onClick={() => handleView(report.id)}
@@ -213,6 +213,14 @@ export default function ReportsList() {
                            title="Edit Report"
                          >
                            <Edit3 size={16} />
+                         </button>
+
+                         <button
+                           onClick={() => navigate(`/wizard-classic/${report.id}`)}
+                           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 dark:text-gray-500 transition-colors"
+                           title={language === 'ar' ? 'المعالج القديم' : 'Classic wizard'}
+                         >
+                           <History size={16} />
                          </button>
 
                          {canDelete && (
