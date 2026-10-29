@@ -332,7 +332,9 @@
 .rpt-big .rpt-hero .lbl { font-size: .82em; }
 .rpt-big .rpt-hero .val { font-size: 2.2em; }
 .rpt-big .rpt-hero > div:first-child .val { font-size: 2.9em; }
-.rpt-big .rpt-years .yr { padding: 4mm 4.5mm; }
+.rpt-big .rpt-years .yr { padding: 3mm 4mm; }
+.rpt-big .rpt-years .overall .y { font-size: .82em; line-height: 1.25; }
+.rpt-big .rpt-years .overall .c, .rpt-big .rpt-years .overall .rng { font-size: .76em; line-height: 1.3; }
 .rpt-big .rpt-years .t { font-size: 1.8em; }
 .rpt-big .rpt-years .split { font-size: .86em; }
 .rpt-big .rpt-table td { padding-top: 2.2mm; padding-bottom: 2.2mm; }
@@ -525,13 +527,9 @@
   .rpt-page:last-child { break-after: auto; page-break-after: auto; }
 }
 
-/* Worker protection: compact KPI boxes under the indicators table (strikes, complaints, custom) — max 2 rows of 4 */
-.rpt-pkpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2mm; margin-top: 2.5mm; }
-.rpt-pkpi .kb { display: flex; flex-direction: column; gap: .3mm; padding: 2mm 3mm; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
-.rpt-pkpi .kb .lbl { font-size: .74em; font-weight: 700; color: var(--ink-2); line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-.rpt[dir="rtl"] .rpt-pkpi .kb .lbl { font-size: .8em; line-height: 1.35; }
-.rpt-pkpi .kb .val { margin-top: auto; padding-top: .6mm; font-size: 1.3em; font-weight: 700; color: var(--navy); line-height: 1.1; white-space: nowrap; }
-.rpt-pkpi .kb .sub { font-size: .68em; color: var(--muted); line-height: 1.25; }
-.rpt[dir="rtl"] .rpt-pkpi .kb .sub { font-size: .74em; }
 .rpt-ptable td { padding-top: 1.1mm; padding-bottom: 1.1mm; }
 .rpt-ptable td.strong { line-height: 1.25; }
+.rpt-ptable { table-layout: fixed; }
+.rpt-ptable th { white-space: nowrap; }
+.rpt-ptable td:not(:first-child) { white-space: nowrap; }
+.rpt-ptable .rpt-split { min-width: 0; width: 100%; }

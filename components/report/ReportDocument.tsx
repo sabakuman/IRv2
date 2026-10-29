@@ -613,6 +613,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
           {on('uae.protection') && <div className="rpt-panel rpt-mt">
             <h3>{T.protection} <Src k="mohre" year={dataAsOf} /></h3>
             <table className="rpt-table rpt-ptable">
+              <colgroup><col /><col style={{ width: '25mm' }} /><col style={{ width: '16mm' }} /><col style={{ width: '25mm' }} /><col style={{ width: '16mm' }} /><col style={{ width: '22mm' }} /></colgroup>
               <thead>
                 <tr>
                   <th>{T.indicator}</th>
@@ -620,7 +621,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
                   <th className="r">%</th>
                   <th className="r">{T.notCovered}</th>
                   <th className="r">%</th>
-                  <th style={{ width: '26mm' }}>{T.share}</th>
+                  <th>{T.share}</th>
                 </tr>
               </thead>
               <tbody>
@@ -638,15 +639,39 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
                     </tr>
                   );
                 })}
+                <tr>
+                  <td className="strong">{T.strikesShort}</td>
+                  <td className="r num strong">{fmtInt(mohre.workersLaborStrikes || '0')}</td>
+                  <td colSpan={4} />
+                </tr>
+                {complaints.hasTotal && (
+                  <tr>
+                    <td className="strong">{T.complaintsYear}</td>
+                    <td className="r num strong">{fmtInt(complaints.total)}</td>
+                    <td colSpan={4} />
+                  </tr>
+                )}
+                {complaints.hasResolved && (() => {
+                  const a = pctNum(complaints.resolvedPct);
+                  return (
+                    <tr>
+                      <td className="strong">{T.complaintsResolved}</td>
+                      <td className="r num strong">{fmtInt(complaints.resolved)}</td>
+                      <td className="r num pct-ok">{complaints.resolvedPct}</td>
+                      <td colSpan={2} />
+                      <td>{a !== null ? <div className="rpt-split"><span className="a" style={{ width: `${a}%` }} /><span className="b" style={{ width: `${100 - a}%` }} /></div> : null}</td>
+                    </tr>
+                  );
+                })()}
+                {customKpis.map((k, i) => (
+                  <tr key={`c${i}`}>
+                    <td className="strong">{k.label}</td>
+                    <td className={`r strong ${/^[\d\s.,%+-]+$/.test(String(k.value).trim()) ? 'num' : 'numx'}`}>{k.value}</td>
+                    <td colSpan={4} />
+                  </tr>
+                ))}
               </tbody>
             </table>
-            <div className="rpt-pkpi">
-              <KBox label={T.strikesShort} value={fmtInt(mohre.workersLaborStrikes || '0')} />
-              {complaints.hasTotal && <KBox label={T.complaintsYear} value={fmtInt(complaints.total)} />}
-              {complaints.hasResolved && <KBox label={T.complaintsResolved} value={fmtInt(complaints.resolved)}
-                sub={complaints.resolvedPct ? <span className="numx">{T.resolvedShare(complaints.resolvedPct)}</span> : undefined} />}
-              {customKpis.map((k, i) => <KBox key={i} label={k.label} value={/^[\d\s.,%+-]+$/.test(String(k.value).trim()) ? <span className="num">{k.value}</span> : <span className="numx">{k.value}</span>} />)}
-            </div>
           </div>}
 
         </>

@@ -438,8 +438,8 @@ export const fmtInt = (v: unknown) => {
 export const fmtCompact = (v: number) =>
   new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
 
-/* Worker-protection panel: most custom KPI boxes a report can hold without breaking the page */
-export const MAX_PROTECTION_KPIS = 5;
+/* Worker-protection table: most custom rows a report can hold without breaking the page */
+export const MAX_PROTECTION_KPIS = 2;
 
 const numOf = (v: unknown) => {
   const n = parseFloat(String(v ?? '').replace(/[^0-9.]/g, ''));
