@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.PORT || 4173; // live dashboard port; set PORT to override
   const DB_FILE = path.join(__dirname, 'database.sqlite');
 
 // Middleware
