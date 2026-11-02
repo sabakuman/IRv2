@@ -711,7 +711,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
             <h3>{T.byEmirate}<Src k="mohreIcp" year={dataAsOf} /></h3>
             {/* Classic layout in the new theme: per emirate, a MOHRE bar and an ICP bar in one track (each on its own scale), numbers at the end */}
             <table className="rpt-em2">
-              <colgroup><col style={{ width: '34mm' }} /><col /><col style={{ width: '25mm' }} /><col style={{ width: '25mm' }} /></colgroup>
+              <colgroup><col style={{ width: '32mm' }} /><col /><col style={{ width: '27mm' }} /><col style={{ width: isRTL ? '34mm' : '27mm' }} /></colgroup>
               <thead><tr>
                 <th>{T.emirateCol}</th>
                 <th className="lg">{T.emScale}</th>
@@ -726,8 +726,8 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
                       <span className="b m" style={{ width: `${r.mohre ? Math.max(1.5, (r.mohre / emMaxM) * 100) : 0}%` }} />
                       <span className="b i" style={{ width: `${r.icp ? Math.max(1.5, (r.icp / emMaxI) * 100) : 0}%` }} />
                     </div></td>
-                    <td className="v num">{r.mohre ? r.mohre.toLocaleString('en-US') : DASH}</td>
-                    <td className="v num">{r.icp ? r.icp.toLocaleString('en-US') : DASH}</td>
+                    <td className="v"><span className="num">{r.mohre ? r.mohre.toLocaleString('en-US') : DASH}</span></td>
+                    <td className="v"><span className="num">{r.icp ? r.icp.toLocaleString('en-US') : DASH}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -915,9 +915,6 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
       ),
     }));
   };
-  flowSection('int', 'relationship', T.relationship, relLede, idx => (
-    <div className="rpt-entries">{idx.map(i => <React.Fragment key={i}>{renderInteraction(i)}</React.Fragment>)}</div>
-  ));
   if (hidden.has('agreements')) {
     /* section hidden */
   } else if (plan.agr.length) {
@@ -929,23 +926,29 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
     pages.push({ key: 'agr-empty', section: 'agreements', toc: s, render: () => (<><Section no={s.no} title={s.title} /><div className="rpt-placeholder">{T.noAgreements}</div></>) });
   }
 
+  flowSection('int', 'relationship', T.relationship, relLede, idx => (
+    <div className="rpt-entries">{idx.map(i => <React.Fragment key={i}>{renderInteraction(i)}</React.Fragment>)}</div>
+  ));
   flowSection('pts', 'points', T.points, T.pointsLede, idx => (
     <div className="rpt-points">{idx.map(i => <React.Fragment key={i}>{renderPoint(points, false)(i)}</React.Fragment>)}</div>
   ));
   flowSection('upd', 'updates', T.updates, T.updatesLede, idx => (
     <div className="rpt-points">{idx.map(i => <React.Fragment key={i}>{renderPoint(updates, true)(i)}</React.Fragment>)}</div>
   ));
-  /* Delegations — partner side only, with "met before" */
+  /* Delegations — partner side (with "met before") and, if switched on, the UAE side */
   if (!hidden.has('delegations')) {
     const s = { no: nextNo(), title: T.delegations };
-    const members = data.delegations.partner || [];
-    const Delegate = ({ d }: { d: any }) => (
+    const partner = (data.delegations.partner || []).map(d => ({ side: 'partner' as const, d }));
+    const uaeOn = (data as any).showUaeDelegation === true;
+    const uaeSide = uaeOn ? (data.delegations.uae || []).filter(d => d && (d.name?.trim() || d.title?.trim())).map(d => ({ side: 'uae' as const, d })) : [];
+    const all = [...partner, ...uaeSide];
+    const Delegate = ({ d, side }: { d: any; side: 'partner' | 'uae' }) => (
       <div className="rpt-dele">
         <div className="photo">{d.imageUrl ? <img src={d.imageUrl} alt={d.name} /> : null}</div>
         <div>
           <div className="name">{d.name || DASH}</div>
           <div className="role">{d.title}</div>
-          {(d.metBefore || d.metShow !== false) && <div className={`rpt-met ${d.metBefore ? 'yes' : 'no'}`}>
+          {side === 'partner' && (d.metBefore || d.metShow !== false) && <div className={`rpt-met ${d.metBefore ? 'yes' : 'no'}`}>
             <span className="k">{T.metBefore}</span>
             <span className="v">{d.metBefore ? T.metYes(d.metWhen ? (/^\d{4}-\d{2}/.test(d.metWhen) ? formatDayDate(d.metWhen, lang) : d.metWhen) : '') : T.metNo}</span>
           </div>}
@@ -953,13 +956,19 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
         </div>
       </div>
     );
-    const groups = members.length ? chunkFixed(members, 3) : [[]];
+    const SideHead = ({ side }: { side: 'partner' | 'uae' }) => side === 'partner'
+      ? <div className="rpt-side">{flag && <img src={flag} alt="" />}{T.partnerDelegation(country)}</div>
+      : <div className="rpt-side uae">{T.uaeDelegation}</div>;
+    const groups = all.length ? chunkFixed(all, 3) : [[]];
     groups.forEach((idx, p) => pages.push({
       key: `dele-${p}`, section: 'delegations', toc: p === 0 ? s : undefined, render: () => (
         <>
-          <Section no={s.no} title={p === 0 ? s.title : `${s.title} ${T.continued}`} lede={p === 0 ? T.delegationsLede : undefined} />
-          <div className="rpt-side">{flag && <img src={flag} alt="" />}{T.partnerDelegation(country)}</div>
-          {idx.length ? idx.map(i => <Delegate key={members[i].id || i} d={members[i]} />) : <div className="rpt-empty">{T.noData}</div>}
+          <Section no={s.no} title={p === 0 ? s.title : `${s.title} ${T.continued}`} lede={p === 0 ? (uaeSide.length ? T.delegationsLedeBoth : T.delegationsLede) : undefined} />
+          {idx.length ? idx.map((i, k) => {
+            const it = all[i];
+            const first = k === 0 || all[idx[k - 1]].side !== it.side;
+            return <React.Fragment key={(it.d as any).id || `${it.side}-${i}`}>{first && <SideHead side={it.side} />}<Delegate d={it.d} side={it.side} /></React.Fragment>;
+          }) : <><SideHead side="partner" /><div className="rpt-empty">{T.noData}</div></>}
         </>
       ),
     }));
