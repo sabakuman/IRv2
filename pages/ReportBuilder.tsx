@@ -483,7 +483,17 @@ export default function ReportBuilder() {
 
   /* ---------- show / hide report sections ---------- */
   const hiddenSet = new Set<string>((data as any).hiddenSections || []);
+  if ((data as any).showEducation !== true) hiddenSet.add('profile.education'); // education: hidden unless switched on
   const toggleSection = (id: string) => {
+    if (id === 'profile.education') {
+      setData(prev => {
+        const cur = new Set<string>((prev as any).hiddenSections || []);
+        cur.delete('profile.education');
+        return { ...prev, showEducation: (prev as any).showEducation !== true, hiddenSections: [...cur] } as ReportData;
+      });
+      setDirty(true);
+      return;
+    }
     setData(prev => {
       const cur = new Set<string>((prev as any).hiddenSections || []);
       cur.has(id) ? cur.delete(id) : cur.add(id);
@@ -641,9 +651,9 @@ export default function ReportBuilder() {
     { id: 'uae', title: R.uaeWorkforce, source: 'user', icon: BarChart3, page: '3', done: `${count(['uaeWorkforceStats.mohre.totalPrivate.value', 'uaeWorkforceStats.mohre.totalDomestic.value', 'uaeWorkforceStats.icp.totalWorkers'])}/3` },
     { id: 'partner', title: R.partnerWorkforce(data.country || '…'), source: 'ai', icon: Users, page: '4', done: `${count(partnerPaths)}/${partnerPaths.length}`, ai: aiIn(partnerPaths).length },
     { id: 'relationship', title: R.relationship, source: 'user', icon: MessageSquare, page: '5', done: String(data.recentInteractions.length) },
+    { id: 'agreements', title: R.agreements, source: 'user', icon: FileText, done: String(data.bilateralAgreements.length) },
     { id: 'points', title: R.points, source: 'user', icon: ListChecks, done: String(data.pointsOfDiscussion.length) },
     { id: 'updates', title: R.updates, source: 'user', icon: History, done: String((data.previousAgreementsAndUpdates || []).length) },
-    { id: 'agreements', title: R.agreements, source: 'user', icon: FileText, done: String(data.bilateralAgreements.length) },
     { id: 'delegations', title: R.delegations, source: 'user', icon: UserRound, done: String(data.delegations.partner.length) },
   ];
   const current = SECTIONS.find(s => s.id === section)!;

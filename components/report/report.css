@@ -419,7 +419,8 @@
 .rpt-dist.sec2 .split { border-inline-start: 1px solid var(--line-2); padding-inline-start: 3mm; }
 .rpt-dist.sec2 .dc { grid-template-columns: 1fr 19mm 8mm; gap: 1.2mm; }
 .rpt-dist.sec2 .nm { font-size: .95em; }
-.rpt-dist.sec2 td { padding-top: 1.3mm; padding-bottom: 1.3mm; }
+.rpt-dist.sec2 td { padding-top: 1.05mm; padding-bottom: 1.05mm; }
+.rpt-dist.sec2 .nm { line-height: 1.2; }
 .rpt-dist-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; align-items: start; }
 .rpt-panel h3 .rpt-src { font-weight: 400; }
 
@@ -533,3 +534,27 @@
 .rpt-ptable th { white-space: nowrap; }
 .rpt-ptable td:not(:first-child) { white-space: nowrap; }
 .rpt-ptable .rpt-split { min-width: 0; width: 100%; }
+
+/* Remittances: highlighted fact box */
+.rpt-fact.hl { background: var(--navy); border-radius: 6px; padding: 2.4mm 3.5mm 2.6mm; border-bottom-color: transparent; margin: .8mm 1.5mm .8mm 0; }
+.rpt[dir="rtl"] .rpt-fact.hl { margin: .8mm 0 .8mm 1.5mm; }
+.rpt-fact.hl .lbl { color: rgba(255,255,255,.82); }
+.rpt-fact.hl .val { color: #f1dfb8; font-weight: 700; }
+.rpt-fact.hl .val.empty { color: rgba(255,255,255,.6); }
+.rpt-fact.hl .rpt-src, .rpt-fact.hl .rpt-src a { color: rgba(255,255,255,.7); border-bottom-color: rgba(255,255,255,.4); }
+
+/* Workers by emirate: classic two-bar rows (MOHRE + ICP in one track), new theme */
+.rpt-em2 { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.rpt-em2 th { text-align: start; font-size: .82em; font-weight: 600; color: var(--muted); padding: 0 2mm 1.4mm; border-bottom: 1.5px solid var(--navy); white-space: nowrap; }
+.rpt[dir="rtl"] .rpt-em2 th { font-size: .92em; }
+.rpt-em2 th.lg { font-weight: 400; color: var(--faint); }
+.rpt-em2 th.v { text-align: end; font-weight: 700; color: var(--ink-2); }
+.rpt-em2 th .key { display: inline-block; width: 2.4mm; height: 2.4mm; border-radius: 1px; margin-inline-end: 1.2mm; vertical-align: -.1em; }
+.rpt-em2 td { padding: 1.05mm 2mm; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.rpt-em2 td.nm { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.rpt-em2 td.v { text-align: end; white-space: nowrap; font-weight: 700; color: var(--navy); }
+.rpt-em2 .tr { display: flex; flex-direction: column; gap: .6mm; background: var(--bg-soft, #f3f5f8); border-radius: 2px; padding: .7mm 1mm; }
+.rpt-em2 .b { display: block; height: 1.8mm; border-radius: 1px; }
+.rpt-em2 .b.m, .rpt-em2 .key.m { background: var(--navy-2); }
+.rpt-em2 .b.i, .rpt-em2 .key.i { background: var(--navy-3); }
+.rpt-em2 tbody tr:last-child td { border-bottom: 0; }

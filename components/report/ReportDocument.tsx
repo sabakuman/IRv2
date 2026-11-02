@@ -58,8 +58,8 @@ export const RichText: React.FC<{ text?: string }> = ({ text }) => {
 };
 
 /* ---------- Presentational pieces ---------- */
-const Fact: React.FC<{ label: string; value: unknown; source?: React.ReactNode; tone?: 'warn' }> = ({ label, value, source, tone }) => (
-  <div className="rpt-fact">
+const Fact: React.FC<{ label: string; value: unknown; source?: React.ReactNode; tone?: 'warn'; highlight?: boolean }> = ({ label, value, source, tone, highlight }) => (
+  <div className={`rpt-fact ${highlight ? 'hl' : ''}`}>
     <div className="lbl">{label}</div>
     <div className={`val ${isBlank(value) ? 'empty' : tone || ''}`}>{show(value)}</div>
     {source}
@@ -295,6 +295,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
     icp: Number(uae.icp.byEmirate.find(x => x.name === e.name)?.value ?? uae.icp.byEmirate[i]?.value) || 0,
   })).sort((a, b) => (b.mohre + b.icp) - (a.mohre + a.icp));
   const emMax = Math.max(...emirateRows.flatMap(r => [r.mohre, r.icp]), 1);
+  const emMaxM = Math.max(...emirateRows.map(r => r.mohre), 1), emMaxI = Math.max(...emirateRows.map(r => r.icp), 1);
   const sectorNames = Array.from(new Set([...mohreSectors.map(x => x.name), ...icpSectors.map(x => x.name)]));
   const sectorRows = sectorNames.map(n => ({ name: n, mohre: mohreSectors.find(x => x.name === n)?.value || 0, icp: icpSectors.find(x => x.name === n)?.value || 0 }))
     .sort((a, b) => (b.mohre + b.icp) - (a.mohre + a.icp));
@@ -346,6 +347,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
   const nMohre = interactions.filter(i => i.party === 'mohre').length;
   const nGov = interactions.filter(i => i.party === 'uae_gov').length;
   const hidden = new Set<string>((data as any).hiddenSections || []);
+  if ((data as any).showEducation !== true) hidden.add('profile.education'); // education: hidden unless switched on
   const on = (k: string) => !hidden.has(k);
   const keyMessages = (data.keyMessages || []).filter(m => m && m.trim());
   const objectives = ((data as any).meetingObjectives || []).map((o: string) => (o || '').trim()).filter(Boolean) as string[];
@@ -538,7 +540,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
           <div className="rpt-facts">
             <Fact label={T.gdp} value={data.gdp} source={<Src k="wb" year={reportYear} />} />
             <Fact label={T.inflation} value={data.economicStats.inflation} source={<Src k="wb" year={reportYear} />} />
-            <Fact label={T.remittances} value={data.economicStats.remittancesFromUAE} source={<Src k="cbuae" year={prevYear} />} />
+            <Fact highlight label={T.remittances} value={data.economicStats.remittancesFromUAE} source={<Src k="cbuae" year={prevYear} />} />
             <Fact label={T.tip} value={data.economicStats.tipRank} tone="warn" source={<Src k="tip" year={prevYear} />} />
           </div></>}
           {on('profile.trade') && <div className="rpt-panel soft rpt-mt">
@@ -707,15 +709,25 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
           {/* Workers by emirate — MOHRE and ICP side by side */}
           {on('uae.emirates') && <div className="rpt-panel rpt-mt">
             <h3>{T.byEmirate}<Src k="mohreIcp" year={dataAsOf} /></h3>
-            <table className="rpt-dist">
-              <colgroup><col style={{ width: '22%' }} /><col /><col /></colgroup>
-              <thead><tr><th>{T.emirateCol}</th><th><i className="key m" />{T.mohreShortSub}</th><th><i className="key i" />{T.icpWorkers}</th></tr></thead>
+            {/* Classic layout in the new theme: per emirate, a MOHRE bar and an ICP bar in one track (each on its own scale), numbers at the end */}
+            <table className="rpt-em2">
+              <colgroup><col style={{ width: '34mm' }} /><col /><col style={{ width: '25mm' }} /><col style={{ width: '25mm' }} /></colgroup>
+              <thead><tr>
+                <th>{T.emirateCol}</th>
+                <th className="lg">{T.emScale}</th>
+                <th className="v"><i className="key m" />{T.mohreShortSub}</th>
+                <th className="v"><i className="key i" />{T.icpWorkers}</th>
+              </tr></thead>
               <tbody>
                 {emirateRows.map(r => (
                   <tr key={r.key}>
                     <td className="nm">{r.name}</td>
-                    <td><DistCell v={r.mohre} max={emMax} total={sumMohre} tone="m" /></td>
-                    <td><DistCell v={r.icp} max={emMax} total={sumIcp} tone="i" /></td>
+                    <td><div className="tr">
+                      <span className="b m" style={{ width: `${r.mohre ? Math.max(1.5, (r.mohre / emMaxM) * 100) : 0}%` }} />
+                      <span className="b i" style={{ width: `${r.icp ? Math.max(1.5, (r.icp / emMaxI) * 100) : 0}%` }} />
+                    </div></td>
+                    <td className="v num">{r.mohre ? r.mohre.toLocaleString('en-US') : DASH}</td>
+                    <td className="v num">{r.icp ? r.icp.toLocaleString('en-US') : DASH}</td>
                   </tr>
                 ))}
               </tbody>
@@ -906,12 +918,6 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
   flowSection('int', 'relationship', T.relationship, relLede, idx => (
     <div className="rpt-entries">{idx.map(i => <React.Fragment key={i}>{renderInteraction(i)}</React.Fragment>)}</div>
   ));
-  flowSection('pts', 'points', T.points, T.pointsLede, idx => (
-    <div className="rpt-points">{idx.map(i => <React.Fragment key={i}>{renderPoint(points, false)(i)}</React.Fragment>)}</div>
-  ));
-  flowSection('upd', 'updates', T.updates, T.updatesLede, idx => (
-    <div className="rpt-points">{idx.map(i => <React.Fragment key={i}>{renderPoint(updates, true)(i)}</React.Fragment>)}</div>
-  ));
   if (hidden.has('agreements')) {
     /* section hidden */
   } else if (plan.agr.length) {
@@ -923,6 +929,12 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
     pages.push({ key: 'agr-empty', section: 'agreements', toc: s, render: () => (<><Section no={s.no} title={s.title} /><div className="rpt-placeholder">{T.noAgreements}</div></>) });
   }
 
+  flowSection('pts', 'points', T.points, T.pointsLede, idx => (
+    <div className="rpt-points">{idx.map(i => <React.Fragment key={i}>{renderPoint(points, false)(i)}</React.Fragment>)}</div>
+  ));
+  flowSection('upd', 'updates', T.updates, T.updatesLede, idx => (
+    <div className="rpt-points">{idx.map(i => <React.Fragment key={i}>{renderPoint(updates, true)(i)}</React.Fragment>)}</div>
+  ));
   /* Delegations — partner side only, with "met before" */
   if (!hidden.has('delegations')) {
     const s = { no: nextNo(), title: T.delegations };
