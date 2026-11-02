@@ -4,7 +4,7 @@ import { Report } from '../../types';
 import {
   COPY, Copy, Lang, MONTHS, SOURCE_URLS, EMIRATES_AR, SECTORS_EN_AR, SECTORS_AR_EN, COUNTRY_AR, DASH,
   flagFor, isBlank, show, toNumber, fmtInt, fmtCompact, fmtPct, fmtChange, withAed, formatDayDate, formatMonthYear,
-  wpsStats, complaintStats, protectionBudget, protRowKey,
+  wpsStats, complaintStats, remittanceAed, protectionBudget, protRowKey,
 } from './reportCopy';
 import './report.css';
 
@@ -540,7 +540,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
           <div className="rpt-facts">
             <Fact label={T.gdp} value={data.gdp} source={<Src k="wb" year={reportYear} />} />
             <Fact label={T.inflation} value={data.economicStats.inflation} source={<Src k="wb" year={reportYear} />} />
-            <Fact highlight label={T.remittances} value={data.economicStats.remittancesFromUAE} source={<Src k="cbuae" year={prevYear} />} />
+            <Fact highlight label={T.remittances} value={isBlank(data.economicStats.remittancesFromUAE) ? '' : remittanceAed(data.economicStats.remittancesFromUAE, lang)} source={<Src k="cbuae" year={prevYear} />} />
             <Fact label={T.tip} value={data.economicStats.tipRank} tone="warn" source={<Src k="tip" year={prevYear} />} />
           </div></>}
           {on('profile.trade') && <div className="rpt-panel soft rpt-mt">

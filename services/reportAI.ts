@@ -23,7 +23,7 @@ export const PROFILE_FIELDS: AIField[] = [
   { path: 'unemploymentRate', type: 'string', hint: 'latest national unemployment rate, e.g. "5.6%"' },
   { path: 'economicStats.inflation', type: 'string', hint: 'latest annual CPI inflation, e.g. "4.1%"' },
   { path: 'economicStats.tipRank', type: 'string', hint: 'latest US Trafficking in Persons Report tier, e.g. "Tier 2"' },
-  { path: 'economicStats.remittancesFromUAE', type: 'string', hint: 'annual remittances from the UAE to the country in USD, e.g. "$0.38B"' },
+  { path: 'economicStats.remittancesFromUAE', type: 'string', hint: 'annual remittances from the UAE to the country in UAE dirhams (AED), e.g. "AED 1.4 billion"' },
   { path: 'economicStats.totalImportsFromUAE', type: 'string', hint: 'annual value of UAE exports to the country (USD), e.g. "$2.84B"' },
   { path: 'economicStats.totalExportsToUAE', type: 'string', hint: 'annual value of UAE imports from the country (USD), e.g. "$0.21B"' },
   { path: 'economicStats.topImportProducts', type: 'stringList', hint: 'top 5 products the UAE exports to the country (1-3 words each)' },

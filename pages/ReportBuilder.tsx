@@ -55,6 +55,7 @@ const UI = {
     totals: 'Headline totals', totalOverride: 'Override total (optional)', totalOverrideHint: 'Only if the official total differs from the calculated one.',
     protection: 'Worker protection', covered: 'covered', notCovered: 'not covered', pct: '%',
     wpsAuto: 'Calculated: workers paid through WPS ÷ total MOHRE workers (labour + domestic). Enter the MOHRE totals in Headline totals.', wpsNeedTotals: 'Enter the MOHRE labour and domestic totals above to calculate this.',
+    remitHint: 'In dirhams (AED). A USD figure is converted at 3.6725 in the report.',
     complaints: 'Labour complaints', complaintsYear: 'Complaints this year', complaintsResolved: 'Resolved so far',
     customKpis: 'Custom rows', customKpisHint: 'Your own indicators, added at the end of this table. Title and number are needed; % is optional (with a %, the coverage bar is shown too). Hide a row above to make room for more.', kpiTitle: 'Title', kpiValue: 'Number', kpiPct: '% (optional)', kpiLimit: 'The table is full. Hide or remove a row to add another.', kpiOver: 'Not shown: the table is full. Hide another row to show it.',
     wages: 'Median monthly wage (AED)', emirates: 'Workers by emirate', sectorsAll: 'Workers by sector', sectorsM: 'Workers by sector — MOHRE', sectorsI: 'Workers by sector — ICP',
@@ -100,6 +101,7 @@ const UI = {
     totals: 'الأرقام الرئيسية', totalOverride: 'تعديل الإجمالي (اختياري)', totalOverrideHint: 'فقط إذا اختلف الإجمالي الرسمي عن الإجمالي المحسوب.',
     protection: 'حماية العمال', covered: 'مشمولون', notCovered: 'غير مشمولين', pct: '%',
     wpsAuto: 'محسوبة: العمال المحوّلة أجورهم عبر النظام ÷ إجمالي عمالة الوزارة (العمالة + المساعدة). أدخل إجماليات الوزارة في الأرقام الرئيسية.', wpsNeedTotals: 'أدخل إجمالي عمالة الوزارة والعمالة المساعدة أعلاه لحساب النسبة.',
+    remitHint: 'بالدرهم الإماراتي. أي رقم بالدولار يُحوَّل في التقرير بسعر 3.6725.',
     complaints: 'الشكاوى العمالية', complaintsYear: 'الشكاوى هذا العام', complaintsResolved: 'تم حلها حتى الآن',
     customKpis: 'صفوف مخصصة', customKpisHint: 'مؤشرات تضيفها بنفسك في آخر هذا الجدول. العنوان والرقم مطلوبان، والنسبة اختيارية (عند إدخالها يظهر شريط التغطية). أخفِ صفاً أعلاه لإتاحة مساحة لصفوف أكثر.', kpiTitle: 'العنوان', kpiValue: 'الرقم', kpiPct: '% (اختياري)', kpiLimit: 'الجدول ممتلئ. أخفِ صفاً أو احذفه لإضافة آخر.', kpiOver: 'لن يظهر: الجدول ممتلئ. أخفِ صفاً آخر لإظهاره.',
     wages: 'وسيط الأجر الشهري (درهم)', emirates: 'العمال حسب الإمارة', sectorsAll: 'العمال حسب القطاع', sectorsM: 'العمال حسب القطاع — الوزارة', sectorsI: 'العمال حسب القطاع — الهوية',
@@ -796,7 +798,7 @@ export default function ReportBuilder() {
               <div className="grid gap-4 md:grid-cols-2">
                 <Field path="gdp" label={R.gdp} />
                 <Field path="economicStats.inflation" label={R.inflation} />
-                <Field path="economicStats.remittancesFromUAE" label={R.remittances} />
+                <Field path="economicStats.remittancesFromUAE" label={R.remittances} hint={ui.remitHint} />
                 <Field path="economicStats.tipRank" label={R.tip} />
               </div>
             </Card>
