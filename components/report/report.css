@@ -535,13 +535,9 @@
 .rpt-ptable td:not(:first-child) { white-space: nowrap; }
 .rpt-ptable .rpt-split { min-width: 0; width: 100%; }
 
-/* Remittances: highlighted fact box */
-.rpt-fact.hl { background: var(--navy); border-radius: 6px; padding: 2.4mm 3.5mm 2.6mm; border-bottom-color: transparent; margin: .8mm 1.5mm .8mm 0; }
-.rpt[dir="rtl"] .rpt-fact.hl { margin: .8mm 0 .8mm 1.5mm; }
-.rpt-fact.hl .lbl { color: rgba(255,255,255,.82); }
-.rpt-fact.hl .val { color: #f1dfb8; font-weight: 700; }
-.rpt-fact.hl .val.empty { color: rgba(255,255,255,.6); }
-.rpt-fact.hl .rpt-src, .rpt-fact.hl .rpt-src a { color: rgba(255,255,255,.7); border-bottom-color: rgba(255,255,255,.4); }
+/* Remittances: same as the other facts, value in gold */
+.rpt-fact.hl .val { color: var(--gold); font-weight: 700; }
+.rpt-fact.hl .val.empty { color: var(--faint); font-weight: 400; }
 
 /* Workers by emirate: classic two-bar rows (MOHRE + ICP in one track), new theme */
 .rpt-em2 { width: 100%; border-collapse: collapse; table-layout: fixed; }
