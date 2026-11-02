@@ -554,3 +554,10 @@
 .rpt-em2 .b.m, .rpt-em2 .key.m { background: var(--navy-2); }
 .rpt-em2 .b.i, .rpt-em2 .key.i { background: var(--navy-3); }
 .rpt-em2 tbody tr:last-child td { border-bottom: 0; }
+
+/* Workers by emirate: figure cells follow the page direction so they line up under their headers */
+.rpt-em2 td.v .num { display: inline-block; }
+/* Delegations: UAE side heading */
+.rpt-side.uae { margin-top: 4mm; }
+.rpt-side.uae::before { content: ''; display: inline-block; width: 6.5mm; height: 3.4mm; border-radius: 1px;
+  background: linear-gradient(90deg, #ce1126 0 25%, transparent 25%), linear-gradient(#00732f 0 33.3%, #fff 33.3% 66.6%, #000 66.6%); box-shadow: 0 0 0 .2mm var(--line); }

@@ -67,7 +67,7 @@ const UI = {
     status: 'Status', pending: 'Pending', done: 'Done', active: 'Active',
     isMohre: 'Is this a MOHRE agreement?', yes: 'Yes', no: 'No', mohreAgr: 'Yes — MOHRE', govAgr: 'No — UAE Government',
     summaryCol: 'Summary', photo: 'Photo', role: 'Position', metBefore: 'Have we met before?', metWhen: 'When / where', metShow: 'Show “first meeting” in the report', metShowHint: 'Turn off to leave this line out of the report.', bio: 'Notes / bio',
-    addEngagement: 'Add engagement', addPoint: 'Add point', addUpdate: 'Add update', addAgreement: 'Add agreement', addMember: 'Add member',
+    addEngagement: 'Add engagement', addPoint: 'Add point', addUpdate: 'Add update', addAgreement: 'Add agreement', addMember: 'Add member', addUaeMember: 'Add UAE representative', uaeSide: 'UAE side (optional)', uaeSideHint: 'Ambassador, Consul General or anyone else attending for the UAE. Shown in the report only when switched on.', uaeEmpty: 'No UAE representatives added.', uaeRolePh: 'e.g. UAE Ambassador', uaeRoles: ['UAE Ambassador', 'UAE Consul General', 'Deputy Head of Mission', 'Labour Attaché'],
     empty: 'Nothing added yet.',
     typeSuggestions: ['Meeting', 'Official visit', 'Joint Committee (JCM)', 'Call', 'Correspondence', 'Workshop'],
   },
@@ -113,7 +113,7 @@ const UI = {
     status: 'الحالة', pending: 'قيد المتابعة', done: 'منجز', active: 'سارية',
     isMohre: 'هل هذه اتفاقية خاصة بالوزارة؟', yes: 'نعم', no: 'لا', mohreAgr: 'نعم — الوزارة', govAgr: 'لا — حكومة الإمارات',
     summaryCol: 'الملخص', photo: 'الصورة', role: 'المنصب', metBefore: 'هل سبق اللقاء؟', metWhen: 'متى / أين', metShow: 'إظهار «أول لقاء» في التقرير', metShowHint: 'أوقفه لعدم إظهار هذا السطر في التقرير.', bio: 'ملاحظات / نبذة',
-    addEngagement: 'إضافة تواصل', addPoint: 'إضافة محور', addUpdate: 'إضافة مستجد', addAgreement: 'إضافة اتفاقية', addMember: 'إضافة عضو',
+    addEngagement: 'إضافة تواصل', addPoint: 'إضافة محور', addUpdate: 'إضافة مستجد', addAgreement: 'إضافة اتفاقية', addMember: 'إضافة عضو', addUaeMember: 'إضافة ممثل عن الدولة', uaeSide: 'الجانب الإماراتي (اختياري)', uaeSideHint: 'السفير أو القنصل العام أو أي ممثل آخر عن دولة الإمارات. يظهر في التقرير فقط عند تفعيله.', uaeEmpty: 'لم تتم إضافة ممثلين عن الدولة.', uaeRolePh: 'مثال: سفير الدولة', uaeRoles: ['سفير دولة الإمارات', 'القنصل العام لدولة الإمارات', 'نائب رئيس البعثة', 'الملحق العمالي'],
     empty: 'لم تتم إضافة أي عنصر بعد.',
     typeSuggestions: ['اجتماع', 'زيارة رسمية', 'اللجنة المشتركة', 'اتصال', 'مراسلة', 'ورشة عمل'],
   },
@@ -652,11 +652,11 @@ export default function ReportBuilder() {
     { id: 'profile', title: R.profile, source: 'ai', icon: Globe, page: '2', done: `${count(profilePaths)}/${profilePaths.length}`, ai: aiIn(profilePaths).length },
     { id: 'uae', title: R.uaeWorkforce, source: 'user', icon: BarChart3, page: '3', done: `${count(['uaeWorkforceStats.mohre.totalPrivate.value', 'uaeWorkforceStats.mohre.totalDomestic.value', 'uaeWorkforceStats.icp.totalWorkers'])}/3` },
     { id: 'partner', title: R.partnerWorkforce(data.country || '…'), source: 'ai', icon: Users, page: '4', done: `${count(partnerPaths)}/${partnerPaths.length}`, ai: aiIn(partnerPaths).length },
-    { id: 'relationship', title: R.relationship, source: 'user', icon: MessageSquare, page: '5', done: String(data.recentInteractions.length) },
-    { id: 'agreements', title: R.agreements, source: 'user', icon: FileText, done: String(data.bilateralAgreements.length) },
+    { id: 'agreements', title: R.agreements, source: 'user', icon: FileText, page: '5', done: String(data.bilateralAgreements.length) },
+    { id: 'relationship', title: R.relationship, source: 'user', icon: MessageSquare, done: String(data.recentInteractions.length) },
     { id: 'points', title: R.points, source: 'user', icon: ListChecks, done: String(data.pointsOfDiscussion.length) },
     { id: 'updates', title: R.updates, source: 'user', icon: History, done: String((data.previousAgreementsAndUpdates || []).length) },
-    { id: 'delegations', title: R.delegations, source: 'user', icon: UserRound, done: String(data.delegations.partner.length) },
+    { id: 'delegations', title: R.delegations, source: 'user', icon: UserRound, done: String(data.delegations.partner.length + ((data as any).showUaeDelegation ? (data.delegations.uae || []).length : 0)) },
   ];
   const current = SECTIONS.find(s => s.id === section)!;
   const currentIdx = SECTIONS.findIndex(s => s.id === section);
@@ -1002,8 +1002,13 @@ export default function ReportBuilder() {
             )} />
         );
 
-      case 'delegations':
+      case 'delegations': {
+        const uaeOn = (data as any).showUaeDelegation === true;
+        const setUaeOn = (v: boolean) => { setData(prev => ({ ...prev, showUaeDelegation: v } as ReportData)); setDirty(true); };
         return (
+          <div className="space-y-5">
+            <div>
+            <h3 className="mb-3 text-[15px] font-bold text-[#0d2c4f] dark:text-white">{R.partnerDelegation(data.country || '…')}</h3>
           <ListEditor ui={ui} items={data.delegations.partner} onChange={v => update('delegations.partner', v)} addLabel={ui.addMember} emptyText={ui.empty}
             make={() => ({ id: uuidv4(), name: '', title: '', imageUrl: '', bio: '', metBefore: false, metWhen: '', metShow: true })}
             render={(d, set) => (
@@ -1034,7 +1039,37 @@ export default function ReportBuilder() {
                 </div>
               </div>
             )} />
+            </div>
+            <div className={`rounded-xl border p-4 shadow-sm ${uaeOn ? 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900/60' : 'border-dashed border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-900/30'}`}>
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#0d2c4f] dark:text-white">{ui.uaeSide}{!uaeOn && <span className="ms-2 rounded bg-slate-200 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:bg-slate-700 dark:text-slate-300">{ui.hiddenTag}</span>}</h3>
+                  <p className="mt-0.5 text-xs text-slate-500">{ui.uaeSideHint}</p>
+                </div>
+                <span className="flex items-center gap-2 text-xs font-semibold text-slate-500"><span className="hidden sm:inline">{ui.showBlock}</span><Switch on={uaeOn} onClick={() => setUaeOn(!uaeOn)} label={ui.uaeSide} /></span>
+              </div>
+              <ListEditor ui={ui} items={data.delegations.uae || []} onChange={v => { update('delegations.uae', v); if (!uaeOn && v.length > (data.delegations.uae || []).length) setUaeOn(true); }} addLabel={ui.addUaeMember} emptyText={ui.uaeEmpty}
+                make={() => ({ id: uuidv4(), name: '', title: '', imageUrl: '', bio: '' })}
+                render={(d, set) => (
+                  <div className="grid gap-4 md:grid-cols-[110px_1fr]">
+                    <label className="flex h-[136px] w-[110px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-400 hover:border-[#24527f] dark:border-slate-600 dark:bg-slate-800">
+                      {d.imageUrl ? <img src={d.imageUrl} className="h-full w-full object-cover" alt="" /> : <><UploadCloud size={20} /><span className="mt-1">{ui.photo}</span></>}
+                      <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) readImage(f, u => set({ imageUrl: u })); }} />
+                    </label>
+                    <div className="space-y-3">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div><label className={labelCls}>{ui.name}</label><input dir={contentDir} className={inputCls} value={d.name} onChange={e => set({ name: e.target.value })} /></div>
+                        <div><label className={labelCls}>{ui.role}</label><input dir={contentDir} list="uae-roles" className={inputCls} value={d.title} placeholder={ui.uaeRolePh} onChange={e => set({ title: e.target.value })} /></div>
+                      </div>
+                      <div><label className={labelCls}>{ui.bio}</label><RichArea dir={contentDir} rows={2} value={d.bio} onChange={v => set({ bio: v })} /></div>
+                    </div>
+                  </div>
+                )} />
+              <datalist id="uae-roles">{ui.uaeRoles.map((r: string) => <option key={r} value={r} />)}</datalist>
+            </div>
+          </div>
         );
+      }
     }
     return null;
   };
