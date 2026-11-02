@@ -502,6 +502,27 @@ export const withAed = (v: string | undefined, lang: Lang) => {
   return lang === 'ar' ? `${fmtInt(s)} درهم` : `AED ${fmtInt(s)}`;
 };
 
+/* Remittances are shown in dirhams. AED is pegged to USD at 3.6725, so a USD figure
+   (e.g. "$0.38B", "USD 21.6 billion") is converted exactly; an AED figure is kept. */
+export const AED_PER_USD = 3.6725;
+export const remittanceAed = (v: unknown, lang: Lang) => {
+  if (isBlank(v)) return DASH;
+  const s = String(v).trim();
+  const isUsd = /usd|\$|us dollars?|دولار/i.test(s);
+  const isAed = /aed|dhs?\b|د\.إ|درهم|dirham/i.test(s);
+  const m = s.replace(/,/g, '').match(/(\d+(?:\.\d+)?)/);
+  if (!m) return s;
+  let n = parseFloat(m[1]);
+  const rest = s.slice((m.index || 0) + m[1].length).toLowerCase();
+  if (/^\s*(b\b|bn|billion|مليار)/.test(rest)) n *= 1e9;
+  else if (/^\s*(m\b|mn|million|مليون)/.test(rest)) n *= 1e6;
+  else if (/^\s*(k\b|thousand|ألف)/.test(rest)) n *= 1e3;
+  if (isUsd && !isAed) n *= AED_PER_USD;
+  const r = (x: number) => (Math.round(x * 10) / 10).toLocaleString('en-US');
+  const [num, unitEn, unitAr] = n >= 1e9 ? [r(n / 1e9), 'billion', 'مليار'] : n >= 1e6 ? [r(n / 1e6), 'million', 'مليون'] : [Math.round(n).toLocaleString('en-US'), '', ''];
+  return lang === 'ar' ? `${num}${unitAr ? ` ${unitAr}` : ''} درهم` : `AED ${num}${unitEn ? ` ${unitEn}` : ''}`;
+};
+
 export const formatDayDate = (dateStr: string, lang: Lang) => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
