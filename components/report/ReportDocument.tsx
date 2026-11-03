@@ -138,7 +138,7 @@ const TrendFigures: React.FC<{ points: TrendPt[]; T: Copy; compact?: boolean }> 
         ))}
         {overall && (
           <div className="yr overall">
-            <span className="y">{T.overallChange}</span>
+            <span className="y">{T.overallChange(points.length)}</span>
             <span className="t num">{overall}</span>
             <span className="rng"><span className="num">{first.year}</span> – <span className="num">{last.year}</span></span>
           </div>
@@ -158,7 +158,7 @@ const TrendFigures: React.FC<{ points: TrendPt[]; T: Copy; compact?: boolean }> 
       ))}
       {overall && (
         <div className="yr overall">
-          <div className="y">{T.overallChange}</div>
+          <div className="y">{T.overallChange(points.length)}</div>
           <div className="t num">{overall}</div>
           <div className="rng"><span className="num">{first.year}</span> – <span className="num">{last.year}</span></div>
           <div className="c"><span className="num">{fmtInt(last.total - first.total)}</span> {T.moreWorkers}</div>
@@ -360,6 +360,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
 
   const renderInteraction = (i: number) => {
     const it = interactions[i];
+    if (!it) return null;
     return (
       <div className={`rpt-entry party-${it.party || 'none'}`}>
         <div className="meta">
@@ -376,6 +377,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
   };
   const renderPoint = (list: typeof points, alt: boolean) => (i: number) => {
     const pt = list[i];
+    if (!pt) return null;
     return (
       <div className={`rpt-point ${alt ? 'alt' : ''}`}>
         <span className="idx num">{i + 1}</span>
@@ -397,6 +399,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
   );
   const renderAgreementRow = (i: number) => {
     const a = agreements[i];
+    if (!a) return null;
     const st = agreementStatus(a);
     return (
       <tr>
@@ -413,7 +416,21 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
   const fallbackPlan = (): Plan => ({
     int: chunkFixed(interactions, 4), pts: chunkFixed(points, 3), upd: chunkFixed(updates, 3), agr: chunkFixed(agreements, 5),
   });
-  const [plan, setPlan] = useState<Plan>(fallbackPlan);
+  const [planState, setPlan] = useState<Plan>(fallbackPlan);
+  /* The measured plan can lag one render behind the data (e.g. right after an entry is deleted):
+     use it only when it covers exactly the current entries, otherwise fall back for that list. */
+  const plan: Plan = (() => {
+    const lists: Record<keyof Plan, unknown[]> = { int: interactions, pts: points, upd: updates, agr: agreements };
+    const fb = fallbackPlan();
+    const out = {} as Plan;
+    (Object.keys(lists) as (keyof Plan)[]).forEach(k => {
+      const n = lists[k].length;
+      const flat = planState[k].flat();
+      const ok = flat.length === n && flat.every((v, j) => v === j);
+      out[k] = ok ? planState[k] : fb[k];
+    });
+    return out;
+  })();
   const measureRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -610,7 +627,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
 
           {on('uae.trend') && trend.length > 0 && (
             <div className="rpt-panel rpt-mt">
-              <h3>{T.trendTitle} <Src k="mohre" /></h3>
+              <h3>{T.trendTitle(trend.length)} <Src k="mohre" /></h3>
               <TrendFigures points={trend} T={T} />
             </div>
           )}
