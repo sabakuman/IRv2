@@ -35,19 +35,30 @@ const inline = (s: string) => escapeHtml(s)
   .replace(/([+\-−]?\$?\d[\d,.]*(?:\s?%|[KMB]\b)?)/g, '<span class="num">$1</span>')
   .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
 
+/* Rich text: **bold**, "- " bullets, and sub-bullets ("  - " indented, or "-- ") under the bullet above */
 export const RichText: React.FC<{ text?: string }> = ({ text }) => {
   if (!text || !text.trim()) return null;
   const blocks: React.ReactNode[] = [];
-  let list: string[] = [];
+  let list: { text: string; subs: string[] }[] = [];
   const flush = (key: string) => {
     if (list.length) {
-      blocks.push(<ul key={key}>{list.map((li, i) => <li key={i} dangerouslySetInnerHTML={{ __html: inline(li) }} />)}</ul>);
+      blocks.push(<ul key={key}>{list.map((li, i) => (
+        <li key={i}>
+          <span dangerouslySetInnerHTML={{ __html: inline(li.text) }} />
+          {li.subs.length > 0 && <ul className="sub">{li.subs.map((sb, j) => <li key={j} dangerouslySetInnerHTML={{ __html: inline(sb) }} />)}</ul>}
+        </li>
+      ))}</ul>);
       list = [];
     }
   };
   text.split('\n').forEach((raw, i) => {
     const line = raw.trim();
-    if (/^[-•]\s+/.test(line)) list.push(line.replace(/^[-•]\s+/, ''));
+    const isSub = /^(\s{2,}|\t)[-•◦]\s+/.test(raw) || /^--\s+/.test(line) || /^◦\s+/.test(line);
+    if (isSub) {
+      const t = line.replace(/^(--|[-•◦])\s+/, '');
+      if (list.length) list[list.length - 1].subs.push(t);
+      else list.push({ text: t, subs: [] });
+    } else if (/^[-•]\s+/.test(line)) list.push({ text: line.replace(/^[-•]\s+/, ''), subs: [] });
     else {
       flush(`ul-${i}`);
       if (line) blocks.push(<p key={i} dangerouslySetInnerHTML={{ __html: inline(line) }} />);

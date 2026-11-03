@@ -236,6 +236,9 @@
 .rpt-rich li { position: relative; margin-bottom: .8mm; }
 .rpt-rich li::before { content: ""; position: absolute; inset-inline-start: -3.6mm; top: .65em; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
 .rpt-rich strong { color: var(--ink); font-weight: 700; }
+.rpt-rich ul.sub { margin: .6mm 0 0; padding-inline-start: 4.5mm; }
+.rpt-rich ul.sub li { margin-bottom: .5mm; font-size: .95em; }
+.rpt-rich ul.sub li::before { width: 4px; height: 4px; background: transparent; border: 1px solid var(--gold); box-sizing: border-box; }
 
 /* Agreements */
 .rpt-agr { table-layout: fixed; }

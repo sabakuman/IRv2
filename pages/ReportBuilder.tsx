@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Save, Sparkles, Loader2, Eye, EyeOff, FileDown, CheckCircle2, Check, Plus, Trash2, ChevronUp, ChevronDown,
-  AlertTriangle, Bold, List, ChevronLeft, ChevronRight, UploadCloud, X, Globe, BarChart3, Users, MessageSquare, ListChecks, History, FileText, UserRound, Settings2, LayoutDashboard,
+  AlertTriangle, Bold, List, ListTree, ChevronLeft, ChevronRight, UploadCloud, X, Globe, BarChart3, Users, MessageSquare, ListChecks, History, FileText, UserRound, Settings2, LayoutDashboard,
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useLanguage } from '../context/LanguageContext';
@@ -180,11 +180,12 @@ const Segmented: React.FC<{ value: any; options: { v: any; label: string }[]; on
 
 const RichArea: React.FC<{ value: string; onChange: (v: string) => void; placeholder?: string; rows?: number; dir?: string }> = ({ value, onChange, placeholder, rows = 5, dir }) => {
   const ref = useRef<HTMLTextAreaElement>(null);
-  const wrap = (kind: 'bold' | 'bullet') => {
+  const wrap = (kind: 'bold' | 'bullet' | 'sub') => {
     const el = ref.current; if (!el) return;
     const { selectionStart: a, selectionEnd: b } = el;
     const sel = value.slice(a, b);
-    const ins = kind === 'bold' ? `**${sel || '…'}**` : `${a > 0 && value[a - 1] !== '\n' ? '\n' : ''}- ${sel}`;
+    const nl = a > 0 && value[a - 1] !== '\n' ? '\n' : '';
+    const ins = kind === 'bold' ? `**${sel || '…'}**` : kind === 'sub' ? `${nl}  - ${sel}` : `${nl}- ${sel}`;
     onChange(value.slice(0, a) + ins + value.slice(b));
     requestAnimationFrame(() => { el.focus(); el.setSelectionRange(a + ins.length, a + ins.length); });
   };
@@ -193,8 +194,27 @@ const RichArea: React.FC<{ value: string; onChange: (v: string) => void; placeho
       <div className="flex gap-1 border-b border-slate-200 bg-slate-50 px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800">
         <button type="button" title="Bold" onClick={() => wrap('bold')} className="rounded p-1 text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"><Bold size={14} /></button>
         <button type="button" title="Bullet" onClick={() => wrap('bullet')} className="rounded p-1 text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"><List size={14} /></button>
+        <button type="button" title="Sub-bullet (under the bullet above). Tip: Tab on a bullet line indents it, Shift+Tab moves it back." onClick={() => wrap('sub')} className="rounded p-1 text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"><ListTree size={14} /></button>
       </div>
       <textarea ref={ref} dir={dir} rows={rows} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)}
+        onKeyDown={e => {
+          const el = e.currentTarget; const pos = el.selectionStart;
+          const start = value.lastIndexOf('\n', pos - 1) + 1;
+          const end = value.indexOf('\n', pos) === -1 ? value.length : value.indexOf('\n', pos);
+          const line = value.slice(start, end);
+          const m = line.match(/^(\s*)([-•◦])\s/);
+          const put = (next: string, caret: number) => { onChange(next); requestAnimationFrame(() => { el.focus(); el.setSelectionRange(caret, caret); }); };
+          if (e.key === 'Tab' && m) {
+            e.preventDefault();
+            if (e.shiftKey) { if (m[1].length) put(value.slice(0, start) + line.replace(/^\s+/, '') + value.slice(end), Math.max(start, pos - m[1].length)); }
+            else if (!m[1].length) put(value.slice(0, start) + '  ' + line + value.slice(end), pos + 2);
+          } else if (e.key === 'Enter' && !e.shiftKey && m) {
+            e.preventDefault();
+            if (line.trim() === m[2]) { put(value.slice(0, start) + value.slice(end), start); return; } // empty bullet ends the list
+            const prefix = `${m[1]}- `;
+            put(value.slice(0, pos) + '\n' + prefix + value.slice(pos), pos + 1 + prefix.length);
+          }
+        }}
         className="block w-full resize-y bg-white px-3 py-2 text-sm leading-relaxed text-slate-900 outline-none dark:bg-slate-900 dark:text-white" />
     </div>
   );
