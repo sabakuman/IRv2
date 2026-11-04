@@ -2,14 +2,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Save, Sparkles, Loader2, Eye, EyeOff, FileDown, CheckCircle2, Check, Plus, Trash2, ChevronUp, ChevronDown,
-  AlertTriangle, Bold, List, ListTree, ChevronLeft, ChevronRight, UploadCloud, X, Globe, BarChart3, Users, MessageSquare, ListChecks, History, FileText, UserRound, Settings2, LayoutDashboard,
+  AlertTriangle, Bold, List, ListTree, Table2, ChevronLeft, ChevronRight, UploadCloud, X, Globe, BarChart3, Users, MessageSquare, ListChecks, History, FileText, UserRound, Settings2, LayoutDashboard,
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { MockService } from '../services/mockService';
 import { EMPTY_REPORT_DATA, Report, ReportData } from '../types';
-import ReportDocument, { SectionKey } from '../components/report/ReportDocument';
+import ReportDocument, { SectionKey, MAX_TABLE_COLS, MAX_TABLE_ROWS } from '../components/report/ReportDocument';
 import { COPY, Lang, isBlank, wpsStats, protectionBudget, protRowKey } from '../components/report/reportCopy';
 import { PROFILE_FIELDS, PARTNER_FIELDS, fetchFields, draftSummary } from '../services/reportAI';
 import { fromClassic } from '../components/report/classicAdapter';
@@ -56,6 +56,7 @@ const UI = {
     protection: 'Worker protection', covered: 'covered', notCovered: 'not covered', pct: '%',
     wpsAuto: 'Calculated: workers paid through WPS ÷ total MOHRE workers (labour + domestic). Enter the MOHRE totals in Headline totals.', wpsNeedTotals: 'Enter the MOHRE labour and domestic totals above to calculate this.',
     remitHint: 'In dirhams (AED). A USD figure is converted at 3.6725 in the report.',
+    tableBtn: 'Insert a table (or edit the table where the cursor is)', tableBtnShort: 'Table', tableTitle: 'Table', tableCol: 'column', tableRow: 'row', tableHead: 'Heading', tableSave: 'Insert table', tableRemove: 'Remove table', tableLimit: (c: number, r: number) => `Up to ${c} columns and ${r} rows so it fits on the page. First row is the heading.`,
     complaints: 'Labour complaints', complaintsYear: 'Complaints this year', complaintsResolved: 'Resolved so far',
     customKpis: 'Custom rows', customKpisHint: 'Your own indicators, added at the end of this table. Title and number are needed; % is optional (with a %, the coverage bar is shown too). Hide a row above to make room for more.', kpiTitle: 'Title', kpiValue: 'Number', kpiPct: '% (optional)', kpiLimit: 'The table is full. Hide or remove a row to add another.', kpiOver: 'Not shown: the table is full. Hide another row to show it.',
     wages: 'Median monthly wage (AED)', emirates: 'Workers by emirate', sectorsAll: 'Workers by sector', sectorsM: 'Workers by sector — MOHRE', sectorsI: 'Workers by sector — ICP',
@@ -102,6 +103,7 @@ const UI = {
     protection: 'حماية العمال', covered: 'مشمولون', notCovered: 'غير مشمولين', pct: '%',
     wpsAuto: 'محسوبة: العمال المحوّلة أجورهم عبر النظام ÷ إجمالي عمالة الوزارة (العمالة + المساعدة). أدخل إجماليات الوزارة في الأرقام الرئيسية.', wpsNeedTotals: 'أدخل إجمالي عمالة الوزارة والعمالة المساعدة أعلاه لحساب النسبة.',
     remitHint: 'بالدرهم الإماراتي. أي رقم بالدولار يُحوَّل في التقرير بسعر 3.6725.',
+    tableBtn: 'إدراج جدول (أو تعديل الجدول عند موضع المؤشر)', tableBtnShort: 'جدول', tableTitle: 'جدول', tableCol: 'عمود', tableRow: 'صف', tableHead: 'عنوان', tableSave: 'إدراج الجدول', tableRemove: 'حذف الجدول', tableLimit: (c: number, r: number) => `بحد أقصى ${c} أعمدة و${r} صفوف حتى يتسع في الصفحة. الصف الأول هو العناوين.`,
     complaints: 'الشكاوى العمالية', complaintsYear: 'الشكاوى هذا العام', complaintsResolved: 'تم حلها حتى الآن',
     customKpis: 'صفوف مخصصة', customKpisHint: 'مؤشرات تضيفها بنفسك في آخر هذا الجدول. العنوان والرقم مطلوبان، والنسبة اختيارية (عند إدخالها يظهر شريط التغطية). أخفِ صفاً أعلاه لإتاحة مساحة لصفوف أكثر.', kpiTitle: 'العنوان', kpiValue: 'الرقم', kpiPct: '% (اختياري)', kpiLimit: 'الجدول ممتلئ. أخفِ صفاً أو احذفه لإضافة آخر.', kpiOver: 'لن يظهر: الجدول ممتلئ. أخفِ صفاً آخر لإظهاره.',
     wages: 'وسيط الأجر الشهري (درهم)', emirates: 'العمال حسب الإمارة', sectorsAll: 'العمال حسب القطاع', sectorsM: 'العمال حسب القطاع — الوزارة', sectorsI: 'العمال حسب القطاع — الهوية',
@@ -178,8 +180,83 @@ const Segmented: React.FC<{ value: any; options: { v: any; label: string }[]; on
   </div>
 );
 
-const RichArea: React.FC<{ value: string; onChange: (v: string) => void; placeholder?: string; rows?: number; dir?: string }> = ({ value, onChange, placeholder, rows = 5, dir }) => {
+/* Table block inside a text field: "| a | b |" lines. Returns the block around the caret, if any. */
+const tableAt = (value: string, pos: number) => {
+  const lines = value.split('\n');
+  let off = 0, idx = -1;
+  for (let i = 0; i < lines.length; i++) { if (pos <= off + lines[i].length) { idx = i; break; } off += lines[i].length + 1; }
+  const isRow = (l?: string) => !!l && /^\s*\|.*\|\s*$/.test(l);
+  if (idx < 0 || !isRow(lines[idx])) return null;
+  let a = idx, b = idx;
+  while (a > 0 && isRow(lines[a - 1])) a--;
+  while (b < lines.length - 1 && isRow(lines[b + 1])) b++;
+  const start = lines.slice(0, a).reduce((n, l) => n + l.length + 1, 0);
+  const end = start + lines.slice(a, b + 1).join('\n').length;
+  const grid = lines.slice(a, b + 1).map(l => l.trim().slice(1, -1).split('|').map(c => c.trim())).filter(r => !r.every(c => /^:?-{2,}:?$/.test(c)));
+  return { start, end, grid };
+};
+const toTableText = (g: string[][]) => g.map(r => `| ${r.map(c => c.replace(/\|/g, '/').replace(/\n/g, ' ').trim() || ' ').join(' | ')} |`).join('\n');
+
+const TableEditor: React.FC<{ initial: string[][]; dir?: string; ui: any; onSave: (g: string[][]) => void; onRemove?: () => void; onClose: () => void }> = ({ initial, dir, ui, onSave, onRemove, onClose }) => {
+  const norm = (g: string[][]) => { const c = Math.min(MAX_TABLE_COLS, Math.max(2, ...g.map(r => r.length))); return g.slice(0, MAX_TABLE_ROWS + 1).map(r => Array.from({ length: c }, (_, i) => r[i] ?? '')); };
+  const [g, setG] = useState<string[][]>(norm(initial.length ? initial : [['', ''], ['', '']]));
+  const cols = g[0].length, rows = g.length;
+  const cell = (r: number, c: number, v: string) => setG(p => p.map((row, i) => i === r ? row.map((x, j) => j === c ? v : x) : row));
+  const btn = 'rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800';
+  return (
+    <div className="border-b border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+        <span className="me-1 text-xs font-bold text-slate-600 dark:text-slate-300">{ui.tableTitle}</span>
+        <button type="button" className={btn} disabled={cols >= MAX_TABLE_COLS} onClick={() => setG(p => p.map(r => [...r, '']))}>+ {ui.tableCol}</button>
+        <button type="button" className={btn} disabled={cols <= 2} onClick={() => setG(p => p.map(r => r.slice(0, -1)))}>− {ui.tableCol}</button>
+        <button type="button" className={btn} disabled={rows - 1 >= MAX_TABLE_ROWS} onClick={() => setG(p => [...p, Array(cols).fill('')])}>+ {ui.tableRow}</button>
+        <button type="button" className={btn} disabled={rows <= 2} onClick={() => setG(p => p.slice(0, -1))}>− {ui.tableRow}</button>
+        <span className="ms-auto text-[11px] text-slate-400">{ui.tableLimit(MAX_TABLE_COLS, MAX_TABLE_ROWS)}</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <tbody>
+            {g.map((row, r) => (
+              <tr key={r}>
+                {row.map((v, c) => (
+                  <td key={c} className="p-0.5">
+                    <input dir={dir} value={v} placeholder={r === 0 ? ui.tableHead : ''} onChange={e => cell(r, c, e.target.value)}
+                      className={`w-full min-w-[80px] rounded border px-2 py-1 text-sm outline-none focus:border-[#24527f] dark:bg-slate-900 dark:text-white ${r === 0 ? 'border-[#24527f]/40 bg-[#eef3f9] font-semibold dark:border-sky-700' : 'border-slate-300 bg-white dark:border-slate-600'}`} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <button type="button" onClick={() => onSave(g)} className="rounded-md bg-[#0d2c4f] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#173d68]">{ui.tableSave}</button>
+        <button type="button" onClick={onClose} className={btn}>{ui.cancel}</button>
+        {onRemove && <button type="button" onClick={onRemove} className="ms-auto text-xs font-semibold text-red-600 hover:underline">{ui.tableRemove}</button>}
+      </div>
+    </div>
+  );
+};
+
+const RichArea: React.FC<{ value: string; onChange: (v: string) => void; placeholder?: string; rows?: number; dir?: string; tables?: boolean }> = ({ value, onChange, placeholder, rows = 5, dir, tables }) => {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const { ui } = React.useContext(BuilderCtx);
+  const [tbl, setTbl] = useState<null | { start: number; end: number; grid: string[][]; edit: boolean }>(null);
+  const openTable = () => {
+    const el = ref.current; const pos = el ? el.selectionStart : value.length;
+    const found = tableAt(value, pos);
+    setTbl(found ? { ...found, edit: true } : { start: pos, end: pos, grid: [], edit: false });
+  };
+  const saveTable = (g: string[][]) => {
+    if (!tbl) return;
+    const txt = toTableText(g);
+    const before = value.slice(0, tbl.start), after = value.slice(tbl.end);
+    const pre = tbl.edit || !before || before.endsWith('\n') ? '' : '\n';
+    const post = tbl.edit || !after || after.startsWith('\n') ? '' : '\n';
+    onChange(before + pre + txt + post + after);
+    setTbl(null);
+  };
+  const removeTable = () => { if (!tbl) return; onChange((value.slice(0, tbl.start) + value.slice(tbl.end)).replace(/\n{3,}/g, '\n\n')); setTbl(null); };
   const wrap = (kind: 'bold' | 'bullet' | 'sub') => {
     const el = ref.current; if (!el) return;
     const { selectionStart: a, selectionEnd: b } = el;
@@ -195,7 +272,9 @@ const RichArea: React.FC<{ value: string; onChange: (v: string) => void; placeho
         <button type="button" title="Bold" onClick={() => wrap('bold')} className="rounded p-1 text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"><Bold size={14} /></button>
         <button type="button" title="Bullet" onClick={() => wrap('bullet')} className="rounded p-1 text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"><List size={14} /></button>
         <button type="button" title="Sub-bullet (under the bullet above). Tip: Tab on a bullet line indents it, Shift+Tab moves it back." onClick={() => wrap('sub')} className="rounded p-1 text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"><ListTree size={14} /></button>
+        {tables && <button type="button" title={ui.tableBtn} onClick={openTable} className={`ms-1 flex items-center gap-1 rounded px-1.5 py-1 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 ${tbl ? 'bg-slate-200 text-[#0d2c4f] dark:bg-slate-700 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}><Table2 size={14} />{ui.tableBtnShort}</button>}
       </div>
+      {tbl && <TableEditor key={`${tbl.start}-${tbl.edit}`} initial={tbl.grid} dir={dir} ui={ui} onSave={saveTable} onRemove={tbl.edit ? removeTable : undefined} onClose={() => setTbl(null)} />}
       <textarea ref={ref} dir={dir} rows={rows} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)}
         onKeyDown={e => {
           const el = e.currentTarget; const pos = el.selectionStart;
@@ -971,7 +1050,7 @@ export default function ReportBuilder() {
                   <label className={labelCls}>{ui.typeCol}</label>
                   <input dir={contentDir} list="engagement-types" className={inputCls} value={it.type} onChange={e => set({ type: e.target.value })} />
                 </div>
-                <div className="md:col-span-2"><label className={labelCls}>{ui.details}</label><RichArea dir={contentDir} rows={4} value={it.details} onChange={v => set({ details: v })} /></div>
+                <div className="md:col-span-2"><label className={labelCls}>{ui.details}</label><RichArea tables dir={contentDir} rows={4} value={it.details} onChange={v => set({ details: v })} /></div>
               </div>
             )} />
         );
@@ -983,7 +1062,7 @@ export default function ReportBuilder() {
             render={(it, set) => (
               <div className="space-y-3">
                 <div><label className={labelCls}>{ui.titleCol}</label><input dir={contentDir} className={inputCls} value={it.title} onChange={e => set({ title: e.target.value })} /></div>
-                <div><label className={labelCls}>{ui.content}</label><RichArea dir={contentDir} rows={4} value={it.content} onChange={v => set({ content: v })} /></div>
+                <div><label className={labelCls}>{ui.content}</label><RichArea tables dir={contentDir} rows={4} value={it.content} onChange={v => set({ content: v })} /></div>
               </div>
             )} />
         );
@@ -998,7 +1077,7 @@ export default function ReportBuilder() {
                   <div><label className={labelCls}>{ui.titleCol}</label><input dir={contentDir} className={inputCls} value={it.title} onChange={e => set({ title: e.target.value })} /></div>
                   <div><label className={labelCls}>{ui.status}</label><Segmented value={it.status || 'pending'} onChange={v => set({ status: v })} options={[{ v: 'pending', label: ui.pending }, { v: 'done', label: ui.done }]} /></div>
                 </div>
-                <div><label className={labelCls}>{ui.content}</label><RichArea dir={contentDir} rows={3} value={it.content} onChange={v => set({ content: v })} /></div>
+                <div><label className={labelCls}>{ui.content}</label><RichArea tables dir={contentDir} rows={3} value={it.content} onChange={v => set({ content: v })} /></div>
               </div>
             )} />
         );

@@ -35,6 +35,10 @@ const inline = (s: string) => escapeHtml(s)
   .replace(/([+\-−]?\$?\d[\d,.]*(?:\s?%|[KMB]\b)?)/g, '<span class="num">$1</span>')
   .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
 
+/* Rich text tables: first row is the header; kept small so an entry always fits on a page */
+export const MAX_TABLE_COLS = 4;
+export const MAX_TABLE_ROWS = 8;
+
 /* Rich text: **bold**, "- " bullets, and sub-bullets ("  - " indented, or "-- ") under the bullet above */
 export const RichText: React.FC<{ text?: string }> = ({ text }) => {
   if (!text || !text.trim()) return null;
@@ -51,8 +55,29 @@ export const RichText: React.FC<{ text?: string }> = ({ text }) => {
       list = [];
     }
   };
+  let table: string[][] = [];
+  const flushTable = (key: string) => {
+    if (!table.length) return;
+    const cols = Math.min(MAX_TABLE_COLS, Math.max(...table.map(r => r.length)));
+    const [head, ...body] = table.map(r => Array.from({ length: cols }, (_, c) => r[c] ?? ''));
+    const isNum = (c: number) => body.length > 0 && body.every(r => !r[c].trim() || /^[\s\d.,%+\-−$()]+$|^(AED|USD)\s?[\d.,]+/.test(r[c].trim()));
+    blocks.push(
+      <table key={key} className="rpt-rtable">
+        <thead><tr>{head.map((h, c) => <th key={c} className={isNum(c) ? 'r' : ''} dangerouslySetInnerHTML={{ __html: inline(h) }} />)}</tr></thead>
+        {body.length > 0 && <tbody>{body.slice(0, MAX_TABLE_ROWS).map((r, j) => <tr key={j}>{r.map((v, c) => <td key={c} className={isNum(c) ? 'r' : ''} dangerouslySetInnerHTML={{ __html: inline(v) }} />)}</tr>)}</tbody>}
+      </table>
+    );
+    table = [];
+  };
   text.split('\n').forEach((raw, i) => {
     const line = raw.trim();
+    if (/^\|.*\|$/.test(line)) {           // table row: | a | b |
+      flush(`ul-${i}`);
+      const cells = line.slice(1, -1).split('|').map(c => c.trim());
+      if (!cells.every(c => /^:?-{2,}:?$/.test(c))) table.push(cells); // skip markdown divider rows
+      return;
+    }
+    flushTable(`tb-${i}`);
     const isSub = /^(\s{2,}|\t)[-•◦]\s+/.test(raw) || /^--\s+/.test(line) || /^◦\s+/.test(line);
     if (isSub) {
       const t = line.replace(/^(--|[-•◦])\s+/, '');
@@ -65,6 +90,7 @@ export const RichText: React.FC<{ text?: string }> = ({ text }) => {
     }
   });
   flush('ul-end');
+  flushTable('tb-end');
   return <div className="rpt-rich">{blocks}</div>;
 };
 
