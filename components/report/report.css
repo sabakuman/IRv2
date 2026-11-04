@@ -236,6 +236,13 @@
 .rpt-rich li { position: relative; margin-bottom: .8mm; }
 .rpt-rich li::before { content: ""; position: absolute; inset-inline-start: -3.6mm; top: .65em; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
 .rpt-rich strong { color: var(--ink); font-weight: 700; }
+.rpt-rtable { width: 100%; border-collapse: collapse; margin: 1.5mm 0 2mm; font-size: .92em; line-height: 1.4; }
+.rpt-rtable th { text-align: start; font-weight: 700; color: var(--ink-2); padding: 1.2mm 2mm; border-bottom: 1.5px solid var(--navy); background: var(--bg-soft, #f3f5f8); }
+.rpt-rtable td { padding: 1.1mm 2mm; border-bottom: 1px solid var(--line); color: var(--ink-2); vertical-align: top; }
+.rpt-rtable tbody tr:last-child td { border-bottom: 0; }
+.rpt-rtable td:first-child { font-weight: 600; color: var(--ink); }
+.rpt-rtable .r { text-align: end; white-space: nowrap; }
+.rpt-rtable td.r { font-weight: 700; color: var(--navy); }
 .rpt-rich ul.sub { margin: .6mm 0 0; padding-inline-start: 4.5mm; }
 .rpt-rich ul.sub li { margin-bottom: .5mm; font-size: .95em; }
 .rpt-rich ul.sub li::before { width: 4px; height: 4px; background: transparent; border: 1px solid var(--gold); box-sizing: border-box; }
