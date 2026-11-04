@@ -183,6 +183,7 @@ export interface ReportData {
   meetingObjectives?: string[]; // "Main objectives of this meeting" on the summary page (user input)
   lastInteractions?: LastInteraction[]; // up to 2 "Last interactions" on the summary page (user input)
   aiFields?: string[];        // field paths filled by AI and not yet verified by a user
+  updatesTitle?: string;      // custom title for the Previous Agreements & Work Updates page (blank = default)
   showEducation?: boolean;
   showUaeDelegation?: boolean; // UAE side of Delegations (ambassador, CG, ...) is shown only if true    // Education block is hidden unless this is true (data is still fetched by AI)
   hiddenSections?: string[];  // report sections switched off in the builder (summary, profile, uae, partner, relationship, points, updates, agreements, delegations)

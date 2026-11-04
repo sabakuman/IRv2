@@ -986,7 +986,7 @@ export default function ReportDocument({ report, lang, onOverflow }: Props) {
   flowSection('pts', 'points', T.points, T.pointsLede, idx => (
     <div className="rpt-points">{idx.map(i => <React.Fragment key={i}>{renderPoint(points, false)(i)}</React.Fragment>)}</div>
   ));
-  flowSection('upd', 'updates', T.updates, T.updatesLede, idx => (
+  flowSection('upd', 'updates', isBlank((data as any).updatesTitle) ? T.updates : String((data as any).updatesTitle).trim(), T.updatesLede, idx => (
     <div className="rpt-points">{idx.map(i => <React.Fragment key={i}>{renderPoint(updates, true)(i)}</React.Fragment>)}</div>
   ));
   /* Delegations — partner side (with "met before") and, if switched on, the UAE side */
