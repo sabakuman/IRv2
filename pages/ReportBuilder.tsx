@@ -57,6 +57,7 @@ const UI = {
     wpsAuto: 'Calculated: workers paid through WPS ÷ total MOHRE workers (labour + domestic). Enter the MOHRE totals in Headline totals.', wpsNeedTotals: 'Enter the MOHRE labour and domestic totals above to calculate this.',
     remitHint: 'In dirhams (AED). A USD figure is converted at 3.6725 in the report.',
     tableBtn: 'Insert a table (or edit the table where the cursor is)', tableBtnShort: 'Table', tableTitle: 'Table', tableCol: 'column', tableRow: 'row', tableHead: 'Heading', tableSave: 'Insert table', tableRemove: 'Remove table', tableLimit: (c: number, r: number) => `Up to ${c} columns and ${r} rows so it fits on the page. First row is the heading.`,
+    pageTitle: 'Page title', pageTitleHint: 'Leave empty to use the standard title shown in grey. Changes this page and its line in the contents.', resetTitle: 'Use standard title',
     complaints: 'Labour complaints', complaintsYear: 'Complaints this year', complaintsResolved: 'Resolved so far',
     customKpis: 'Custom rows', customKpisHint: 'Your own indicators, added at the end of this table. Title and number are needed; % is optional (with a %, the coverage bar is shown too). Hide a row above to make room for more.', kpiTitle: 'Title', kpiValue: 'Number', kpiPct: '% (optional)', kpiLimit: 'The table is full. Hide or remove a row to add another.', kpiOver: 'Not shown: the table is full. Hide another row to show it.',
     wages: 'Median monthly wage (AED)', emirates: 'Workers by emirate', sectorsAll: 'Workers by sector', sectorsM: 'Workers by sector — MOHRE', sectorsI: 'Workers by sector — ICP',
@@ -104,6 +105,7 @@ const UI = {
     wpsAuto: 'محسوبة: العمال المحوّلة أجورهم عبر النظام ÷ إجمالي عمالة الوزارة (العمالة + المساعدة). أدخل إجماليات الوزارة في الأرقام الرئيسية.', wpsNeedTotals: 'أدخل إجمالي عمالة الوزارة والعمالة المساعدة أعلاه لحساب النسبة.',
     remitHint: 'بالدرهم الإماراتي. أي رقم بالدولار يُحوَّل في التقرير بسعر 3.6725.',
     tableBtn: 'إدراج جدول (أو تعديل الجدول عند موضع المؤشر)', tableBtnShort: 'جدول', tableTitle: 'جدول', tableCol: 'عمود', tableRow: 'صف', tableHead: 'عنوان', tableSave: 'إدراج الجدول', tableRemove: 'حذف الجدول', tableLimit: (c: number, r: number) => `بحد أقصى ${c} أعمدة و${r} صفوف حتى يتسع في الصفحة. الصف الأول هو العناوين.`,
+    pageTitle: 'عنوان الصفحة', pageTitleHint: 'اتركه فارغاً لاستخدام العنوان الافتراضي الظاهر بالرمادي. يغيّر عنوان هذه الصفحة وسطرها في الفهرس.', resetTitle: 'العنوان الافتراضي',
     complaints: 'الشكاوى العمالية', complaintsYear: 'الشكاوى هذا العام', complaintsResolved: 'تم حلها حتى الآن',
     customKpis: 'صفوف مخصصة', customKpisHint: 'مؤشرات تضيفها بنفسك في آخر هذا الجدول. العنوان والرقم مطلوبان، والنسبة اختيارية (عند إدخالها يظهر شريط التغطية). أخفِ صفاً أعلاه لإتاحة مساحة لصفوف أكثر.', kpiTitle: 'العنوان', kpiValue: 'الرقم', kpiPct: '% (اختياري)', kpiLimit: 'الجدول ممتلئ. أخفِ صفاً أو احذفه لإضافة آخر.', kpiOver: 'لن يظهر: الجدول ممتلئ. أخفِ صفاً آخر لإظهاره.',
     wages: 'وسيط الأجر الشهري (درهم)', emirates: 'العمال حسب الإمارة', sectorsAll: 'العمال حسب القطاع', sectorsM: 'العمال حسب القطاع — الوزارة', sectorsI: 'العمال حسب القطاع — الهوية',
@@ -1069,6 +1071,16 @@ export default function ReportBuilder() {
 
       case 'updates':
         return (
+          <div className="space-y-5">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+            <label className={labelCls}>{ui.pageTitle}</label>
+            <div className="flex gap-2">
+              <input dir={contentDir} maxLength={90} className={inputCls} value={(data as any).updatesTitle || ''} placeholder={COPY[lang].updates}
+                onChange={e => update('updatesTitle', e.target.value)} />
+              {!isBlank((data as any).updatesTitle) && <button type="button" onClick={() => update('updatesTitle', '')} className="shrink-0 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">{ui.resetTitle}</button>}
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">{ui.pageTitleHint}</p>
+          </div>
           <ListEditor ui={ui} items={data.previousAgreementsAndUpdates || []} onChange={v => update('previousAgreementsAndUpdates', v)} addLabel={ui.addUpdate} emptyText={ui.empty}
             make={() => ({ id: uuidv4(), title: '', content: '', status: 'pending' as const })}
             render={(it, set) => (
@@ -1080,6 +1092,7 @@ export default function ReportBuilder() {
                 <div><label className={labelCls}>{ui.content}</label><RichArea tables dir={contentDir} rows={3} value={it.content} onChange={v => set({ content: v })} /></div>
               </div>
             )} />
+          </div>
         );
 
       case 'agreements':
